@@ -1,7 +1,12 @@
 package springredis.demo.entity.base;
 
-public class BaseTaskEntity {
+import lombok.Data;
 
+import javax.persistence.MappedSuperclass;
+
+@Data
+@MappedSuperclass
+public class BaseTaskEntity {
     //这三个是CoreModule的Key,无需处理直接返回即可
     private Long activeAudienceId;
     private Long targetNodeId;

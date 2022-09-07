@@ -1,13 +1,15 @@
 package springredis.demo.controller;
 
+import org.apache.coyote.Request;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import springredis.demo.entity.Campaign;
-import springredis.demo.entity.Node;
-import springredis.demo.entity.User;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import springredis.demo.Service.DAO;
+import springredis.demo.entity.*;
 import springredis.demo.repository.*;
 
 import java.sql.Date;
@@ -25,6 +27,50 @@ public class TestController {
     private AudienceRepository audienceRepository;
     @Autowired
     private CampaignRepository campaignRepository;
+
+    @Autowired
+    private DAO dao;
+    @Autowired
+    RestTemplate restTemplate;
+
+    private String str = new String();
+
+
+    @GetMapping("/simulated_call")
+    public CoreModuleTask simulated_core_module_call(){
+        //现在数据库中save一个mock user，一个mock journey，一个mock node和一个mock audience
+        User user = new User(); user.setShopifydevstore("example.devstore");user.setShopifyApiKey("example.key");
+//        System.out.println(user.getShopifyApiKey());
+        Long userid = dao.addNewUser(user).getId();
+        Long journeyid = dao.addNewJourney(new Journey()).getId();
+        Long nodeid = dao.addNewNode(new Node()).getId();
+        Audience audience = new Audience(); audience.setEmail("example@gmail.com");
+        Long audienceid = dao.addNewAudience(audience).getId();
+        CoreModuleTask newtask = new CoreModuleTask();
+        newtask.setType("API Trigger");
+        newtask.setName("shopify_create_trigger");
+        //其他coremoduletask的参数没有设置，因为在trigger api中不需要。这里单独测试trigger api的功能。
+        newtask.setUserId(userid);
+        newtask.setAudienceId(audienceid);
+        newtask.setJourneyId(journeyid);
+        newtask.setNodeId(nodeid);
+        String url = "http://localhost:8080/API_trigger";
+        HttpEntity<CoreModuleTask> call = new HttpEntity<CoreModuleTask>(newtask);
+        CoreModuleTask res = restTemplate.exchange(url, HttpMethod.POST,call,CoreModuleTask.class).getBody();
+        return res;
+    }
+
+    @RequestMapping(value="/show",method= RequestMethod.POST)
+    public void showjson(@RequestBody String obj){
+        this.str = obj;
+    }
+
+    @GetMapping(value = "/show",produces =MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String display(){
+        return this.str;
+    }
+
 
 
     //这里我随便测了几个应该都是可以用的，注意有些参数是必须要有的
