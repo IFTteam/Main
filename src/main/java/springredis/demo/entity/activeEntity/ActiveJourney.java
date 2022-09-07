@@ -19,6 +19,9 @@ public class ActiveJourney {
     @OneToMany(mappedBy = "activeJourney")
     private List<ActiveNode> activeNodeList = new ArrayList<>();
 
+
+
+
 //    @OneToMany(mappedBy = "activeJourney")
 //    private List<ActiveAudience> activeAudienceList = new ArrayList<>();
 

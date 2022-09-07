@@ -4,14 +4,12 @@ import lombok.Data;
 import org.springframework.data.relational.core.sql.In;
 import springredis.demo.entity.base.BaseEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.sql.Date;
 
 @Entity
 @Data
+@Table
 public class User extends BaseEntity {
     @Id
     @GeneratedValue
