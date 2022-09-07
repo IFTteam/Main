@@ -10,6 +10,7 @@ import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -46,13 +47,26 @@ public class API_Trigger_Controller {
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
         Journey journey = productService.searchJourneyById(task.getJourneyId());
+        Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"purchase");
+        if(!opstnr.isPresent()){
+            triggerType_node_relation tnr = new triggerType_node_relation("purchase",user.getId());
+            productService.addNewTNR(tnr);
+        }
+        triggerType_node_relation restnr = productService.searchTNR(user.getId(),"purchase").get();
+        List<Node> nodes = restnr.getNodes();
+        boolean found = false;
+        for(Node n:nodes){
+            if(n.getId()==node.getId()){
+                found = true;
+            }
+        }
+        if(!found) restnr.addnode(node);               //this node must have not been added before, as we parse each node of each journey exactly once
         //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
-//        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-String url = "http://localhost:8080/show";             //for testing purpose
-        //replace local host with our server's name. Note that the designated address is specified in USER-JOURNEY-NODE style
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/Shopify/shopify_purhcase_update/"+Long.toString(user.getId())+"/"+Long.toString(journey.getId())+"/"+Long.toString(node.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+//String url = "http://localhost:8080/show";             //for testing purpose
+        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/Shopify/shopify_purhcase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         // create headers
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
@@ -70,12 +84,26 @@ String url = "http://localhost:8080/show";             //for testing purpose
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
         Journey journey = productService.searchJourneyById(task.getJourneyId());
+        Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"abandon_cart");
+        if(!opstnr.isPresent()){
+            triggerType_node_relation tnr = new triggerType_node_relation("abandon_cart",user.getId());
+            productService.addNewTNR(tnr);
+        }
+        triggerType_node_relation restnr = productService.searchTNR(user.getId(),"abandon_cart").get();
+        List<Node> nodes = restnr.getNodes();
+        boolean found = false;
+        for(Node n:nodes){
+            if(n.getId()==node.getId()){
+                found = true;
+            }
+        }
+        if(!found) restnr.addnode(node);               //this node must have not been added before, as we parse each node of each journey exactly once
+
         //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-        //replace local host with our server's name. Note that the designated address is specified in USER-JOURNEY-NODE style
-        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"localhost:8080/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"/"+Long.toString(journey.getId())+"/"+Long.toString(node.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"localhost:8080/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         // create headers
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
@@ -92,12 +120,11 @@ String url = "http://localhost:8080/show";             //for testing purpose
         return task;
     }
 
-    @RequestMapping(value="/shopify_purchase_update/{user}/{journey}/{node}",method=RequestMethod.POST)
-    void shopify_purchasetrigger_hit(@PathVariable("user") String username,@PathVariable("journey") String journeyid, @PathVariable("node") String nodeid,@RequestBody String jsonstr)
+    //the url now is only user-specific
+    @RequestMapping(value="/shopify_purchase_update/{user}",method=RequestMethod.POST)
+    void shopify_purchasetrigger_hit(@PathVariable("user") String username, String nodeid,@RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
-        Node node = productService.searchNodeById(Long.parseLong(nodeid));
-        Journey journey = productService.searchJourneyById(Long.parseLong(journeyid));
         JSONObject order = new JSONObject(jsonstr);
         JSONObject tmp = order.getJSONObject("customer");
         Long id = tmp.getLong("id");
@@ -105,29 +132,38 @@ String url = "http://localhost:8080/show";             //for testing purpose
         Audience audience = new Audience();
         audience.setEmail(email);audience.setFirstName(fi);audience.setLastName(li);
         audience.setSource("shopify");
+        Long audienceid = 0L;
         //add new audience if not included in the audience table
         if(!productService.searchAudienceByEmail(email).isPresent()){
-            productService.addNewAudience(audience);
+            audienceid = productService.addNewAudience(audience).getId();
         }
-        long audienceid = audience.getId();
-        //better approach: make taskcontroller a service, directly call service instead of sending http request
-        String url  = "{server_domain_name}"+"/ReturnTask";
-        CoreModuleTask task = new CoreModuleTask();
-        task.setNodeId(node.getId());
-        task.setJourneyId(journey.getId());
-        task.setAudienceId(audienceid);
-        task.setUserId(user.getId());
-        HttpEntity<CoreModuleTask> request = new HttpEntity(task);
-        //create a task at the task controller's endpoint
-        ResponseEntity<String> res = this.restTemplate.exchange(url,HttpMethod.POST,request,String.class);
+        else audienceid = audience.getId();
+        triggerType_node_relation tnr = productService.searchTNR(user.getId(),"purchase").get();        //this must exist, because we must have created the webhook first before we use it
+        List<Node> nodes = tnr.getNodes();
+        //for each next node of the node in the TNR of this user's trigger, make a new task from it and include the incoming new audience
+        for(Node n:nodes){
+            for(Long nextid:n.getNexts()) {
+                Node nextnode = productService.searchNodeById(nextid);
+                String url = "{server_domain_name}" + "/ReturnTask";
+                CoreModuleTask task = new CoreModuleTask();
+                task.setAudienceId(audienceid);
+                task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
+                task.setUserId(user.getId());
+                task.setTaskType(1);                //a task that is creating a new audience
+                task.setName(nextnode.getName());
+                task.setType(nextnode.getType());
+                HttpEntity<CoreModuleTask> request = new HttpEntity(task);
+                //create a task at the task controller's endpoint
+                ResponseEntity<String> res = this.restTemplate.exchange(url,HttpMethod.POST,request,String.class);
+            }
+        }
+
     }
 
-    @RequestMapping(value="/shopify_abandon_checkout_update/{user}/{journey}/{node}",method=RequestMethod.POST)
-    void shopify_abandoncarttrigger_hit(@PathVariable("user") String username, @PathVariable("journey") String journeyid,@PathVariable("node") String nodeid,@RequestBody String jsonstr)
+    @RequestMapping(value="/shopify_abandon_checkout_update/{user}",method=RequestMethod.POST)
+    void shopify_abandoncarttrigger_hit(@PathVariable("user") String username,  String nodeid,@RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
-        Node node = productService.searchNodeById(Long.parseLong(nodeid));
-        Journey journey = productService.searchJourneyById(Long.parseLong(journeyid));
         JSONObject order = new JSONObject(jsonstr);
         JSONObject tmp = order.getJSONObject("customer");
         Long id = tmp.getLong("id");
@@ -135,21 +171,32 @@ String url = "http://localhost:8080/show";             //for testing purpose
         Audience audience = new Audience();
         audience.setEmail(email);audience.setFirstName(fi);audience.setLastName(li);
         audience.setSource("shopify");
+        Long audienceid = 0L;
         //add new audience if not included in the audience table
         if(!productService.searchAudienceByEmail(email).isPresent()){
-            productService.addNewAudience(audience);
+            audienceid = productService.addNewAudience(audience).getId();
         }
-        long audienceid = audience.getId();
+        else audienceid = audience.getId();
         //better approach: make taskcontroller a service, directly call service instead of sending http request
-        String url  = "{server_domain_name}"+"/ReturnTask";
-        CoreModuleTask task = new CoreModuleTask();
-        task.setNodeId(node.getId());
-        task.setJourneyId(journey.getId());
-        task.setAudienceId(audienceid);
-        task.setUserId(user.getId());
-        HttpEntity<CoreModuleTask> request = new HttpEntity(task);
-        //create a task at the task controller's endpoint
-        ResponseEntity<String> res = this.restTemplate.exchange(url,HttpMethod.POST,request,String.class);
+        triggerType_node_relation tnr = productService.searchTNR(user.getId(),"abandon_cart").get();        //this must exist, because we must have created the webhook first before we use it
+        List<Node> nodes = tnr.getNodes();
+        //for each next node of the node in the TNR of this user's trigger, make a new task from it and include the incoming new audience
+        for(Node n:nodes){
+            for(Long nextid:n.getNexts()) {
+                Node nextnode = productService.searchNodeById(nextid);
+                String url = "{server_domain_name}" + "/ReturnTask";
+                CoreModuleTask task = new CoreModuleTask();
+                task.setAudienceId(audienceid);
+                task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
+                task.setUserId(user.getId());
+                task.setTaskType(1);                //a task that is creating a new audience
+                task.setName(nextnode.getName());
+                task.setType(nextnode.getType());
+                HttpEntity<CoreModuleTask> request = new HttpEntity(task);
+                //create a task at the task controller's endpoint
+                ResponseEntity<String> res = this.restTemplate.exchange(url,HttpMethod.POST,request,String.class);
+            }
+        }
     }
 
     @RequestMapping(value="/salesforce_subscription_update/{user}/{node}",method=RequestMethod.POST)

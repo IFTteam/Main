@@ -2,10 +2,7 @@ package springredis.demo.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import springredis.demo.entity.Audience;
-import springredis.demo.entity.Journey;
-import springredis.demo.entity.Node;
-import springredis.demo.entity.User;
+import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.repository.*;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
@@ -34,6 +31,8 @@ public class DAO {
     private ActiveNodeRepository activeNodeRepository;
     @Autowired
     private ActiveJourneyRepository activeJourneyRepository;
+    @Autowired
+    private TNR_Repository tnr_repository;
 
     public DAO(){
 
@@ -63,6 +62,8 @@ public class DAO {
         return activeAudienceRepository.searchActiveAudienceByAudienceId(audienceID);
     }
 
+    public Optional<triggerType_node_relation> searchTNR(Long uid,String type){return tnr_repository.searchTNR(uid,type);}
+
     public Audience addNewAudience(Audience audience){
         return audienceRepository.save(audience);
     }
@@ -75,6 +76,10 @@ public class DAO {
 
     public Journey addNewJourney(Journey journey){
         return journeyRepository.save(journey);
+    }
+
+    public triggerType_node_relation addNewTNR(triggerType_node_relation tnr){
+        return tnr_repository.save(tnr);
     }
 
 }
