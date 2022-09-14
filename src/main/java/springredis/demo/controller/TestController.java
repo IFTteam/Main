@@ -12,7 +12,9 @@ import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.repository.*;
 
+import javax.print.attribute.standard.Media;
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -35,6 +37,8 @@ public class TestController {
 
     private String str = new String();
 
+    private List<CoreModuleTask> tasks = new ArrayList<>();
+
 
     @GetMapping("/simulated_call")
     public CoreModuleTask simulated_core_module_call(){
@@ -44,6 +48,13 @@ public class TestController {
         Long userid = dao.addNewUser(user).getId();
         Long journeyid = dao.addNewJourney(new Journey()).getId();
         Long nodeid = dao.addNewNode(new Node()).getId();
+        //
+        Node node2=new Node(),node3 = new Node();
+        node2.setType("action"); node3.setType("if/else");
+        Long node2id = dao.addNewNode(node2).getId(), node3id = dao.addNewNode(node3).getId();
+        Node node1 = dao.searchNodeById(nodeid);
+        //create next nodes for node1; so when trigger happens, we can see whether task requests about node2 and node3 are posted
+        node1.getNexts().add(node2id);node1.getNexts().add(node3id);
         Audience audience = new Audience(); audience.setEmail("example@gmail.com");
         Long audienceid = dao.addNewAudience(audience).getId();
         CoreModuleTask newtask = new CoreModuleTask();
@@ -70,6 +81,12 @@ public class TestController {
     public String display(){
         return this.str;
     }
+
+    @RequestMapping(value="/receivetask",method=RequestMethod.POST)
+    public void showtask(@RequestBody CoreModuleTask task){this.tasks.add(task);}
+
+    @GetMapping(value="/receivetask",produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<CoreModuleTask> displaytask(){return this.tasks;}
 
 
 

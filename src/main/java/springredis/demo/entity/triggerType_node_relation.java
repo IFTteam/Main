@@ -2,18 +2,18 @@ package springredis.demo.entity;
 
 import lombok.Data;
 import lombok.Generated;
+import lombok.NoArgsConstructor;
 import springredis.demo.entity.base.BaseEntity;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 @Data
+@NoArgsConstructor
 @Table(name="TNR")
-public class triggerType_node_relation extends BaseEntity {
+public class triggerType_node_relation {
     @Id
     @GeneratedValue
     private long id;
@@ -23,13 +23,12 @@ public class triggerType_node_relation extends BaseEntity {
     private Long userId;                //the userid in main table
 
 
-    @OneToMany(mappedBy="triggerType_node_relation")
-    private List<Node> nodes;                   //the list of active nodes for this user's this journey's this trigger type; when trigger is invoked,
+    @OneToMany(mappedBy="triggertype_node_relation",cascade= CascadeType.ALL)
+    private List<Node> nodes = new ArrayList<>();                   //the list of active nodes for this user's this journey's this trigger type; when trigger is invoked,
 
     public triggerType_node_relation(String s, long uid){
         triggerType = s;
         userId = uid;
-        nodes = new ArrayList<>();
     }
 
     public void addnode(Node node){

@@ -4,7 +4,9 @@ import io.netty.util.internal.StringUtil;
 import lombok.Data;
 import org.apache.tomcat.util.buf.StringUtils;
 import org.yaml.snakeyaml.util.ArrayUtils;
+import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.entity.base.BaseEntity;
+import springredis.demo.entity.triggerType_node_relation;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -29,9 +31,13 @@ public class Node extends BaseEntity {
     private String status;
 
     @Transient
-    private List<Long> nexts;
+    private List<Long> nexts = new ArrayList<>();
     @Transient
-    private List<Long> lasts;
+    private List<Long> lasts = new ArrayList<>();
+
+    @ManyToOne(targetEntity = triggerType_node_relation.class)
+    @JoinColumn(name="TNR_id",referencedColumnName = "id")
+    private triggerType_node_relation triggertype_node_relation;
 
     private String sNexts;
     private String sLasts;

@@ -16,12 +16,9 @@ public class ActiveNode {
     @GeneratedValue
     private Long id;
     private Long nodeId;
-
-
     @ManyToOne(targetEntity = ActiveJourney.class)
     @JoinColumn(name="node_journey_id",referencedColumnName = "id")
     private ActiveJourney activeJourney;
-
     @OneToMany(mappedBy = "activeNode")
     private List<ActiveAudience> activeAudienceList = new ArrayList<>();
     public ActiveNode(Long nodeId, ActiveJourney activeJourney) {

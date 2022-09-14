@@ -25,7 +25,7 @@ public class API_Trigger_Controller {
     //after processing the api call, return the coremoduletask that was sent in POST (in this case, don't change anything)
     @RequestMapping( value="/API_trigger",method= RequestMethod.POST)
     @ResponseBody
-    CoreModuleTask redirect(@RequestBody CoreModuleTask task){
+    public CoreModuleTask redirect(@RequestBody CoreModuleTask task){
         CoreModuleTask nulltask = new CoreModuleTask();
         nulltask.setName("nulltask");
         if(task.getName().equals("shopify_create_trigger")){
@@ -42,7 +42,7 @@ public class API_Trigger_Controller {
 
     @RequestMapping(value="shopify_create_puchase_webhook",method=RequestMethod.POST)
     @ResponseBody
-    CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
+    public CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
         Audience audience = productService.searchAudienceById(task.getAudienceId());
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
@@ -64,9 +64,9 @@ public class API_Trigger_Controller {
         //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
-        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-//String url = "http://localhost:8080/show";             //for testing purpose
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/Shopify/shopify_purhcase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+//        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+String url = "http://localhost:8080/show";             //for testing purpose
+        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         // create headers
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
@@ -79,7 +79,7 @@ public class API_Trigger_Controller {
     //
     @RequestMapping(value="/shopify_create_abandon_checkout_webhook",method=RequestMethod.POST)
     @ResponseBody
-    CoreModuleTask create_abandon_checkout_webhook(@RequestBody CoreModuleTask task) {
+    public CoreModuleTask create_abandon_checkout_webhook(@RequestBody CoreModuleTask task) {
         Audience audience = productService.searchAudienceById(task.getAudienceId());
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
@@ -98,7 +98,6 @@ public class API_Trigger_Controller {
             }
         }
         if(!found) restnr.addnode(node);               //this node must have not been added before, as we parse each node of each journey exactly once
-
         //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
@@ -115,14 +114,16 @@ public class API_Trigger_Controller {
 
     @RequestMapping(value="/salesforce_create_subscription_webhook",method=RequestMethod.POST)
     @ResponseBody
-    CoreModuleTask create_salesforce_subscription_trigger(@RequestBody CoreModuleTask task) {
+    public CoreModuleTask create_salesforce_subscription_trigger(@RequestBody CoreModuleTask task) {
         //create the webhook (see previous code)
         return task;
     }
 
     //the url now is only user-specific
     @RequestMapping(value="/shopify_purchase_update/{user}",method=RequestMethod.POST)
-    void shopify_purchasetrigger_hit(@PathVariable("user") String username, String nodeid,@RequestBody String jsonstr)
+    @ResponseStatus(code=HttpStatus.OK,reason="ok")
+    @ResponseBody
+    public String shopify_purchasetrigger_hit(@PathVariable("user") String username, @RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
         JSONObject order = new JSONObject(jsonstr);
@@ -144,7 +145,8 @@ public class API_Trigger_Controller {
         for(Node n:nodes){
             for(Long nextid:n.getNexts()) {
                 Node nextnode = productService.searchNodeById(nextid);
-                String url = "{server_domain_name}" + "/ReturnTask";
+//                String url = "{server_domain_name}" + "/ReturnTask";
+String url = "https://localhost:8080/receivetask";         //for testing purpose
                 CoreModuleTask task = new CoreModuleTask();
                 task.setAudienceId(audienceid);
                 task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
@@ -157,11 +159,12 @@ public class API_Trigger_Controller {
                 ResponseEntity<String> res = this.restTemplate.exchange(url,HttpMethod.POST,request,String.class);
             }
         }
-
+        return jsonstr;
     }
 
     @RequestMapping(value="/shopify_abandon_checkout_update/{user}",method=RequestMethod.POST)
-    void shopify_abandoncarttrigger_hit(@PathVariable("user") String username,  String nodeid,@RequestBody String jsonstr)
+    @ResponseStatus(code = HttpStatus.OK, reason = "OK")
+    public void shopify_abandoncarttrigger_hit(@PathVariable("user") String username,  String nodeid,@RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
         JSONObject order = new JSONObject(jsonstr);
@@ -177,7 +180,6 @@ public class API_Trigger_Controller {
             audienceid = productService.addNewAudience(audience).getId();
         }
         else audienceid = audience.getId();
-        //better approach: make taskcontroller a service, directly call service instead of sending http request
         triggerType_node_relation tnr = productService.searchTNR(user.getId(),"abandon_cart").get();        //this must exist, because we must have created the webhook first before we use it
         List<Node> nodes = tnr.getNodes();
         //for each next node of the node in the TNR of this user's trigger, make a new task from it and include the incoming new audience
