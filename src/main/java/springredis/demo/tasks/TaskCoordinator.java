@@ -3,54 +3,45 @@ package springredis.demo.tasks;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import springredis.demo.entity.CoreModuleTask;
+import springredis.demo.repository.TimeDelayRepository;
+import springredis.demo.structures.OutAPICaller;
+import springredis.demo.structures.SimulateHeapKeeper;
+import springredis.demo.structures.SimulateNewEvent;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
 @Slf4j
-public class TaskCoordinator implements DisposableBean,Runnable {
+public class TaskCoordinator implements DisposableBean {
 
-    private Thread thread;
+
     private volatile boolean someCondition = true;
 
     private final String taskQueueKey = "CoretaskQueue";
-    @Autowired
-    private RedisTemplate redisTemplate;
+
+
+
     private ExecutorService executorService;
 
     // dao 和service注入
     @Autowired
-    public TaskCoordinator() {
-            this.thread = new Thread(this);
-            this.thread.start();
-            log.info("Task Coordinator Started");
-        }
-
-        @Override
-        public void run() {
-            ExecutorService executorService = Executors.newFixedThreadPool(10);//初始化线程池
+    public TaskCoordinator(RedisTemplate redisTemplate, TimeDelayRepository timeDelayRepository) {
+        RedisConnection redisConnection = RedisConnectionUtils.getConnection(redisTemplate.getConnectionFactory(),true);
+        redisConnection.flushDb();
+        SimulateHeapKeeper simulateHeapKeeper = new SimulateHeapKeeper(redisTemplate);
+        OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate);
+        SimulateNewEvent simulateNewEvent = new SimulateNewEvent(timeDelayRepository, redisTemplate);
 
 
-        while (someCondition) {
-            // 查Redis
-            while (redisTemplate.opsForList().size(taskQueueKey)>0){
-                CoreModuleTask coreModuleTask = (CoreModuleTask) redisTemplate.opsForList().rightPop(taskQueueKey);
-                TaskExecutor taskExecutor = new TaskExecutor(coreModuleTask);
-                executorService.execute(taskExecutor);
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
+        new Thread(simulateNewEvent).start();
+        new Thread(simulateHeapKeeper).start();
+        new Thread(outAPICaller).start();
     }
-
 
 
 
@@ -59,4 +50,3 @@ public class TaskCoordinator implements DisposableBean,Runnable {
         someCondition = false;
     }
 }
-
