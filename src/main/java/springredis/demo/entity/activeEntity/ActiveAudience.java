@@ -6,9 +6,11 @@ import javax.persistence.*;
 
 @Entity
 @Table
+@Data
 public class ActiveAudience {
     @Id
     @GeneratedValue
+
     private Long id;
     private Long AudienceId;
     @ManyToOne(targetEntity = ActiveNode.class)
@@ -19,24 +21,5 @@ public class ActiveAudience {
     public ActiveAudience(Long audienceId) {
         AudienceId = audienceId;
     }
-    public ActiveNode getActiveNode() {
-        return activeNode;
-    }
-    public void setActiveNode(ActiveNode activeNode) {
-        this.activeNode = activeNode;
-    }
-    public Long getId() {
-        return id;
-    }
-    public void setId(Long id) {
-        this.id = id;
-    }
 
-    public Long getAudienceId() {
-        return AudienceId;
-    }
-
-    public void setAudienceId(Long audienceId) {
-        AudienceId = audienceId;
-    }
 }

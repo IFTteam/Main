@@ -11,6 +11,7 @@ import java.util.List;
 @Entity
 @Table(name="active_node")
 @NoArgsConstructor
+@Data
 public class ActiveNode {
     @Id
     @GeneratedValue
@@ -26,35 +27,5 @@ public class ActiveNode {
         this.activeJourney = activeJourney;
     }
 
-    public List<ActiveAudience> getActiveAudienceList() {
-        return activeAudienceList;
-    }
 
-    public void setActiveAudienceList(List<ActiveAudience> activeAudienceList) {
-        this.activeAudienceList = activeAudienceList;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(Long nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public ActiveJourney getActiveJourney() {
-        return activeJourney;
-    }
-
-    public void setActiveJourney(ActiveJourney activeJourney) {
-        this.activeJourney = activeJourney;
-    }
 }

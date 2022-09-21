@@ -3,10 +3,7 @@ package springredis.demo.entity;
 import lombok.Data;
 import springredis.demo.entity.base.BaseEntity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Data
@@ -14,6 +11,7 @@ import javax.persistence.Table;
 public class Journey extends BaseEntity {
     @Id
     @GeneratedValue
+
     private Long id;
     private String journeyName;
     private String thumbnailUrl;

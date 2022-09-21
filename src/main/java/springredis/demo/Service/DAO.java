@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
+import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.repository.*;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
@@ -54,9 +55,11 @@ public class DAO {
         return journeyRepository.searchJourneyById(Id);
     }
 
-    public Optional<Audience> searchAudienceByEmail(String email) {
+    public Audience searchAudienceByEmail(String email) {
         return audienceRepository.searchAudienceByEmail(email);
     }
+
+    public ActiveNode searchActiveNodeById(Long id){return activeNodeRepository.findByActiveNodeId(id);}
 
     public Optional<ActiveAudience> searchActiveAudienceByAudienceID(Long audienceID){
         return activeAudienceRepository.searchActiveAudienceByAudienceId(audienceID);
@@ -73,6 +76,12 @@ public class DAO {
     }
 
     public Node addNewNode(Node node){return nodeRepository.save(node);}
+
+    public ActiveNode addNewActiveNode(ActiveNode node){return activeNodeRepository.save(node);}
+
+    public ActiveAudience addNewActiveAudience(ActiveAudience aud){return activeAudienceRepository.save(aud);}
+
+
 
     public Journey addNewJourney(Journey journey){
         return journeyRepository.save(journey);

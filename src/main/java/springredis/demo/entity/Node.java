@@ -30,12 +30,12 @@ public class Node extends BaseEntity {
     private Integer headOrTail;
     private String status;
 
-    @Transient
+    @ElementCollection
     private List<Long> nexts = new ArrayList<>();
-    @Transient
+    @ElementCollection
     private List<Long> lasts = new ArrayList<>();
 
-    @ManyToOne(targetEntity = triggerType_node_relation.class)
+    @ManyToOne(fetch = FetchType.LAZY,targetEntity = triggerType_node_relation.class)
     @JoinColumn(name="TNR_id",referencedColumnName = "id")
     private triggerType_node_relation triggertype_node_relation;
 

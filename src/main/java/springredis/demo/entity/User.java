@@ -12,8 +12,7 @@ import java.sql.Date;
 @Table
 public class User extends BaseEntity {
     @Id
-    @GeneratedValue
-    private Long id;
+    @GeneratedValue    private Long id;
     private String username;
     private String password_hash;
     private String avatarUrl;

@@ -46,6 +46,7 @@ public class API_Trigger_Controller {
         Audience audience = productService.searchAudienceById(task.getAudienceId());
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
+//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(node.toString()),String.class);
         Journey journey = productService.searchJourneyById(task.getJourneyId());
         Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"purchase");
         if(!opstnr.isPresent()){
@@ -60,7 +61,10 @@ public class API_Trigger_Controller {
                 found = true;
             }
         }
-        if(!found) restnr.addnode(node);               //this node must have not been added before, as we parse each node of each journey exactly once
+        if(!found) {
+            restnr.getNodes().add(node);
+            restnr = productService.addNewTNR(restnr);                   //at this point since restnr was created before, it is an update operation to update the node field
+        }
         //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
@@ -73,6 +77,9 @@ String url = "http://localhost:8080/show";             //for testing purpose
         header.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity(data,header);
         ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);       //fetches response entity from server. response is confirmation of the created webhook
+Optional<triggerType_node_relation> otnr = productService.searchTNR(user.getId(),"purchase");        //this must exist, because we must have created the webhook first before we use it
+triggerType_node_relation tnr = otnr.get();
+restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(tnr.toString()),String.class);
         return task;
     }
 
@@ -97,7 +104,7 @@ String url = "http://localhost:8080/show";             //for testing purpose
                 found = true;
             }
         }
-        if(!found) restnr.addnode(node);               //this node must have not been added before, as we parse each node of each journey exactly once
+        if(!found) restnr.getNodes().add(node);               //this node must have not been added before, as we parse each node of each journey exactly once
         //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
@@ -134,19 +141,22 @@ String url = "http://localhost:8080/show";             //for testing purpose
         audience.setEmail(email);audience.setFirstName(fi);audience.setLastName(li);
         audience.setSource("shopify");
         Long audienceid = 0L;
+        Audience exsitingaudience = productService.searchAudienceByEmail(email);
         //add new audience if not included in the audience table
-        if(!productService.searchAudienceByEmail(email).isPresent()){
-            audienceid = productService.addNewAudience(audience).getId();
+        if(exsitingaudience!=null){
+            audienceid = productService.searchAudienceByEmail(email).getId();
         }
-        else audienceid = audience.getId();
-        triggerType_node_relation tnr = productService.searchTNR(user.getId(),"purchase").get();        //this must exist, because we must have created the webhook first before we use it
+        else
+            audienceid = productService.addNewAudience(audience).getId();
+        Optional<triggerType_node_relation> otnr = productService.searchTNR(user.getId(),"purchase");        //this must exist, because we must have created the webhook first before we use it
+        triggerType_node_relation tnr = otnr.get();
+restTemplate.exchange("http://localhost:8080/show",HttpMethod.POST,new HttpEntity<String>(tnr.toString()),String.class);
         List<Node> nodes = tnr.getNodes();
-        //for each next node of the node in the TNR of this user's trigger, make a new task from it and include the incoming new audience
         for(Node n:nodes){
             for(Long nextid:n.getNexts()) {
                 Node nextnode = productService.searchNodeById(nextid);
 //                String url = "{server_domain_name}" + "/ReturnTask";
-String url = "https://localhost:8080/receivetask";         //for testing purpose
+String url = "http://localhost:8080/receivetask";         //for testing purpose
                 CoreModuleTask task = new CoreModuleTask();
                 task.setAudienceId(audienceid);
                 task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
@@ -175,11 +185,13 @@ String url = "https://localhost:8080/receivetask";         //for testing purpose
         audience.setEmail(email);audience.setFirstName(fi);audience.setLastName(li);
         audience.setSource("shopify");
         Long audienceid = 0L;
+        Audience exsitingaudience = productService.searchAudienceByEmail(email);
         //add new audience if not included in the audience table
-        if(!productService.searchAudienceByEmail(email).isPresent()){
-            audienceid = productService.addNewAudience(audience).getId();
+        if(exsitingaudience!=null){
+            audienceid = productService.searchAudienceByEmail(email).getId();
         }
-        else audienceid = audience.getId();
+        else
+            audienceid = productService.addNewAudience(audience).getId();
         triggerType_node_relation tnr = productService.searchTNR(user.getId(),"abandon_cart").get();        //this must exist, because we must have created the webhook first before we use it
         List<Node> nodes = tnr.getNodes();
         //for each next node of the node in the TNR of this user's trigger, make a new task from it and include the incoming new audience

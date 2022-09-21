@@ -13,6 +13,7 @@ import java.util.List;
 public class ActiveJourney {
     @Id
     @GeneratedValue
+
     private Long id;
     private Long journeyId;
 

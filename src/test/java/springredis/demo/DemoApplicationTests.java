@@ -3,6 +3,7 @@ package springredis.demo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import springredis.demo.Service.DAO;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveJourney;
 import springredis.demo.entity.activeEntity.ActiveNode;
@@ -18,7 +19,8 @@ public class DemoApplicationTests {
 
     @Autowired
     private ActiveNodeRepository activeNodeRepository;
-
+@Autowired
+    DAO dao;
 
     @Autowired
     private ActiveAudienceRepository activeAudienceRepository;
@@ -33,8 +35,8 @@ public class DemoApplicationTests {
         activeJourneyRepository.save(activeJourney);
         activeNodeRepository.save(activeNode);
         activeAudienceRepository.save(activeAudience);
-
-
+        dao.addNewActiveNode(activeNode);
+        System.out.println("hi");
     }
 
 

@@ -13,6 +13,6 @@ public interface AudienceRepository extends JpaRepository<Audience, Long> {
 Audience searchAudienceByid(long Id);
 
     @Query(value = "SELECT a from Audience a WHERE a.email=:Email")
-    Optional<Audience> searchAudienceByEmail(String Email);
+    Audience searchAudienceByEmail(String Email);
 
 }

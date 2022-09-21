@@ -1,16 +1,18 @@
 package springredis.demo.controller;
 
 import org.apache.coyote.Request;
+import org.json.HTTP;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
+import springredis.demo.entity.activeEntity.ActiveAudience;
+import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.repository.*;
+import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 
 import javax.print.attribute.standard.Media;
 import java.sql.Date;
@@ -29,13 +31,15 @@ public class TestController {
     private AudienceRepository audienceRepository;
     @Autowired
     private CampaignRepository campaignRepository;
+    @Autowired
+    private ActiveNodeRepository activeNodeRepository;
 
     @Autowired
     private DAO dao;
     @Autowired
     RestTemplate restTemplate;
 
-    private String str = new String();
+    private String str = new String(),str2=new String();
 
     private List<CoreModuleTask> tasks = new ArrayList<>();
 
@@ -48,13 +52,14 @@ public class TestController {
         Long userid = dao.addNewUser(user).getId();
         Long journeyid = dao.addNewJourney(new Journey()).getId();
         Long nodeid = dao.addNewNode(new Node()).getId();
-        //
         Node node2=new Node(),node3 = new Node();
         node2.setType("action"); node3.setType("if/else");
         Long node2id = dao.addNewNode(node2).getId(), node3id = dao.addNewNode(node3).getId();
         Node node1 = dao.searchNodeById(nodeid);
+        node1.setType("trigger");
         //create next nodes for node1; so when trigger happens, we can see whether task requests about node2 and node3 are posted
         node1.getNexts().add(node2id);node1.getNexts().add(node3id);
+        dao.addNewNode(node1);              //update node 1
         Audience audience = new Audience(); audience.setEmail("example@gmail.com");
         Long audienceid = dao.addNewAudience(audience).getId();
         CoreModuleTask newtask = new CoreModuleTask();
@@ -65,10 +70,30 @@ public class TestController {
         newtask.setAudienceId(audienceid);
         newtask.setJourneyId(journeyid);
         newtask.setNodeId(nodeid);
+//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(node1.toString()),String.class);
+//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(dao.searchNodeById(newtask.getNodeId()).toString()),String.class);
         String url = "http://localhost:8080/API_trigger";
         HttpEntity<CoreModuleTask> call = new HttpEntity<CoreModuleTask>(newtask);
         CoreModuleTask res = restTemplate.exchange(url, HttpMethod.POST,call,CoreModuleTask.class).getBody();
         return res;
+    }
+
+    @GetMapping(value="/smalltest")
+    public void test1(){
+        ActiveNode actn = new ActiveNode();
+        ActiveAudience acta = dao.addNewActiveAudience(new ActiveAudience());
+        actn.getActiveAudienceList().add(acta);
+        actn.setNodeId(111L);
+        actn = dao.addNewActiveNode(actn);
+//        restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
+        restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
+        restTemplate.exchange("http://localhost:8080/smalltest2/"+Long.toString(actn.getId()), HttpMethod.GET,new HttpEntity<>(new HttpHeaders()),String.class);
+    }
+
+    @GetMapping(value="/smalltest2/{id}")
+    public void test2(@PathVariable("id") Long ID){
+        ActiveNode actn = dao.searchActiveNodeById(ID);
+        restTemplate.exchange("http://localhost:8080/show2", HttpMethod.POST,new HttpEntity<>(activeNodeRepository.findByActiveNodeId(ID).toString()),String.class);
     }
 
     @RequestMapping(value="/show",method= RequestMethod.POST)
@@ -82,8 +107,19 @@ public class TestController {
         return this.str;
     }
 
+    @RequestMapping(value="/show2",method= RequestMethod.POST)
+    public void showjson2(@RequestBody String obj){
+        this.str2 = obj;
+    }
+
+    @GetMapping(value = "/show2",produces =MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String display2(){
+        return this.str2;
+    }
+
     @RequestMapping(value="/receivetask",method=RequestMethod.POST)
-    public void showtask(@RequestBody CoreModuleTask task){this.tasks.add(task);}
+    public String showtask(@RequestBody CoreModuleTask task){this.tasks.add(task);return "ok";}
 
     @GetMapping(value="/receivetask",produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CoreModuleTask> displaytask(){return this.tasks;}
