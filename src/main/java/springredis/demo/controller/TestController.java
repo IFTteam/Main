@@ -12,7 +12,10 @@ import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.repository.*;
+import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
+import org.springframework.http.HttpStatus;
+
 
 import javax.print.attribute.standard.Media;
 import java.sql.Date;
@@ -33,6 +36,8 @@ public class TestController {
     private CampaignRepository campaignRepository;
     @Autowired
     private ActiveNodeRepository activeNodeRepository;
+    @Autowired
+    private ActiveAudienceRepository activeAudienceRepository;
 
     @Autowired
     private DAO dao;
@@ -81,13 +86,20 @@ public class TestController {
     @GetMapping(value="/smalltest")
     public void test1(){
         ActiveNode actn = new ActiveNode();
-        ActiveAudience acta = dao.addNewActiveAudience(new ActiveAudience());
-        actn.getActiveAudienceList().add(acta);
         actn.setNodeId(111L);
-        actn = dao.addNewActiveNode(actn);
+        ActiveAudience acta = new ActiveAudience(2L,actn);
+        ActiveAudience acta2 =new ActiveAudience(3L,actn);
+        activeNodeRepository.save(actn);
+        activeAudienceRepository.save(acta);
+        activeAudienceRepository.save(acta2);
+//        ActiveNode actn = new ActiveNode();
+//        ActiveAudience acta = dao.addNewActiveAudience(new ActiveAudience());
+//        actn.getActiveAudienceList().add(acta);
+//        actn.setNodeId(111L);
+//        actn = dao.addNewActiveNode(actn);
 //        restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
-        restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
-        restTemplate.exchange("http://localhost:8080/smalltest2/"+Long.toString(actn.getId()), HttpMethod.GET,new HttpEntity<>(new HttpHeaders()),String.class);
+ //       restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
+ //       restTemplate.exchange("http://localhost:8080/smalltest2/"+Long.toString(actn.getId()), HttpMethod.GET,new HttpEntity<>(new HttpHeaders()),String.class);
     }
 
     @GetMapping(value="/smalltest2/{id}")
@@ -96,27 +108,42 @@ public class TestController {
         restTemplate.exchange("http://localhost:8080/show2", HttpMethod.POST,new HttpEntity<>(activeNodeRepository.findByActiveNodeId(ID).toString()),String.class);
     }
 
-    @RequestMapping(value="/show",method= RequestMethod.POST)
-    public void showjson(@RequestBody String obj){
-        this.str = obj;
+    @GetMapping("/allActiveNodes")
+    public ResponseEntity<List<ActiveNode>> getAllActiveNodes() {
+        try {
+            List<ActiveNode> nodes = new ArrayList<ActiveNode>();
+            activeNodeRepository.findAll().forEach(nodes::add);
+            if (nodes.isEmpty()) {
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(nodes, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println(e);
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @GetMapping(value = "/show",produces =MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public String display(){
-        return this.str;
-    }
-
-    @RequestMapping(value="/show2",method= RequestMethod.POST)
-    public void showjson2(@RequestBody String obj){
-        this.str2 = obj;
-    }
-
-    @GetMapping(value = "/show2",produces =MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public String display2(){
-        return this.str2;
-    }
+//    @RequestMapping(value="/show",method= RequestMethod.POST)
+//    public void showjson(@RequestBody String obj){
+//        this.str = obj;
+//    }
+//
+//    @GetMapping(value = "/show",produces =MediaType.APPLICATION_JSON_VALUE)
+//    @ResponseBody
+//    public String display(){
+//        return this.str;
+//    }
+//
+//    @RequestMapping(value="/show2",method= RequestMethod.POST)
+//    public void showjson2(@RequestBody String obj){
+//        this.str2 = obj;
+//    }
+//
+//    @GetMapping(value = "/show2",produces =MediaType.APPLICATION_JSON_VALUE)
+//    @ResponseBody
+//    public String display2(){
+//        return this.str2;
+//    }
 
     @RequestMapping(value="/receivetask",method=RequestMethod.POST)
     public String showtask(@RequestBody CoreModuleTask task){this.tasks.add(task);return "ok";}
