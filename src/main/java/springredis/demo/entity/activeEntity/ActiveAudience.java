@@ -19,7 +19,7 @@ public class ActiveAudience implements Serializable {
     private Long AudienceId;
 
     @ManyToOne
-    @JoinColumn(name="audience_node_id", nullable=false)
+    @JoinColumn(name="audience_node_id")
     @JsonIgnore
     private ActiveNode activeNode;
 

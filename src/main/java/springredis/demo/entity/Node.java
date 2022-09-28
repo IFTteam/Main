@@ -1,5 +1,6 @@
 package springredis.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.util.internal.StringUtil;
 import lombok.Data;
 import org.apache.tomcat.util.buf.StringUtils;
@@ -36,7 +37,8 @@ public class Node extends BaseEntity {
     private List<Long> lasts = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY,targetEntity = triggerType_node_relation.class)
-    @JoinColumn(name="TNR_id",referencedColumnName = "id")
+    @JoinColumn(name="TNR_Node_id",referencedColumnName = "id")
+    @JsonIgnore
     private triggerType_node_relation triggertype_node_relation;
 
     private String sNexts;

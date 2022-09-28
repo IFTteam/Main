@@ -10,6 +10,7 @@ import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,7 +47,6 @@ public class API_Trigger_Controller {
         Audience audience = productService.searchAudienceById(task.getAudienceId());
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
-//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(node.toString()),String.class);
         Journey journey = productService.searchJourneyById(task.getJourneyId());
         Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"purchase");
         if(!opstnr.isPresent()){
@@ -62,24 +62,19 @@ public class API_Trigger_Controller {
             }
         }
         if(!found) {
-            restnr.getNodes().add(node);
+            node.setTriggertype_node_relation(restnr);
             restnr = productService.addNewTNR(restnr);                   //at this point since restnr was created before, it is an update operation to update the node field
+            node = productService.addNewNode(node);
         }
-        //need to add
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
-//        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-String url = "http://localhost:8080/show";             //for testing purpose
+        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
         String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
-        // create headers
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity(data,header);
         ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);       //fetches response entity from server. response is confirmation of the created webhook
-Optional<triggerType_node_relation> otnr = productService.searchTNR(user.getId(),"purchase");        //this must exist, because we must have created the webhook first before we use it
-triggerType_node_relation tnr = otnr.get();
-restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(tnr.toString()),String.class);
         return task;
     }
 
@@ -127,10 +122,9 @@ restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEnti
     }
 
     //the url now is only user-specific
-    @RequestMapping(value="/shopify_purchase_update/{user}",method=RequestMethod.POST)
-    @ResponseStatus(code=HttpStatus.OK,reason="ok")
+    @RequestMapping(value="/shopify_purchase_update/{user}",method=RequestMethod.POST,produces=MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String shopify_purchasetrigger_hit(@PathVariable("user") String username, @RequestBody String jsonstr)
+    public List<CoreModuleTask> shopify_purchasetrigger_hit(@PathVariable("user") String username, @RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
         JSONObject order = new JSONObject(jsonstr);
@@ -148,15 +142,13 @@ restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEnti
         }
         else
             audienceid = productService.addNewAudience(audience).getId();
-        Optional<triggerType_node_relation> otnr = productService.searchTNR(user.getId(),"purchase");        //this must exist, because we must have created the webhook first before we use it
-        triggerType_node_relation tnr = otnr.get();
-restTemplate.exchange("http://localhost:8080/show",HttpMethod.POST,new HttpEntity<String>(tnr.toString()),String.class);
+        triggerType_node_relation tnr = productService.searchTNR(user.getId(),"purchase").get();
         List<Node> nodes = tnr.getNodes();
+        List<CoreModuleTask> tasks = new ArrayList<>();                 //returns all new tasks pushed onto the task queue
         for(Node n:nodes){
             for(Long nextid:n.getNexts()) {
                 Node nextnode = productService.searchNodeById(nextid);
-//                String url = "{server_domain_name}" + "/ReturnTask";
-String url = "http://localhost:8080/receivetask";         //for testing purpose
+                String url = "http://localhost:8080" + "/ReturnTask";   //replace with server domain name
                 CoreModuleTask task = new CoreModuleTask();
                 task.setAudienceId(audienceid);
                 task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
@@ -164,12 +156,14 @@ String url = "http://localhost:8080/receivetask";         //for testing purpose
                 task.setTaskType(1);                //a task that is creating a new audience
                 task.setName(nextnode.getName());
                 task.setType(nextnode.getType());
+                task.setSourceNodeId(n.getId());
+                if(nextnode.getNexts().size()!=0) task.setTargetNodeId(nextnode.getNexts().get(0));
                 HttpEntity<CoreModuleTask> request = new HttpEntity(task);
-                //create a task at the task controller's endpoint
-                ResponseEntity<String> res = this.restTemplate.exchange(url,HttpMethod.POST,request,String.class);
+                ResponseEntity<Long> res = this.restTemplate.exchange(url,HttpMethod.POST,request,Long.class);
+                tasks.add(task);
             }
         }
-        return jsonstr;
+        return tasks;
     }
 
     @RequestMapping(value="/shopify_abandon_checkout_update/{user}",method=RequestMethod.POST)

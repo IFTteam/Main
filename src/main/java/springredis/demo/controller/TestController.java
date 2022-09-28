@@ -59,6 +59,7 @@ public class TestController {
         Long nodeid = dao.addNewNode(new Node()).getId();
         Node node2=new Node(),node3 = new Node();
         node2.setType("action"); node3.setType("if/else");
+        node2.setName("someName1");node3.setName("someName2");
         Long node2id = dao.addNewNode(node2).getId(), node3id = dao.addNewNode(node3).getId();
         Node node1 = dao.searchNodeById(nodeid);
         node1.setType("trigger");
@@ -84,12 +85,15 @@ public class TestController {
     }
 
     @GetMapping(value="/smalltest")
-    public void test1(){
-        ActiveNode actn = new ActiveNode();
+    @ResponseBody
+    public List<ActiveNode> test1(){
+        ActiveNode actn = new ActiveNode();activeNodeRepository.save(actn).getId();
         actn.setNodeId(111L);
-        ActiveAudience acta = new ActiveAudience(2L,actn);
-        ActiveAudience acta2 =new ActiveAudience(3L,actn);
-        activeNodeRepository.save(actn);
+        ActiveAudience acta = new ActiveAudience(2L);
+        ActiveAudience acta2 =new ActiveAudience(3L);
+        acta.setActiveNode(actn);
+        acta2.setActiveNode(actn);
+        Long nid = activeNodeRepository.save(actn).getId();
         activeAudienceRepository.save(acta);
         activeAudienceRepository.save(acta2);
 //        ActiveNode actn = new ActiveNode();
@@ -98,8 +102,11 @@ public class TestController {
 //        actn.setNodeId(111L);
 //        actn = dao.addNewActiveNode(actn);
 //        restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
- //       restTemplate.exchange("http://localhost:8080/show", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
- //       restTemplate.exchange("http://localhost:8080/smalltest2/"+Long.toString(actn.getId()), HttpMethod.GET,new HttpEntity<>(new HttpHeaders()),String.class);
+//        restTemplate.exchange("http://localhost:8080/show2", HttpMethod.POST,new HttpEntity<>(dao.searchActiveNodeById(actn.getId())),String.class);
+//        restTemplate.exchange("http://localhost:8080/smalltest2/"+Long.toString(actn.getId()), HttpMethod.GET,new HttpEntity<>(new HttpHeaders()),String.class);
+        System.out.println(nid);
+        List<ActiveNode> res = restTemplate.exchange("http://localhost:8080/allActiveNodes/"+Long.toString(nid), HttpMethod.GET,new HttpEntity<>(new HttpHeaders()),List.class).getBody();
+        return res;
     }
 
     @GetMapping(value="/smalltest2/{id}")
@@ -108,11 +115,11 @@ public class TestController {
         restTemplate.exchange("http://localhost:8080/show2", HttpMethod.POST,new HttpEntity<>(activeNodeRepository.findByActiveNodeId(ID).toString()),String.class);
     }
 
-    @GetMapping("/allActiveNodes")
-    public ResponseEntity<List<ActiveNode>> getAllActiveNodes() {
+    @GetMapping("/allActiveNodes/{id}")
+    public ResponseEntity<List<ActiveNode>> getAllActiveNodes(@PathVariable("id") Long ID) {
         try {
             List<ActiveNode> nodes = new ArrayList<ActiveNode>();
-            activeNodeRepository.findAll().forEach(nodes::add);
+            nodes.add(activeNodeRepository.findByActiveNodeId(ID));
             if (nodes.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
@@ -123,33 +130,33 @@ public class TestController {
         }
     }
 
-//    @RequestMapping(value="/show",method= RequestMethod.POST)
-//    public void showjson(@RequestBody String obj){
-//        this.str = obj;
-//    }
-//
-//    @GetMapping(value = "/show",produces =MediaType.APPLICATION_JSON_VALUE)
-//    @ResponseBody
-//    public String display(){
-//        return this.str;
-//    }
-//
-//    @RequestMapping(value="/show2",method= RequestMethod.POST)
-//    public void showjson2(@RequestBody String obj){
-//        this.str2 = obj;
-//    }
-//
-//    @GetMapping(value = "/show2",produces =MediaType.APPLICATION_JSON_VALUE)
-//    @ResponseBody
-//    public String display2(){
-//        return this.str2;
-//    }
+    @RequestMapping(value="/show",method= RequestMethod.POST)
+    public void showjson(@RequestBody String obj){
+        this.str = obj;
+    }
 
-    @RequestMapping(value="/receivetask",method=RequestMethod.POST)
-    public String showtask(@RequestBody CoreModuleTask task){this.tasks.add(task);return "ok";}
+    @GetMapping(value = "/show",produces =MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String display(){
+        return this.str;
+    }
 
-    @GetMapping(value="/receivetask",produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<CoreModuleTask> displaytask(){return this.tasks;}
+    @RequestMapping(value="/show2",method= RequestMethod.POST)
+    public void showjson2(@RequestBody String obj){
+        this.str2 = obj;
+    }
+
+    @GetMapping(value = "/show2",produces =MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String display2(){
+        return this.str2;
+    }
+
+    @PostMapping("/receivetask")
+    @ResponseBody
+    public CoreModuleTask receiveTasks(@RequestBody CoreModuleTask task) {
+        return task;
+    }
 
 
 
