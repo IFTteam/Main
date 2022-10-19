@@ -9,13 +9,13 @@ import javax.persistence.*;
 @Entity
 public class CoreModuleTask extends BaseTaskEntity {
     // Return this Entity when call core module
-    // core module also posts this task when calling other api
+    //  also posts this task when calling other api
     @Id
     @GeneratedValue
     private Long id;
-    //0 for move audience, 1 for create audience
-    private int taskType;
+    private int taskType;       //0 for move audience, 1 for create audience
     private String createModule;
     private String type;        //this is the general type of tasks
     private String name;        //this is the specific description of this task of this type; each api has its own coding
+    private int makenext=1;     //If set to 1, means the task (when returned to core module) need to make the next task based on next nodes; if 0 then core module will not make a new task when this task is returned
 }

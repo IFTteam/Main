@@ -53,7 +53,6 @@ public class TestController {
     public CoreModuleTask simulated_core_module_call(){
         //现在数据库中save一个mock user，一个mock journey，一个mock node和一个mock audience
         User user = new User(); user.setShopifydevstore("example.devstore");user.setShopifyApiKey("example.key");
-//        System.out.println(user.getShopifyApiKey());
         Long userid = dao.addNewUser(user).getId();
         Long journeyid = dao.addNewJourney(new Journey()).getId();
         Long nodeid = dao.addNewNode(new Node()).getId();
@@ -76,8 +75,6 @@ public class TestController {
         newtask.setAudienceId(audienceid);
         newtask.setJourneyId(journeyid);
         newtask.setNodeId(nodeid);
-//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(node1.toString()),String.class);
-//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(dao.searchNodeById(newtask.getNodeId()).toString()),String.class);
         String url = "http://localhost:8080/API_trigger";
         HttpEntity<CoreModuleTask> call = new HttpEntity<CoreModuleTask>(newtask);
         CoreModuleTask res = restTemplate.exchange(url, HttpMethod.POST,call,CoreModuleTask.class).getBody();

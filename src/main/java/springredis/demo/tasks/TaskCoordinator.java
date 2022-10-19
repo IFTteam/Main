@@ -19,7 +19,6 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class TaskCoordinator implements DisposableBean {
 
-
     private volatile boolean someCondition = true;
 
     private final String taskQueueKey = "CoretaskQueue";
@@ -36,8 +35,6 @@ public class TaskCoordinator implements DisposableBean {
         SimulateHeapKeeper simulateHeapKeeper = new SimulateHeapKeeper(redisTemplate);
         OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate);
         SimulateNewEvent simulateNewEvent = new SimulateNewEvent(timeDelayRepository, redisTemplate);
-
-
         new Thread(simulateNewEvent).start();
         new Thread(simulateHeapKeeper).start();
         new Thread(outAPICaller).start();

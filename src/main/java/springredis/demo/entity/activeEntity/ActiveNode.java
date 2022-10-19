@@ -32,5 +32,4 @@ public class ActiveNode implements Serializable {
         this.activeJourney = activeJourney;
     }
 
-
 }

@@ -3,6 +3,7 @@ package springredis.demo.tasks;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
+import springredis.demo.entity.Audience;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Node;
 import springredis.demo.entity.activeEntity.ActiveAudience;
@@ -16,8 +17,12 @@ import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import javax.swing.text.html.HTML;
 import java.util.*;
 
+//takes a Core module task as parameter
+
 public class TaskExecutor implements Runnable {
     private CoreModuleTask coreModuleTask;
+
+    private String url;
 
     private ActiveAudienceRepository activeAudienceRepository;
 
@@ -27,14 +32,16 @@ public class TaskExecutor implements Runnable {
 
     private NodeRepository nodeRepository;
     private RestTemplate restTemplate = new RestTemplate();
-    private HashMap<String,String> urlDict = new HashMap<String,String>(){
+    //Chanage the below to actual API endpoints of functional urls
+    private HashMap<String, String> urlDict = new HashMap<String, String>() {
         {
-            put("TimeDelay","http://localhost:3000");
-            put("APITrigger","http://localhost:3001");
-            put("End","http://localhost:3002");
-            put("TimeTrigger","http://localhost:3003");
-            put("SendEmail","http://localhost:3004");
-
+            put("TimeDelay", "http://localhost:8080/TimeDelay");
+            put("APITrigger", "http://localhost:8080/APITrigger");
+            put("End", "http://localhost:8080/End");
+            put("TimeTrigger", "http://localhost:8080/TimeTrigger");
+            put("SendEmail", "http://localhost:8080/SendEmail");
+            put("If/else", "http://localhost:8080/If_Else");
+            put("tag", "http://localhost:8080/Tag");
         }
 
     };
@@ -53,105 +60,46 @@ public class TaskExecutor implements Runnable {
 
     @Override
     public void run() {
-        //move or create audience on audience buffer
-        if (coreModuleTask.getTaskType()==0){
-            if (findAudience(coreModuleTask.getActiveAudienceId())){//User found and move from one buffer to another
-                moveUser(coreModuleTask);
-            }
-            else{//No user found, return to thread pool
-                return;
-            }
-
-        }else{//Directly create user in the next buffer
-            coreModuleTask.setAudienceId(createUser(coreModuleTask));
-
+        //first, if this coremoduletask's type is "end", we dont do anythong and simply returns
+        if (coreModuleTask.getType().equals("End")) return;
+        //else, we can first call the respective functional API's based on task type:
+        CoreModuleTask restask = restTemplate.exchange(urlDict.get(coreModuleTask.getType()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
+        //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
+        if (restask.getMakenext() == 0) return;
+        //else: first move audience from curnode to next node, or create new active audience in nextnode
+        Long activeid;
+        //change local host to server domain!!
+        //moving active audience pool from current node to next node (via method in task controller)
+        if (restask.getTaskType() == 0) {
+            activeid = restTemplate.exchange("https://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
+        } else {
+            activeid = restTemplate.exchange("https://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
         }
-
-        //call API
-        Optional<Node> nextNode = nodeRepository.findById(coreModuleTask.getTargetNodeId());
-        if (nextNode.isPresent() && !Objects.equals( nextNode.get().getName(),"End")){
-            callModule(nextNode.get());
-        }else{
-            System.out.println("target node not found");
-        }
-
-
-
-
-
-    }
-
-    public void callModule(Node node) {
-        String nodeType = node.getType();
-        String nodeName = node.getName();
-        BaseTaskEntity baseTaskEntity = coreModuleTask;
-//        baseTaskEntity.setJourneyId(coreModuleTask.getJourneyId());
-//        baseTaskEntity.setNodeId(coreModuleTask.getNodeId());
-//        baseTaskEntity.setUserId(coreModuleTask.getUserId());
-        // switch the previous target node to new source node
-        baseTaskEntity.setSourceNodeId(coreModuleTask.getTargetNodeId());
-        // get new target node
-        if ((node.getNexts()).size()>0){
-            baseTaskEntity.setTargetNodeId(activeNodeRepository.findByDBNodeId((node.getNexts()).get(0)).getId());
-        }
-        //Call module accordingly
-        CoreModuleTask curtask = restTemplate.postForObject(urlDict.get(nodeType), baseTaskEntity, CoreModuleTask.class);
-        Long activeaudienceid;
-        //first, identify whether the task specifies to move or create an audience in the active respostiory
-        if(curtask.getTaskType()==0){activeaudienceid=moveUser(curtask);}
-        else activeaudienceid=createUser(curtask);
-        //then, query for the next node of the current task's node; make sure. Finally, call task controller to add new task to queue
-        Node curnode = nodeRepository.searchNodeByid(curtask.getNodeId());
-        //push a new task for each active audience in the next node's activeaudience pool; note that each activeaudience must be already saved in main DB (have corresponding audienceid)
-        for(long id:curnode.getNexts()){
+        Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
+        //finally, make and push new tasks based on next node
+        for (int i = 0; i < curnode.getNexts().size(); i++) {
+            Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
+            CoreModuleTask newtask = new CoreModuleTask();
+            newtask.setTaskType(0);                 //all tasks are move-user except for trigger hit, which is not taken care of here
+            newtask.setType(nextnode.getType());
+            newtask.setName(nextnode.getName());
+            newtask.setSourceNodeId(nextnode.getId());
+            newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
+            //now we identify the current activeNode
             ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
-            List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();
-            for(ActiveAudience activeAudience:activeAudienceList){
-                CoreModuleTask newtask = new CoreModuleTask();
-                newtask.setTaskType(0);                 //all tasks are move-user except for trigger hit, which is not taken care of here
-                newtask.setType(nextnode.getType());
-                newtask.setName(nextnode.getName());
-                newtask.setSourceNodeId(nextnode.getId());
-                newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());
-                newtask.setActiveAudienceId(activeaudienceid);
-                newtask.setNodeId(nextnode.getId()); newtask.setUserId(curtask.getUserId()); newtask.setJourneyId(curtask.getJourneyId());
-                newtask.setAudienceId(activeAudience.getAudienceId());
-                //replace domain name with server domain
-                String url = "https://localhost:8080/ReturnTask";
-                HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
-                Long taskid = restTemplate.exchange(url, HttpMethod.POST,httpEntity,Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
+            List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
+            List<Long> activeIDs = new ArrayList<>();
+            List<Long> IDs = new ArrayList<>();
+            for (ActiveAudience aud : activeAudienceList) {
+                activeIDs.add(aud.getId());
+                IDs.add(aud.getAudienceId());
             }
+            newtask.setActiveAudienceId1(activeIDs);
+            newtask.setAudienceId1(IDs);
+            String url = "https://localhost:8080/ReturnTask";
+            HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
+            Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
         }
-
-    }
-
-    private Long createUser(CoreModuleTask coreModuleTask) {
-        ActiveAudience activeAudience = new ActiveAudience(coreModuleTask.getAudienceId());
-        Optional<ActiveNode> activeNode = activeNodeRepository.findById(coreModuleTask.getTargetNodeId());
-        if (activeNode.isPresent()){
-            activeAudience.setActiveNode(activeNode.get());
-            activeAudience = activeAudienceRepository.save(activeAudience);
-            return activeAudience.getId();
-
-        }
-        System.out.println("Create ActiveAudience Error");
-        return -1L;
-
-    }
-
-    private Long moveUser(CoreModuleTask coreModuleTask) {
-        Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId());
-        if (activeAudience.isPresent()){
-            ActiveAudience activeAudience1 = activeAudience.get();
-            activeAudience1.setActiveNode(activeNodeRepository.findById(coreModuleTask.getTargetNodeId()).get());
-            return activeAudienceRepository.save(activeAudience1).getId();
-        }
-        return -1L;
-    }
-
-    private Boolean findAudience(Long id) {
-        Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(id);
-        return activeAudience.isPresent();
     }
 }
