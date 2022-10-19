@@ -15,11 +15,14 @@ import springredis.demo.repository.*;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import org.springframework.http.HttpStatus;
+import springredis.demo.serializer.SeDeFunction;
 
 
 import javax.print.attribute.standard.Media;
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -200,6 +203,34 @@ public class TestController {
 //        User user = new User(domain,avatarUrl,domain,companyId,unsubscribeLink,subscriptionType,null,lastModifiedBy,null,contactName,contactEmail,contactPhone,address,api_id,preferEmailSvcProvider,onlySendDeliverableEmail,unsubscribeType,salesforceApiKey,hubspotApiKey,shopifyApiKey,facebookAdsApiKey);
 //        return userRepository.save(user);
 //    }
+    @GetMapping("/test/serializeNode")
+    public String serializeNode() {
+        SeDeFunction sede = new SeDeFunction();
+        Node node1 = nodeRepository.searchNodeByid(7);
+        Node node2 = nodeRepository.searchNodeByid(8);
+
+        node1.setCreatedAt(LocalDateTime.now());
+        node2.setCreatedAt(LocalDateTime.now());
+        ArrayList<Node> node_list = new ArrayList<>(Arrays.asList(node1, node2));
+
+        String nodeListString = sede.serializing(node_list);
+        return nodeListString;
+    }
+    @GetMapping("/test/deserializeNode")
+    public List<Node> deserializeNode() {
+        SeDeFunction sede = new SeDeFunction();
+        Node node1 = nodeRepository.searchNodeByid(7);
+        Node node2 = nodeRepository.searchNodeByid(8);
+
+        node1.setCreatedAt(LocalDateTime.now());
+        node2.setCreatedAt(LocalDateTime.now());
+
+        ArrayList<Node> node_list = new ArrayList<>(Arrays.asList(node1, node2));
+        String nodeListString = sede.serializing(node_list);
+        List<Node> nodeListArray = sede.deserializing(nodeListString);
+        return nodeListArray;
+    }
+
 
     @PostMapping("/test/addUser")
     public User addUser(User user){
