@@ -35,9 +35,6 @@ public class API_Trigger_Controller {
         else if (task.getName().equals("shopify_abandon_checkout_trigger")){
             return create_abandon_checkout_webhook(task);
         }
-        else if (task.getName().equals("finished")){
-            return finshed(task);
-        }
         return nulltask;
     }
 
@@ -207,13 +204,6 @@ String url = "http://localhost:8080/show"; //for testing
             }
         }
         return tasks;
-    }
-
-    @RequestMapping(value="/shopify_abandon_checkout_update/{user}",method=RequestMethod.POST)
-    @ResponseBody
-    public CoreModuleTask finshed(@RequestBody CoreModuleTask cmt){
-        cmt.setTaskType(1);
-        return cmt;
     }
 
 }

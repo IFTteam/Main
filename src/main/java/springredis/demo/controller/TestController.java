@@ -52,8 +52,9 @@ public class TestController {
     private List<CoreModuleTask> tasks = new ArrayList<>();
 
 
-    @GetMapping("/simulated_call")
-    public CoreModuleTask simulated_core_module_call(){
+    @GetMapping("/active_audience_transfer_test")
+    @ResponseBody
+    public List<CoreModuleTask> simulated_core_module_call(){
         //create a node and a corresponding active node, as well as two nodes that are its nexts. Create four audience entities, two of which has their corresponding active audience already mapped to this node, and the other two are unregistered in active DB. (simulating webhook trigger hit)
         //then, make two CMTs with node being this node (and its corresponding active node). First fill the two audiencelists with two new active audiences, then call the "createUser" api in task controller. This should create the two new active audiences1 in the active audience pool of the respective two next nodes
         //second CMT will fill the two audiencelists with the two existing active audiences(respectively), then call "moveUser" in task controller. This will result in these two audience's mapped-to active node become this node's next two nodes, respectively.
@@ -66,11 +67,31 @@ public class TestController {
         act1 = dao.addNewActiveNode(act1);act2 = dao.addNewActiveNode(act2); act3 = dao.addNewActiveNode(act3);
         Long aud1id=dao.addNewAudience(new Audience()).getId(),aud2id=dao.addNewAudience(new Audience()).getId(),aud3id=dao.addNewAudience(new Audience()).getId(),aud4id=dao.addNewAudience(new Audience()).getId();
         ActiveAudience actaud1 = new ActiveAudience(), actaud2 = new ActiveAudience();
-        actaud1.setAudienceId(aud1id);actaud2.setAudienceId(aud2id);
-        actaud1.setActiveNode(act1); actaud2.setActiveNode(act2);;
+        actaud1.setAudienceId(aud1id);actaud2.setAudienceId(aud2id);                //only first two audience are registered!
+        actaud1.setActiveNode(act1); actaud2.setActiveNode(act1);;
         actaud1 = dao.addNewActiveAudience(actaud1);actaud2 = dao.addNewActiveAudience(actaud2);
+        //configure cmt1
         CoreModuleTask cmt1 = new CoreModuleTask(), cmt2 = new CoreModuleTask();
-        cmt1.setAudienceId1();
+        List<Long> audlist = new ArrayList<>(); audlist.add(aud1id);cmt1.setAudienceId1(audlist);
+        audlist.clear(); audlist.add(aud2id);cmt1.setAudienceId2(audlist);cmt1.setNodeId(nid1);
+        //configure cmt2
+        audlist.clear(); audlist.add(aud3id);cmt2.setAudienceId1(audlist);
+        audlist.clear(); audlist.add(aud4id);cmt2.setAudienceId2(audlist);cmt2.setNodeId(nid1);
+        String url1 = "http://localhost:8080/move_user";
+//        restTemplate.exchange(url1,HttpMethod.POST,new HttpEntity<>(cmt1),Long.class).getBody();
+        url1 = "http://localhost:8080/create_user";
+        restTemplate.exchange(url1,HttpMethod.POST,new HttpEntity<>(cmt2),Long.class);
+        List<CoreModuleTask> res = new ArrayList<>();
+        res.add(cmt1);res.add(cmt2);
+        return res;
+    }
+
+    @GetMapping(value="/removeall")
+    public void removall(){
+        List<Node> ls1 = nodeRepository.findAll(); for(Node n:ls1){nodeRepository.delete(n);}
+        List<ActiveNode> ls2 = activeNodeRepository.findAll(); for(ActiveNode n:ls2){activeNodeRepository.delete(n);}
+        List<Audience> ls3 = audienceRepository.findAll(); for(Audience n:ls3){audienceRepository.delete(n);}
+        List<ActiveAudience> ls4 = activeAudienceRepository.findAll(); for(ActiveAudience n:ls4){activeAudienceRepository.delete(n);}
     }
 
     @GetMapping(value="/smalltest")

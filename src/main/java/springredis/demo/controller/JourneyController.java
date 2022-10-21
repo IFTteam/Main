@@ -110,7 +110,7 @@ public class JourneyController {
             //Dummy Task
             coreModuleTask.setTargetNodeId(activeNodeRepository.findByDBNodeId(heads.get(i).getId()).getId());//Target node ->source
             TaskExecutor taskExecutor = new TaskExecutor(coreModuleTask);
-            taskExecutor.callModule(heads.get(i));
+//            taskExecutor.callModule(heads.get(i));
         }
         return journey;
     }
