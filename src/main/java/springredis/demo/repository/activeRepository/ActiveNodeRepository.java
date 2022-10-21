@@ -7,8 +7,8 @@ import springredis.demo.entity.Audience;
 import springredis.demo.entity.activeEntity.ActiveNode;
 
 public interface ActiveNodeRepository extends JpaRepository<ActiveNode, Long> {
-    @Query(value = "select * from active_node t where t.node_id = node_id",nativeQuery = true)
-    ActiveNode findByDBNodeId(@Param("node_id") Long NodeId);
+    @Query(value = "select t from ActiveNode t where t.nodeId = :node_id")
+    ActiveNode findByDBNodeId(Long node_id);
 
     @Query(value="select t from ActiveNode t where t.id=:Id")
     ActiveNode findByActiveNodeId(Long Id);

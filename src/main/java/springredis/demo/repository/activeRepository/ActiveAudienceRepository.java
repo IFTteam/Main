@@ -12,8 +12,8 @@ import static org.hibernate.loader.Loader.SELECT;
 
 public interface ActiveAudienceRepository extends JpaRepository<ActiveAudience, Long> {
 
-    @Query(value = "select * from active_audience t where t.audience_id = audience_id",nativeQuery = true)
-    ActiveAudience findByDBId(@Param("audience_id") Long audienceId);
-    @Query(value="SELECT a FROM ActiveAudience a WHERE a.AudienceId=:audienceID")
-    Optional<ActiveAudience> searchActiveAudienceByAudienceId(long audienceID);
+    @Query(value = "select t from ActiveAudience t where t.AudienceId = :audienceId")
+    ActiveAudience findByDBId(Long audienceId);
+//    @Query(value="SELECT a FROM ActiveAudience a WHERE a.AudienceId=:audienceID")
+//    Optional<ActiveAudience> searchActiveAudienceByAudienceId(long audienceID);
 }

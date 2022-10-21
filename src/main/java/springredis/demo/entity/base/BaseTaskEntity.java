@@ -32,4 +32,5 @@ public class BaseTaskEntity extends BaseEntity{
         this.journeyId = baseTaskEntity.getJourneyId();
         this.userId = baseTaskEntity.getUserId();
     }
+
 }

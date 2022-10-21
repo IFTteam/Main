@@ -45,7 +45,6 @@ public class TaskController {
                 if (activeNode != null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
-                    return activeAudience.getId();
                 }
             }
         }
@@ -56,12 +55,11 @@ public class TaskController {
                 if (activeNode!=null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
-                    return activeAudience.getId();
                 }
             }
         }
-        System.out.println("Create ActiveAudience Error");
-        return -1L;
+        System.out.println("success");
+        return 1L;
     }
 
     @PostMapping("/move_user")
@@ -73,23 +71,21 @@ public class TaskController {
                 if (activeNode != null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
-                    return activeAudience.getId();
                 }
             }
         }
         if (coreModuleTask.getAudienceId2().size() != 0) {                  //this means we have audience to create in the second connected node of the source node
-            for (Long AudId : coreModuleTask.getAudienceId1()) {
+            for (Long AudId : coreModuleTask.getAudienceId2()) {
                 ActiveAudience activeAudience = activeAudienceRepository.findByDBId(AudId);
                 ActiveNode activeNode = activeNodeRepository.findByDBNodeId(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(1)).getId());
                 if (activeNode!=null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
-                    return activeAudience.getId();
                 }
             }
         }
-        System.out.println("Create ActiveAudience Error");
-        return -1L;
+        System.out.println("success");
+        return 1L;
     }
 
 }
