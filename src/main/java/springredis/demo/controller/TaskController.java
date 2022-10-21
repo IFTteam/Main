@@ -41,9 +41,9 @@ public class TaskController {
         if (coreModuleTask.getAudienceId1().size() != 0) {                  //this means we have audience to create in the first connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId1()) {
                 ActiveAudience activeAudience = new ActiveAudience(Audid);
-                Optional<ActiveNode> activeNode = activeNodeRepository.findById(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(0)).getId());
-                if (activeNode.isPresent()) {
-                    activeAudience.setActiveNode(activeNode.get());
+                ActiveNode activeNode = activeNodeRepository.findByDBNodeId(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(0)).getId());
+                if (activeNode != null) {
+                    activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
                     return activeAudience.getId();
                 }
@@ -52,9 +52,9 @@ public class TaskController {
         if (coreModuleTask.getAudienceId2().size() != 0) {                  //this means we have audience to create in the second connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId2()) {
                 ActiveAudience activeAudience = new ActiveAudience(Audid);
-                Optional<ActiveNode> activeNode = activeNodeRepository.findById(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(1)).getId());
-                if (activeNode.isPresent()) {
-                    activeAudience.setActiveNode(activeNode.get());
+                ActiveNode activeNode = activeNodeRepository.findByDBNodeId(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(1)).getId());
+                if (activeNode!=null) {
+                    activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
                     return activeAudience.getId();
                 }
@@ -69,9 +69,9 @@ public class TaskController {
         if (coreModuleTask.getAudienceId1().size() != 0) {                  //this means we have audience to create in the first connected node of the source node
             for (Long AudId : coreModuleTask.getAudienceId1()) {
                 ActiveAudience activeAudience = activeAudienceRepository.findByDBId(AudId);
-                Optional<ActiveNode> activeNode = activeNodeRepository.findById(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(0)).getId());
-                if (activeNode.isPresent()) {
-                    activeAudience.setActiveNode(activeNode.get());
+                ActiveNode activeNode = activeNodeRepository.findByDBNodeId(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(0)).getId());
+                if (activeNode != null) {
+                    activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
                     return activeAudience.getId();
                 }
@@ -80,9 +80,9 @@ public class TaskController {
         if (coreModuleTask.getAudienceId2().size() != 0) {                  //this means we have audience to create in the second connected node of the source node
             for (Long AudId : coreModuleTask.getAudienceId1()) {
                 ActiveAudience activeAudience = activeAudienceRepository.findByDBId(AudId);
-                Optional<ActiveNode> activeNode = activeNodeRepository.findById(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(1)).getId());
-                if (activeNode.isPresent()) {
-                    activeAudience.setActiveNode(activeNode.get());
+                ActiveNode activeNode = activeNodeRepository.findByDBNodeId(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(1)).getId());
+                if (activeNode!=null) {
+                    activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
                     return activeAudience.getId();
                 }

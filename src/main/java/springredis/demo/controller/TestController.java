@@ -54,41 +54,29 @@ public class TestController {
 
     @GetMapping("/simulated_call")
     public CoreModuleTask simulated_core_module_call(){
-        //现在数据库中save一个mock user，一个mock journey，一个mock node和一个mock audience
-        User user = new User(); user.setShopifydevstore("example.devstore");user.setShopifyApiKey("example.key");
-        Long userid = dao.addNewUser(user).getId();
-        Long journeyid = dao.addNewJourney(new Journey()).getId();
-        Long nodeid = dao.addNewNode(new Node()).getId();
-        Node node2=new Node(),node3 = new Node();
-        node2.setType("action"); node3.setType("if/else");
-        node2.setName("someName1");node3.setName("someName2");
-        Long node2id = dao.addNewNode(node2).getId(), node3id = dao.addNewNode(node3).getId();
-        Node node1 = dao.searchNodeById(nodeid);
-        node1.setType("trigger");
-        //create next nodes for node1; so when trigger happens, we can see whether task requests about node2 and node3 are posted
-        node1.getNexts().add(node2id);node1.getNexts().add(node3id);
-        dao.addNewNode(node1);              //update node 1
-        Audience audience = new Audience(); audience.setEmail("example@gmail.com");
-        Long audienceid = dao.addNewAudience(audience).getId();
-        CoreModuleTask newtask = new CoreModuleTask();
-        newtask.setType("API Trigger");
-        newtask.setName("shopify_create_trigger");
-        //其他coremoduletask的参数没有设置，因为在trigger api中不需要。这里单独测试trigger api的功能。
-        newtask.setUserId(userid);
-        newtask.setAudienceId(audienceid);
-        newtask.setJourneyId(journeyid);
-        newtask.setNodeId(nodeid);
-        String url = "http://localhost:8080/API_trigger";
-        HttpEntity<CoreModuleTask> call = new HttpEntity<CoreModuleTask>(newtask);
-        CoreModuleTask res = restTemplate.exchange(url, HttpMethod.POST,call,CoreModuleTask.class).getBody();
-        return res;
+        //create a node and a corresponding active node, as well as two nodes that are its nexts. Create four audience entities, two of which has their corresponding active audience already mapped to this node, and the other two are unregistered in active DB. (simulating webhook trigger hit)
+        //then, make two CMTs with node being this node (and its corresponding active node). First fill the two audiencelists with two new active audiences, then call the "createUser" api in task controller. This should create the two new active audiences1 in the active audience pool of the respective two next nodes
+        //second CMT will fill the two audiencelists with the two existing active audiences(respectively), then call "moveUser" in task controller. This will result in these two audience's mapped-to active node become this node's next two nodes, respectively.
+        Node node1=new Node(),node2=new Node(),node3=new Node();
+        List<Long> tmp = new ArrayList<>(); tmp.add(node2.getId()); tmp.add(node3.getId());
+        node1.setNexts(tmp);
+        Long nid1 = dao.addNewNode(node1).getId(), nid2 = dao.addNewNode(node2).getId(), nid3= dao.addNewNode(node3).getId();
+        ActiveNode act1= new ActiveNode(),act2=new ActiveNode(),act3 = new ActiveNode();
+        act1.setNodeId(nid1);  act2.setNodeId(nid2); act3.setNodeId(nid3);
+        act1 = dao.addNewActiveNode(act1);act2 = dao.addNewActiveNode(act2); act3 = dao.addNewActiveNode(act3);
+        Long aud1id=dao.addNewAudience(new Audience()).getId(),aud2id=dao.addNewAudience(new Audience()).getId(),aud3id=dao.addNewAudience(new Audience()).getId(),aud4id=dao.addNewAudience(new Audience()).getId();
+        ActiveAudience actaud1 = new ActiveAudience(), actaud2 = new ActiveAudience();
+        actaud1.setAudienceId(aud1id);actaud2.setAudienceId(aud2id);
+        actaud1.setActiveNode(act1); actaud2.setActiveNode(act2);;
+        actaud1 = dao.addNewActiveAudience(actaud1);actaud2 = dao.addNewActiveAudience(actaud2);
+        CoreModuleTask cmt1 = new CoreModuleTask(), cmt2 = new CoreModuleTask();
+        cmt1.setAudienceId1();
     }
 
     @GetMapping(value="/smalltest")
     @ResponseBody
     public List<ActiveNode> test1(){
-        ActiveNode actn = new ActiveNode();activeNodeRepository.save(actn).getId();
-        actn.setNodeId(111L);
+        ActiveNode actn = new ActiveNode();activeNodeRepository.save(actn).getId(); actn.setNodeId(111L);
         ActiveAudience acta = new ActiveAudience(2L);
         ActiveAudience acta2 =new ActiveAudience(3L);
         acta.setActiveNode(actn);

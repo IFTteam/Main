@@ -57,7 +57,6 @@ public class TaskCoordinator implements DisposableBean,Runnable {
                 CoreModuleTask coreModuleTask = (CoreModuleTask) m_redisTemplate.opsForList().rightPop(taskQueueKey);
                 TaskExecutor taskExecutor = new TaskExecutor(coreModuleTask);
                 executorService.execute(taskExecutor);                //this is equivalent to using taskExecutor.run()
-
             }
             try {
                 Thread.sleep(1000);
