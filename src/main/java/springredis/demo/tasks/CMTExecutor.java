@@ -1,29 +1,26 @@
 package springredis.demo.tasks;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import springredis.demo.entity.Audience;
+import springredis.demo.Service.DAO;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Node;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
-import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 
-import javax.swing.text.html.HTML;
 import java.util.*;
 
 //takes a Core module task as parameter
 
-public class TaskExecutor implements Runnable {
-    private CoreModuleTask coreModuleTask;
-
-    private String url;
-
+@Component
+public class CMTExecutor{
     private ActiveAudienceRepository activeAudienceRepository;
 
     private ActiveNodeRepository activeNodeRepository;
@@ -31,12 +28,13 @@ public class TaskExecutor implements Runnable {
     private ActiveJourneyRepository activeJourneyRepository;
 
     private NodeRepository nodeRepository;
-    private RestTemplate restTemplate = new RestTemplate();
+
+    RestTemplate restTemplate;
     //Chanage the below to actual API endpoints of functional urls
     private HashMap<String, String> urlDict = new HashMap<String, String>() {
         {
             put("TimeDelay", "http://localhost:8080/TimeDelay");
-            put("APITrigger", "http://localhost:8080/APITrigger");
+            put("APITrigger", "http://localhost:8080/API_trigger");
             put("End", "http://localhost:8080/End");
             put("TimeTrigger", "http://localhost:8080/TimeTrigger");
             put("SendEmail", "http://localhost:8080/SendEmail");
@@ -46,21 +44,23 @@ public class TaskExecutor implements Runnable {
 
     };
 
-    public TaskExecutor(CoreModuleTask coreModuleTask) {
-        this.coreModuleTask = coreModuleTask;
+    @Autowired
+    public CMTExecutor(NodeRepository nodeRepository, RestTemplate restTemplate, ActiveNodeRepository activeNodeRepository){
+        this.nodeRepository = nodeRepository;
+        this.restTemplate = restTemplate;
+        this.activeNodeRepository = activeNodeRepository;
     }
 
-    public TaskExecutor(CoreModuleTask coreModuleTask, ActiveAudienceRepository activeAudienceRepository, ActiveNodeRepository activeNodeRepository, ActiveJourneyRepository activeJourneyRepository, NodeRepository nodeRepository) {
-        this.coreModuleTask = coreModuleTask;
+    public CMTExecutor(CoreModuleTask coreModuleTask, ActiveAudienceRepository activeAudienceRepository, ActiveNodeRepository activeNodeRepository, ActiveJourneyRepository activeJourneyRepository, NodeRepository nodeRepository) {
         this.activeAudienceRepository = activeAudienceRepository;
         this.activeNodeRepository = activeNodeRepository;
         this.activeJourneyRepository = activeJourneyRepository;
         this.nodeRepository = nodeRepository;
     }
 
-    @Override
-    public void run() {
-        //first, if this coremoduletask's type is "end", we dont do anythong and simply returns
+    public void execute(CoreModuleTask coreModuleTask) {
+
+        //first, if this coremoduletask's type is "end", we don't do anythong and simply returns
         if (coreModuleTask.getType().equals("End")) return;
         //else, we can first call the respective functional API's based on task type:
         CoreModuleTask restask = restTemplate.exchange(urlDict.get(coreModuleTask.getType()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
@@ -71,10 +71,11 @@ public class TaskExecutor implements Runnable {
         //change local host to server domain!!
         //moving active audience pool from current node to next node (via method in task controller)
         if (restask.getTaskType() == 0) {
-            activeid = restTemplate.exchange("https://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
+            activeid = restTemplate.exchange("http://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
         } else {
-            activeid = restTemplate.exchange("https://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
+            activeid = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
         }
+System.out.println("im here");
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
         //finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {
@@ -85,7 +86,7 @@ public class TaskExecutor implements Runnable {
             newtask.setType(nextnode.getType());
             newtask.setName(nextnode.getName());
             newtask.setSourceNodeId(nextnode.getId());
-            newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
+            if(nextnode.getNexts().size()>0) newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
             //now we identify the current activeNode
             ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
             List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
@@ -97,7 +98,7 @@ public class TaskExecutor implements Runnable {
             }
             newtask.setActiveAudienceId1(activeIDs);
             newtask.setAudienceId1(IDs);
-            String url = "https://localhost:8080/ReturnTask";
+            String url = "http://localhost:8080/ReturnTask";
             HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
             Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
         }

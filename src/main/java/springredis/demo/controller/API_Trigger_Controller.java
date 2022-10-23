@@ -35,10 +35,15 @@ public class API_Trigger_Controller {
         else if (task.getName().equals("shopify_abandon_checkout_trigger")){
             return create_abandon_checkout_webhook(task);
         }
+        //for testing purpose
+        else if (task.getName().equals("Test")) {
+            task.setType("finish");
+            return task;
+        }
         return nulltask;
     }
 
-    @RequestMapping(value="shopify_create_puchase_webhook",method=RequestMethod.POST)
+    @RequestMapping(value="/shopify_create_puchase_webhook",method=RequestMethod.POST)
     @ResponseBody
     public CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
         User user = productService.searchUserById(task.getUserId());

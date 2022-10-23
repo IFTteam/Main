@@ -26,7 +26,8 @@ public class TaskCoordinator implements DisposableBean,Runnable {
 
     private RedisTemplate m_redisTemplate;
 
-
+    @Autowired
+    CMTExecutor cmtExecutor;
 
     private ExecutorService executorService;
 
@@ -48,15 +49,12 @@ public class TaskCoordinator implements DisposableBean,Runnable {
 
     @Override
     public void run() {
-        ExecutorService executorService = Executors.newFixedThreadPool(10);//初始化线程池
-
-
+//        ExecutorService executorService = Executors.newFixedThreadPool(10);//初始化线程池
         while (someCondition) {
             // 查Redis
             while (m_redisTemplate.opsForList().size(taskQueueKey)>0){
                 CoreModuleTask coreModuleTask = (CoreModuleTask) m_redisTemplate.opsForList().rightPop(taskQueueKey);
-                TaskExecutor taskExecutor = new TaskExecutor(coreModuleTask);
-                executorService.execute(taskExecutor);                //this is equivalent to using taskExecutor.run()
+                cmtExecutor.execute(coreModuleTask);
             }
             try {
                 Thread.sleep(1000);

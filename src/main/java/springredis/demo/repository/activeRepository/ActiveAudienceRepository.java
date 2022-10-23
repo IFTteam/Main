@@ -3,6 +3,8 @@ package springredis.demo.repository.activeRepository;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.ResponseBody;
 import springredis.demo.entity.Audience;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 
@@ -10,6 +12,7 @@ import java.util.Optional;
 
 import static org.hibernate.loader.Loader.SELECT;
 
+@Repository
 public interface ActiveAudienceRepository extends JpaRepository<ActiveAudience, Long> {
 
     @Query(value = "select t from ActiveAudience t where t.AudienceId = :audienceId")
