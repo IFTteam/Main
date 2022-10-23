@@ -75,7 +75,6 @@ public class CMTExecutor{
         } else {
             activeid = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
         }
-System.out.println("im here");
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
         //finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {

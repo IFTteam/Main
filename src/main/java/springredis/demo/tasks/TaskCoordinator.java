@@ -43,7 +43,7 @@ public class TaskCoordinator implements DisposableBean,Runnable {
         new Thread(simulateNewEvent).start();
         new Thread(simulateHeapKeeper).start();
         new Thread(outAPICaller).start();
-        new Thread(this).start();                   //since task coordinator itself is also a runnable,its run function is also started when it is constructed
+//        new Thread(this).start();                   //since task coordinator itself is also a runnable,its run function is also started when it is constructed
     }
 
 

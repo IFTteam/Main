@@ -95,10 +95,19 @@ public class TestController {
 
 
     //task executor test
-    // make three nodes - the first node is an api_trigger_node with name being a test endpoint that returns the task directly without doing anything; the second node is its successive node with a "time delay" type node with random name. The third node is a node with type being "End". Each node has a associated (active) audience, labeled aud1,aud2,aud3.
-    // test1: We will initialize task executor with a CMT made from the first node and makenext being 1,and tasktype being 0. This means the task executor should first call corresponding method in APi_trigger controller, then upon return, transfer active audience from first node to next node (node with type being "time-delay"), and finally push a CMT onto global task queue with task being about the next node (time-delay).
-    // test 1.5: We will initialize task executor with a CMT made from the first node and makenext being 1, and tasktype being 1. This means the task executor should first call corresponding method in APi_trigger controller, then upon return, create new active audience in  next active node (node with type being "time-delay"), and finally push a CMT onto global task queue with task being about the next node (time-delay).
-    // test2: We will initialize task executor with a CMT made from the first node and makenext being 0. This means the task executor should only call the target endpoint, but upon return, do not do anymore audience-transfer or task-making activity and simply return.
+    // make three nodes - the first node is an api_trigger_node with name being a test endpoint that returns the task directly without doing anything;
+    // the second node is its successive node with a "time delay" type node with random name. The third node is a node with type being "End".
+    // Each node has a associated (active) audience, labeled aud1,aud2,aud3.
+    // test1: We will initialize task executor with a CMT made from the first node and makenext being 1,and tasktype being 0.
+    // This means the task executor should first call corresponding method in APi_trigger controller,
+    // then upon return, transfer active audience from first node to next node (node with type being "time-delay"),
+    // and finally push a CMT onto global task queue with task being about the next node (time-delay).
+    // test 1.5: We will initialize task executor with a CMT made from the first node and makenext being 1, and tasktype being 1.
+    // This means the task executor should first call corresponding method in APi_trigger controller,
+    // then upon return, create new active audience in  next active node (node with type being "time-delay"),
+    // and finally push a CMT onto global task queue with task being about the next node (time-delay).
+    // test2: We will initialize task executor with a CMT made from the first node and makenext being 0.
+    // sThis means the task executor should only call the target endpoint, but upon return, do not do anymore audience-transfer or task-making activity and simply return.
     // test3: We will  initialize task executor with a CMT made from the "End" node. This should do nothing and simply return.
     @GetMapping(value="/task_executor_test")
     @ResponseBody
