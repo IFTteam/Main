@@ -24,11 +24,11 @@ public class Node extends BaseEntity {
     @GeneratedValue
     private Long id;
 
-    private Long frontEndId;
+    private Long frontEndId; //改成string
     private String name;
     private String type;
 
-    private Integer headOrTail;
+    private Integer headOrTail; // what if there's only one node
     private String status;
 
     @ElementCollection
@@ -71,7 +71,7 @@ public class Node extends BaseEntity {
     }
 
     public Node(String name, String type, String status, LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy) {
-        super(createdAt, createdBy,updatedAt,updatedBy);
+        super(createdAt, createdBy, updatedAt,updatedBy);
         this.name = name;
         this.type = type;
         this.status = status;

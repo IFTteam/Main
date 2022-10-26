@@ -14,12 +14,18 @@ public class SeDeFunction {
     //传进来的是node list，把一个一个node拿出来序列化，然后加入String，返回String
     GsonBuilder gsonBuilder = new GsonBuilder();
 
-    // used to parse the journey JSON from frontend
+    // used to parse the journey JSON from frontend to JourneyJsonModel object
     public JourneyJsonModel deserializeJounrey(String journeyJson){
         gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
         Gson gson = gsonBuilder.setPrettyPrinting().create();
         JourneyJsonModel journeyObject = gson.fromJson(journeyJson, JourneyJsonModel.class);
         return journeyObject;
+    }
+
+    public String serializeJourney(JourneyJsonModel journeyJsonModel) {
+        gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
+        Gson gson = gsonBuilder.setPrettyPrinting().create();
+        return gson.toJson(journeyJsonModel);
     }
 
     public NodeJsonModel JsonToNodeJsonModel(String nodeJson) {
