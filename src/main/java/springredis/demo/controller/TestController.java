@@ -274,47 +274,68 @@ public class TestController {
         dao.addNewNode(node3);
         dao.addNewNode(node4);
     }
-    public Long dfs(NodeJsonModel[] nodeJsonList, int idx) {
-        Node newNode = new Node();
-        LocalDateTime createAt = LocalDateTime.parse(nodeJsonList[idx].getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-        LocalDateTime updateAt = LocalDateTime.parse(nodeJsonList[idx].getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
 
-        newNode.setFrontEndId(nodeJsonList[idx].getId());
-        newNode.setUpdatedBy(nodeJsonList[idx].getUpdatedBy());
+    private Node createEndNode() {
+        Node endNode = new Node();
+        endNode.setType("end");
+        endNode.setHeadOrTail(2);
+        endNode.setName("endNode");
+        return endNode;
+    }
+    private Node createNodeFromNodeJsonModel(NodeJsonModel nodeJsonModel) {
+        Node newNode = new Node();
+        LocalDateTime createAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime updateAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+
+        newNode.setFrontEndId(nodeJsonModel.getId());
+        newNode.setUpdatedBy(nodeJsonModel.getUpdatedBy());
         newNode.setUpdatedAt(updateAt);
-        newNode.setType(nodeJsonList[idx].getComponentType());
+        newNode.setType(nodeJsonModel.getComponentType());
         newNode.setHeadOrTail(0);
-        newNode.setCreatedBy(nodeJsonList[idx].getCreatedBy());
+        newNode.setCreatedBy(nodeJsonModel.getCreatedBy());
         newNode.setCreatedAt(createAt);
-        newNode.setName(nodeJsonList[idx].getName());
-        dao.addNewNode(newNode); // we need to store the node into DB first
-        Long nodeId = newNode.getId(); // so that we can get the node's id
+        newNode.setName(nodeJsonModel.getName());
+        return newNode;
+    }
+    public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx) {
+        Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx]);
+        // We need to store the node in DB first
+        dao.addNewNode(newNode);
+        // so that we can get the node's id
+        Long nodeId = newNode.getId();
         nodeIdList.add(newNode.getId());
         newNode = dao.searchNodeById(nodeId);
 
         List<Long> nexts = new ArrayList<>();
+        // If it is an if/else node. It'll have two next nodes.
         if (newNode.getType().equals("switch")) {
              Long child1 = null;
              Long child2 = null;
-             if (nodeJsonList[idx].getBranches().getTrue().length != 0) {
-                 child1 = dfs(nodeJsonList[idx].getBranches().getTrue(), 0);
+             if (nodeJsonModelList[idx].getBranches().getTrue().length != 0) {
+                 child1 = dfs(nodeJsonModelList[idx].getBranches().getTrue(), 0);
              }
-             if (nodeJsonList[idx].getBranches().getFalse().length != 0) {
-                 child2 = dfs(nodeJsonList[idx].getBranches().getFalse(), 0);
+             if (nodeJsonModelList[idx].getBranches().getFalse().length != 0) {
+                 child2 = dfs(nodeJsonModelList[idx].getBranches().getFalse(), 0);
              }
+             if (child1 == null) {
+                 Node endNode = createEndNode();
+                 child1 = dao.addNewNode(endNode).getId();
+             }
+            if (child2 == null) {
+                Node endNode = createEndNode();
+                child2 = dao.addNewNode(endNode).getId();
+            }
             nexts.add(child1);
             nexts.add(child2);
-            nexts.add(null);
-            if (child1 == null && child2 == null) newNode.setHeadOrTail(-1);
         } else {
+            // Otherwise, it'll have only one next node.
             Long child = null;
-            if (idx != nodeJsonList.length - 1) {
-                child = dfs(nodeJsonList, idx + 1);
+            if (idx != nodeJsonModelList.length - 1) {
+                child = dfs(nodeJsonModelList, idx + 1);
             } else {
-                newNode.setHeadOrTail(-1);
+                Node endNode = createEndNode();
+                child = dao.addNewNode(endNode).getId();
             }
-            nexts.add(null);
-            nexts.add(null);
             nexts.add(child);
         }
         newNode.setNexts(nexts);
@@ -326,24 +347,23 @@ public class TestController {
 
     ArrayList<Long> nodeIdList = new ArrayList<>();
     @PostMapping("/test/deserializeJourney")
-    public void deserializeJourney(@RequestBody String journey) {
+    public void deserializeJourney(@RequestBody String journeyJson) {
         SeDeFunction sede = new SeDeFunction();
         // Map JourneyJson to JourneyJsonModel
-        JourneyJsonModel journeyJson = sede.deserializeJounrey(journey);
-
-        // Create Journey object using JourneyJson's data then store in DB
+        JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
+        // Create Journey object using JourneyJson's info then store in DB
         Journey oneJourney = new Journey();
-        oneJourney.setJourneyName(journeyJson.getProperties().getJourneyName());
+        oneJourney.setJourneySerialized(journeyJson);
+        oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
         Long journeyid = dao.addNewJourney(oneJourney).getId();
 
-        // Traverse the journeyJson object and add each node into DB
-        dfs(journeyJson.getSequence(), 0);
+        // Traverse the journeyJsonModel object and add each node into DB
+        dfs(journeyJsonModel.getSequence(), 0);
 
         // set first node as head
         Node headNode = dao.searchNodeById(nodeIdList.get(0));
         headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
         dao.addNewNode(headNode);
-        System.out.println(nodeIdList);
     }
 
     @PostMapping("/test/deNode")
@@ -358,6 +378,11 @@ public class TestController {
         Node node9 = dao.searchNodeById(9L);
         Node node10 = dao.searchNodeById(10L);
         Node node11 = dao.searchNodeById(11L);
+        Node node12 = dao.searchNodeById(12L);
+        Node node13 = dao.searchNodeById(13L);
+        Node node14 = dao.searchNodeById(14L);
+        Node node15 = dao.searchNodeById(15L);
+        Node node16 = dao.searchNodeById(16L);
         System.out.println(node2.getNexts());
         System.out.println(node3.getNexts());
         System.out.println(node4.getNexts());
@@ -368,6 +393,11 @@ public class TestController {
         System.out.println(node9.getNexts());
         System.out.println(node10.getNexts());
         System.out.println(node11.getNexts());
+        System.out.println(node12.getNexts());
+        System.out.println(node13.getNexts());
+        System.out.println(node14.getNexts());
+        System.out.println(node15.getNexts());
+        System.out.println(node16.getNexts());
     }
 
 

@@ -39,6 +39,8 @@ public class DemoApplicationTests {
         System.out.println("hi");
     }
 
+    @Test
+    public void testStoreJourney() {
 
-
+    }
 }
