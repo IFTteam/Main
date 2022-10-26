@@ -18,4 +18,5 @@ public class Journey extends BaseEntity {
     private String journeySerialized;
     private Integer status;
     private String stage;
+    private String frontEndId;
 }

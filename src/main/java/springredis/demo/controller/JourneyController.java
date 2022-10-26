@@ -14,6 +14,7 @@ import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.serializer.SeDeFunction;
 import springredis.demo.tasks.CMTExecutor;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,13 +45,13 @@ public class JourneyController {
         Journey oneJourney = new Journey();
         oneJourney.setJourneySerialized(journeyJson);
         oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
-//        LocalDateTime createAt = LocalDateTime.parse(journeyJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-//        LocalDateTime updateAt = LocalDateTime.parse(journeyJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-//
-//        oneJourney.setCreatedAt(createAt);
-//        oneJourney.setCreatedBy(journeyJsonModel.getProperties().getCreatedBy());
-//        oneJourney.setUpdatedAt(updateAt);
-//        oneJourney.setUpdatedBy(journeyJsonModel.getProperties().getUpdatedBy());
+        LocalDateTime createAt = LocalDateTime.parse(journeyJsonModel.getProperties().getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime updateAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+
+        oneJourney.setCreatedAt(createAt);
+        oneJourney.setCreatedBy(journeyJsonModel.getProperties().getCreatedBy());
+        oneJourney.setUpdatedAt(updateAt);
+        oneJourney.setUpdatedBy(journeyJsonModel.getProperties().getUpdatedBy());
         return journeyRepository.save(oneJourney);
     }
     private Node createEndNode() {
@@ -145,7 +146,7 @@ public class JourneyController {
         Journey oneJourney = new Journey();
         oneJourney.setJourneySerialized(journeyJson);
         oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
-        Long journeyid = journeyRepository.save(oneJourney).getId();
+        Long journeyId = journeyRepository.save(oneJourney).getId();
 
 
         // Traverse the journeyJsonModel object and add each node into DB
@@ -154,7 +155,7 @@ public class JourneyController {
 
         // Create an ActiveJourney object and map to journey
         ActiveJourney activeJourney = new ActiveJourney();
-        activeJourney.setJourneyId(journeyid);
+        activeJourney.setJourneyId(journeyId);
         activeJourneyRepository.save(activeJourney);
 
         createActiveNodesAndMapToNodes(activeJourney);
@@ -164,6 +165,7 @@ public class JourneyController {
         Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
         headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
         nodeRepository.save(headNode);
+
         return oneJourney;
     }
 

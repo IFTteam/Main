@@ -460,13 +460,13 @@ public class TestController {
         Node node7 = dao.searchNodeById(7L);
         Node node8 = dao.searchNodeById(8L);
         Node node9 = dao.searchNodeById(9L);
-        Node node10 = dao.searchNodeById(10L);
-        Node node11 = dao.searchNodeById(11L);
-        Node node12 = dao.searchNodeById(12L);
-        Node node13 = dao.searchNodeById(13L);
-        Node node14 = dao.searchNodeById(14L);
-        Node node15 = dao.searchNodeById(15L);
-        Node node16 = dao.searchNodeById(16L);
+//        Node node10 = dao.searchNodeById(10L);
+//        Node node11 = dao.searchNodeById(11L);
+//        Node node12 = dao.searchNodeById(12L);
+//        Node node13 = dao.searchNodeById(13L);
+//        Node node14 = dao.searchNodeById(14L);
+//        Node node15 = dao.searchNodeById(15L);
+//        Node node16 = dao.searchNodeById(16L);
         System.out.println(node2.getNexts());
         System.out.println(node3.getNexts());
         System.out.println(node4.getNexts());
@@ -475,13 +475,13 @@ public class TestController {
         System.out.println(node7.getNexts());
         System.out.println(node8.getNexts());
         System.out.println(node9.getNexts());
-        System.out.println(node10.getNexts());
-        System.out.println(node11.getNexts());
-        System.out.println(node12.getNexts());
-        System.out.println(node13.getNexts());
-        System.out.println(node14.getNexts());
-        System.out.println(node15.getNexts());
-        System.out.println(node16.getNexts());
+//        System.out.println(node10.getNexts());
+//        System.out.println(node11.getNexts());
+//        System.out.println(node12.getNexts());
+//        System.out.println(node13.getNexts());
+//        System.out.println(node14.getNexts());
+//        System.out.println(node15.getNexts());
+//        System.out.println(node16.getNexts());
     }
 
 
