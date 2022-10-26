@@ -35,16 +35,17 @@ public class API_Trigger_Controller {
         else if (task.getName().equals("shopify_abandon_checkout_trigger")){
             return create_abandon_checkout_webhook(task);
         }
-        else if (task.getName().equals("salesforce_subscription_trigger")){
-            return create_salesforce_subscription_trigger(task);
+        //for testing purpose
+        else if (task.getName().equals("Test")) {
+            task.setType("finish");
+            return task;
         }
         return nulltask;
     }
 
-    @RequestMapping(value="shopify_create_puchase_webhook",method=RequestMethod.POST)
+    @RequestMapping(value="/shopify_create_puchase_webhook",method=RequestMethod.POST)
     @ResponseBody
     public CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
-        Audience audience = productService.searchAudienceById(task.getAudienceId());
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
         Journey journey = productService.searchJourneyById(task.getJourneyId());
@@ -68,7 +69,8 @@ public class API_Trigger_Controller {
         }
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
-        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+//        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+String url = "http://localhost:8080/show"; //for testing
         String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
@@ -82,7 +84,6 @@ public class API_Trigger_Controller {
     @RequestMapping(value="/shopify_create_abandon_checkout_webhook",method=RequestMethod.POST)
     @ResponseBody
     public CoreModuleTask create_abandon_checkout_webhook(@RequestBody CoreModuleTask task) {
-        Audience audience = productService.searchAudienceById(task.getAudienceId());
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
         Journey journey = productService.searchJourneyById(task.getJourneyId());
@@ -116,13 +117,6 @@ public class API_Trigger_Controller {
         return task;
     }
 
-    @RequestMapping(value="/salesforce_create_subscription_webhook",method=RequestMethod.POST)
-    @ResponseBody
-    public CoreModuleTask create_salesforce_subscription_trigger(@RequestBody CoreModuleTask task) {
-        //create the webhook (see previous code)
-        return task;
-    }
-
     //the url now is only user-specific
     @RequestMapping(value="/shopify_purchase_update/{user}",method=RequestMethod.POST,produces=MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
@@ -147,29 +141,31 @@ public class API_Trigger_Controller {
         triggerType_node_relation tnr = productService.searchTNR(user.getId(),"purchase").get();
         List<Node> nodes = tnr.getNodes();
         List<CoreModuleTask> tasks = new ArrayList<>();                 //returns all new tasks pushed onto the task queue
+        //push a bunch of API_trigger-typed CMT onto task queue with name being "finished": this type of task is redirected to a "finished" controller, which only modifies the task's taskType to 1 so task executor will create (not make) audience in next node's buffer
         for(Node n:nodes){
-            for(Long nextid:n.getNexts()) {
-                Node nextnode = productService.searchNodeById(nextid);
-                String url = "http://localhost:8080" + "/ReturnTask";   //replace with server domain name
-                CoreModuleTask task = new CoreModuleTask();
-                task.setAudienceId(audienceid);
-                task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
-                task.setUserId(user.getId());
-                task.setTaskType(1);                //a task that is creating a new audience
-                task.setName(nextnode.getName());
-                task.setType(nextnode.getType());
-                task.setSourceNodeId(n.getId());
-                if(nextnode.getNexts().size()!=0) task.setTargetNodeId(nextnode.getNexts().get(0));
-                HttpEntity<CoreModuleTask> request = new HttpEntity(task);
-                ResponseEntity<Long> res = this.restTemplate.exchange(url,HttpMethod.POST,request,Long.class);
-                tasks.add(task);
-            }
+            String url = "http://localhost:8080" + "/ReturnTask";   //replace with server domain name
+            CoreModuleTask task = new CoreModuleTask();
+            List<Long> newlist = new ArrayList<>();
+            newlist.add(audienceid);
+            task.setAudienceId1(newlist);
+            task.setNodeId(n.getId());                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
+            task.setUserId(user.getId());
+            task.setTaskType(1);                        //a task that is creating a new audience
+            task.setName(n.getName());
+            task.setType(n.getType());
+            task.setSourceNodeId(n.getId());
+            task.setMakenext(1);                        //When processing this task, core module will make the next task upon response from controller
+            if(n.getNexts().size()!=0) task.setTargetNodeId(n.getNexts().get(0));
+            HttpEntity<CoreModuleTask> request = new HttpEntity(task);
+            ResponseEntity<Long> res = this.restTemplate.exchange(url,HttpMethod.POST,request,Long.class);
+            tasks.add(task);
         }
         return tasks;
     }
 
+
     @RequestMapping(value="/shopify_abandon_checkout_update/{user}",method=RequestMethod.POST)
-    @ResponseStatus(code = HttpStatus.OK, reason = "OK")
+    @ResponseBody
     public List<CoreModuleTask> shopify_abandoncarttrigger_hit(@PathVariable("user") String username,  String nodeid,@RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
@@ -196,13 +192,16 @@ public class API_Trigger_Controller {
                 Node nextnode = productService.searchNodeById(nextid);
                 String url = "http://localhost:8080" + "/ReturnTask";   //replace with server domain name
                 CoreModuleTask task = new CoreModuleTask();
-                task.setAudienceId(audienceid);
+                List<Long> newlist = new ArrayList<>();
+                newlist.add(audienceid);
+                task.setAudienceId1(newlist);
                 task.setNodeId(nextid);                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
                 task.setUserId(user.getId());
                 task.setTaskType(1);                //a task that is creating a new audience
                 task.setName(nextnode.getName());
                 task.setType(nextnode.getType());
                 task.setSourceNodeId(n.getId());
+                task.setMakenext(1);                //When processing this task, core module will make the next task unless the task object is modified by some other module
                 if(nextnode.getNexts().size()!=0) task.setTargetNodeId(nextnode.getNexts().get(0));
                 HttpEntity<CoreModuleTask> request = new HttpEntity(task);
                 ResponseEntity<Long> res = this.restTemplate.exchange(url,HttpMethod.POST,request,Long.class);
@@ -212,9 +211,4 @@ public class API_Trigger_Controller {
         return tasks;
     }
 
-    @RequestMapping(value="/salesforce_subscription_update/{user}/{node}",method=RequestMethod.POST)
-    void salesforce_subscription_hit(@PathVariable("user") String username, @PathVariable("node") String nodeid)
-    {
-
-    }
 }

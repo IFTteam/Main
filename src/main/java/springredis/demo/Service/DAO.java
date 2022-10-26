@@ -61,8 +61,8 @@ public class DAO {
 
     public ActiveNode searchActiveNodeById(Long id){return activeNodeRepository.findByActiveNodeId(id);}
 
-    public Optional<ActiveAudience> searchActiveAudienceByAudienceID(Long audienceID){
-        return activeAudienceRepository.searchActiveAudienceByAudienceId(audienceID);
+    public ActiveAudience searchActiveAudienceByAudienceID(Long audienceID){
+        return activeAudienceRepository.findByDBId(audienceID);
     }
 
     public Optional<triggerType_node_relation> searchTNR(Long uid,String type){return tnr_repository.searchTNR(uid,type);}

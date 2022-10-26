@@ -18,6 +18,7 @@ public class ActiveNode implements Serializable {
     @GeneratedValue
     private Long id;
 
+    @Column(name="nodeId")
     private Long nodeId;
 
     @ManyToOne(targetEntity = ActiveJourney.class)
@@ -31,6 +32,5 @@ public class ActiveNode implements Serializable {
         this.nodeId = nodeId;
         this.activeJourney = activeJourney;
     }
-
 
 }

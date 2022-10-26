@@ -1,7 +1,6 @@
 package springredis.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.ParameterResolutionDelegate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,8 +12,7 @@ import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.serializer.SeDeFunction;
-import springredis.demo.tasks.TaskExecutor;
-import java.time.LocalDateTime;
+import springredis.demo.tasks.CMTExecutor;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -34,6 +32,9 @@ public class JourneyController {
 
     @Autowired
     private ActiveNodeRepository activeNodeRepository;
+
+    @Autowired
+    CMTExecutor cmtExecutor;
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
         SeDeFunction sede = new SeDeFunction();
@@ -218,8 +219,8 @@ public class JourneyController {
             coreModuleTask.setNodeId(heads.get(i).getId());
             //Dummy Task
             coreModuleTask.setTargetNodeId(activeNodeRepository.findByDBNodeId(heads.get(i).getId()).getId());//Target node ->source
-            TaskExecutor taskExecutor = new TaskExecutor(coreModuleTask);
-            taskExecutor.callModule(heads.get(i));
+            cmtExecutor.execute(coreModuleTask);
+//            taskExecutor.callModule(heads.get(i));
         }
         return journey;
     }

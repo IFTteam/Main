@@ -13,11 +13,17 @@ import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import org.springframework.http.HttpStatus;
 import springredis.demo.serializer.SeDeFunction;
+import springredis.demo.tasks.CMTExecutor;
 
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 public class TestController {
@@ -41,51 +47,129 @@ public class TestController {
     @Autowired
     RestTemplate restTemplate;
 
+    @Autowired
+    CMTExecutor cmtExecutor;
+
     private String str = new String(),str2=new String();
 
     private List<CoreModuleTask> tasks = new ArrayList<>();
 
 
-    @GetMapping("/simulated_call")
-    public CoreModuleTask simulated_core_module_call(){
-        //现在数据库中save一个mock user，一个mock journey，一个mock node和一个mock audience
-        User user = new User(); user.setShopifydevstore("example.devstore");user.setShopifyApiKey("example.key");
-//        System.out.println(user.getShopifyApiKey());
-        Long userid = dao.addNewUser(user).getId();
-        Long journeyid = dao.addNewJourney(new Journey()).getId();
-        Long nodeid = dao.addNewNode(new Node()).getId();
-        Node node2=new Node(),node3 = new Node();
-        node2.setType("action"); node3.setType("if/else");
-        node2.setName("someName1");node3.setName("someName2");
-        Long node2id = dao.addNewNode(node2).getId(), node3id = dao.addNewNode(node3).getId();
-        Node node1 = dao.searchNodeById(nodeid);
-        node1.setType("trigger");
-        //create next nodes for node1; so when trigger happens, we can see whether task requests about node2 and node3 are posted
-        node1.getNexts().add(node2id);node1.getNexts().add(node3id);
-        dao.addNewNode(node1);              //update node 1
-        Audience audience = new Audience(); audience.setEmail("example@gmail.com");
-        Long audienceid = dao.addNewAudience(audience).getId();
-        CoreModuleTask newtask = new CoreModuleTask();
-        newtask.setType("API Trigger");
-        newtask.setName("shopify_create_trigger");
-        //其他coremoduletask的参数没有设置，因为在trigger api中不需要。这里单独测试trigger api的功能。
-        newtask.setUserId(userid);
-        newtask.setAudienceId(audienceid);
-        newtask.setJourneyId(journeyid);
-        newtask.setNodeId(nodeid);
-//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(node1.toString()),String.class);
-//restTemplate.exchange("http://localhost:8080/show2",HttpMethod.POST,new HttpEntity<String>(dao.searchNodeById(newtask.getNodeId()).toString()),String.class);
-        String url = "http://localhost:8080/API_trigger";
-        HttpEntity<CoreModuleTask> call = new HttpEntity<CoreModuleTask>(newtask);
-        CoreModuleTask res = restTemplate.exchange(url, HttpMethod.POST,call,CoreModuleTask.class).getBody();
+    //audience transfer test
+    @GetMapping("/active_audience_transfer_test")
+    @ResponseBody
+    public List<CoreModuleTask> simulated_core_module_call(){
+        //create a node and a corresponding active node, as well as two nodes that are its nexts.
+        // Create four audience entities, two of which has their corresponding active audience already mapped to this node, and the other two are unregistered in active DB. (simulating webhook trigger hit)
+        //then, make two CMTs with node being this node (and its corresponding active node). First fill the two audiencelists with two new active audiences, then call the "createUser" api in task controller.
+        // This should create the two new active audiences1 in the active audience pool of the respective two next nodes.
+        //second CMT will fill the two audiencelists with the two existing active audiences(respectively), then call "moveUser" in task controller.
+        // This will result in these two audience's mapped-to active node become this node's next two nodes, respectively.
+        Node node1=new Node(),node2=new Node(),node3=new Node();
+        Long nid2 = dao.addNewNode(node2).getId(), nid3= dao.addNewNode(node3).getId();;
+        List<Long> tmp = new ArrayList<>(); tmp.add(nid2); tmp.add(nid3);
+        node1.setNexts(tmp);
+        Long nid1 = dao.addNewNode(node1).getId();
+        System.out.println(node1.getNexts().get(0).toString());
+        ActiveNode act1= new ActiveNode(),act2=new ActiveNode(),act3 = new ActiveNode();
+        act1.setNodeId(nid1);  act2.setNodeId(nid2); act3.setNodeId(nid3);
+        act1 = dao.addNewActiveNode(act1);act2 = dao.addNewActiveNode(act2); act3 = dao.addNewActiveNode(act3);
+        Long aud1id=dao.addNewAudience(new Audience()).getId(),aud2id=dao.addNewAudience(new Audience()).getId(),aud3id=dao.addNewAudience(new Audience()).getId(),aud4id=dao.addNewAudience(new Audience()).getId();
+        ActiveAudience actaud1 = new ActiveAudience(), actaud2 = new ActiveAudience();
+        actaud1.setAudienceId(aud1id);actaud2.setAudienceId(aud2id);                //only first two audience are registered!
+        actaud1.setActiveNode(act1); actaud2.setActiveNode(act1);;
+        actaud1 = dao.addNewActiveAudience(actaud1);actaud2 = dao.addNewActiveAudience(actaud2);
+        //configure cmt1
+        CoreModuleTask cmt1 = new CoreModuleTask(), cmt2 = new CoreModuleTask();
+        List<Long> audlist = new ArrayList<>(); audlist.add(aud1id);cmt1.setAudienceId1(audlist);
+        List<Long> audlist2 = new ArrayList<>(); audlist2.add(aud2id);cmt1.setAudienceId2(audlist2);cmt1.setNodeId(nid1);cmt1.setName("hi");
+        //configure cmt2
+        List<Long> audlist3 = new ArrayList<>(); audlist3.add(aud3id);cmt2.setAudienceId1(audlist3);
+        List<Long> audlist4 = new ArrayList<>(); audlist4.add(aud4id);cmt2.setAudienceId2(audlist4);cmt2.setNodeId(nid1);cmt1.setName("hi");
+        String url1 = "http://localhost:8080/move_user";
+        restTemplate.exchange(url1,HttpMethod.POST,new HttpEntity<>(cmt1),Long.class).getBody();
+        url1 = "http://localhost:8080/create_user";
+        restTemplate.exchange(url1,HttpMethod.POST,new HttpEntity<>(cmt2),Long.class);
+        List<CoreModuleTask> res = new ArrayList<>();
+        res.add(cmt1);res.add(cmt2);
         return res;
+    }
+
+
+    //task executor test
+    // make three nodes - the first node is an api_trigger_node with name being a test endpoint that returns the task directly without doing anything;
+    // the second node is its successive node with a "time delay" type node with random name. The third node is a node with type being "End".
+    // Each node has a associated (active) audience, labeled aud1,aud2,aud3.
+    // test1: We will initialize task executor with a CMT made from the first node and makenext being 1,and tasktype being 0.
+    // This means the task executor should first call corresponding method in APi_trigger controller,
+    // then upon return, transfer active audience from first node to next node (node with type being "time-delay"),
+    // and finally push a CMT onto global task queue with task being about the next node (time-delay).
+    // test 1.5: We will initialize task executor with a CMT made from the first node and makenext being 1, and tasktype being 1.
+    // This means the task executor should first call corresponding method in APi_trigger controller,
+    // then upon return, create new active audience in  next active node (node with type being "time-delay"),
+    // and finally push a CMT onto global task queue with task being about the next node (time-delay).
+    // test2: We will initialize task executor with a CMT made from the first node and makenext being 0.
+    // sThis means the task executor should only call the target endpoint, but upon return, do not do anymore audience-transfer or task-making activity and simply return.
+    // test3: We will  initialize task executor with a CMT made from the "End" node. This should do nothing and simply return.
+    @GetMapping(value="/task_executor_test")
+    @ResponseBody
+    public CoreModuleTask task_executor_test(){
+        //preparation
+        Node node1 = new Node(), node2 = new Node(); node1.setType("APITrigger"); node1.setName("Test"); node2.setType("Time_Delay"); node2.setName("Test");
+        Long node2id = nodeRepository.save(node2).getId();
+        List<Long> tmp = new ArrayList<>(); tmp.add(node2id);
+        node1.setNexts(tmp);
+        Long node1id = nodeRepository.save(node1).getId();
+        ActiveNode acn = new ActiveNode(); acn.setNodeId(node1id);
+        Long acnid1 = activeNodeRepository.save(acn).getId();
+        ActiveNode acn2 = new ActiveNode(); acn2.setNodeId(node2id);
+        Long acnid2 = activeNodeRepository.save(acn2).getId();
+        Long aud1id=dao.addNewAudience(new Audience()).getId(),aud2id=dao.addNewAudience(new Audience()).getId();
+        ActiveAudience actaud1 = new ActiveAudience(), actaud2 = new ActiveAudience();
+        actaud1.setAudienceId(aud1id);actaud2.setAudienceId(aud2id);                //only first two audience are registered!
+        actaud1.setActiveNode(acn); actaud2.setActiveNode(acn);;
+        Long actaud1id = dao.addNewActiveAudience(actaud1).getId(),actaud2id = dao.addNewActiveAudience(actaud2).getId();
+       //making core module task:
+        CoreModuleTask cmt1 = new CoreModuleTask();
+        cmt1.setNodeId(node1id);
+        List<Long> list = new ArrayList<>();
+        list.add(aud1id); list.add(aud2id);
+        List<Long> list2 = new ArrayList<>();
+        list2.add(actaud1id);list2.add(actaud2id);
+        cmt1.setAudienceId1(list);
+        cmt1.setActiveAudienceId1(list2);
+        cmt1.setTaskType(0);
+        cmt1.setMakenext(1);
+        cmt1.setName("Test");cmt1.setType("APITrigger");
+        //execute this task with task executor
+        cmtExecutor.execute(cmt1);
+        return cmt1;
+    }
+
+    @GetMapping(value="/removeall")
+    public void removall() {
+//        List<ActiveNode> ls2 = activeNodeRepository.findAll();
+//        for (ActiveNode n : ls2) {
+//            activeNodeRepository.delete(n);
+//        }
+//        List<ActiveAudience> ls1 = activeAudienceRepository.findAll();
+//        for (ActiveAudience n : ls1) {
+//            activeAudienceRepository.delete(n);
+//        }
+//        List<Audience> ls3 = audienceRepository.findAll();
+//        for (Audience n : ls3) {
+//            audienceRepository.delete(n);
+//        }
+        List<Node> ls4 = nodeRepository.findAll();
+        for (Node n : ls4) {
+            nodeRepository.delete(n);
+        }
     }
 
     @GetMapping(value="/smalltest")
     @ResponseBody
     public List<ActiveNode> test1(){
-        ActiveNode actn = new ActiveNode();activeNodeRepository.save(actn).getId();
-        actn.setNodeId(111L);
+        ActiveNode actn = new ActiveNode();activeNodeRepository.save(actn).getId(); actn.setNodeId(111L);
         ActiveAudience acta = new ActiveAudience(2L);
         ActiveAudience acta2 =new ActiveAudience(3L);
         acta.setActiveNode(actn);

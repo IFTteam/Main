@@ -16,6 +16,7 @@ public class ActiveAudience implements Serializable {
     @GeneratedValue
     private Long id;
 
+    @Column(name="AudienceId")
     private Long AudienceId;
 
     @ManyToOne
