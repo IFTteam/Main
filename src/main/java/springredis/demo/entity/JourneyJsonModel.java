@@ -15,5 +15,9 @@ public class JourneyJsonModel {
         String updatedAt;
         String createdBy;
         String updatedBy;
+        String frontEndId;
+        String thumbNailURL;
+        int status;
+        String stage;
     }
 }

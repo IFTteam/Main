@@ -38,20 +38,29 @@ public class JourneyController {
     CMTExecutor cmtExecutor;
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
+        nodeIdList.clear();
         SeDeFunction sede = new SeDeFunction();
         // Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
         // Create Journey object using JourneyJson's info then store in DB
-        Journey oneJourney = new Journey();
-        oneJourney.setJourneySerialized(journeyJson);
-        oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
-        LocalDateTime createAt = LocalDateTime.parse(journeyJsonModel.getProperties().getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-        LocalDateTime updateAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        String journeyName = journeyJsonModel.getProperties().getJourneyName();
+        String frontEndId = journeyJsonModel.getProperties().getFrontEndId();
+        String thumbNailURL = journeyJsonModel.getProperties().getThumbNailURL();
+        int status = journeyJsonModel.getProperties().getStatus();
+        String stage = journeyJsonModel.getProperties().getStage();
+        String createdBy = journeyJsonModel.getProperties().getCreatedBy();
+        String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
+        LocalDateTime createdAt = LocalDateTime.parse(journeyJsonModel.getProperties().getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime updatedAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
 
-        oneJourney.setCreatedAt(createAt);
-        oneJourney.setCreatedBy(journeyJsonModel.getProperties().getCreatedBy());
-        oneJourney.setUpdatedAt(updateAt);
-        oneJourney.setUpdatedBy(journeyJsonModel.getProperties().getUpdatedBy());
+        Journey existingJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
+
+        Journey oneJourney = new Journey(journeyName, thumbNailURL, journeyJson, status, stage, frontEndId, createdAt, createdBy, updatedAt, updatedBy);
+
+        if (existingJourney != null) {
+            oneJourney.setId(existingJourney.getId());
+        }
+
         return journeyRepository.save(oneJourney);
     }
     private Node createEndNode() {
@@ -63,16 +72,16 @@ public class JourneyController {
     }
     private Node createNodeFromNodeJsonModel(NodeJsonModel nodeJsonModel) {
         Node newNode = new Node();
-        LocalDateTime createAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-        LocalDateTime updateAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime createdAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime updatedAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
 
         newNode.setFrontEndId(nodeJsonModel.getId());
         newNode.setUpdatedBy(nodeJsonModel.getUpdatedBy());
-        newNode.setUpdatedAt(updateAt);
+        newNode.setUpdatedAt(updatedAt);
         newNode.setType(nodeJsonModel.getComponentType());
         newNode.setHeadOrTail(0);
         newNode.setCreatedBy(nodeJsonModel.getCreatedBy());
-        newNode.setCreatedAt(createAt);
+        newNode.setCreatedAt(createdAt);
         newNode.setName(nodeJsonModel.getName());
         return newNode;
     }
@@ -139,13 +148,22 @@ public class JourneyController {
     @PostMapping("/journey/activateJourney")//激活Journey,查取数据库，反序列化
     public Journey activateJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
+        Journey oneJourney = saveJourney(journeyJson);
         SeDeFunction sede = new SeDeFunction();
-        // Map JourneyJson to JourneyJsonModel
+//         Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
         // Create Journey object using JourneyJson's info then store in DB
-        Journey oneJourney = new Journey();
-        oneJourney.setJourneySerialized(journeyJson);
-        oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
+//        String journeyName = journeyJsonModel.getProperties().getJourneyName();
+//        String frontEndId = journeyJsonModel.getProperties().getFrontEndId();
+//        String thumbNailURL = journeyJsonModel.getProperties().getThumbNailURL();
+//        int status = journeyJsonModel.getProperties().getStatus();
+//        String stage = journeyJsonModel.getProperties().getStage();
+//        String createBy = journeyJsonModel.getProperties().getCreatedBy();
+//        String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
+//        LocalDateTime createAt = LocalDateTime.parse(journeyJsonModel.getProperties().getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+//        LocalDateTime updateAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+//
+//        Journey oneJourney = new Journey(journeyName, thumbNailURL, journeyJson, status, stage, frontEndId, createAt, createBy, updateAt, updatedBy);
         Long journeyId = journeyRepository.save(oneJourney).getId();
 
 

@@ -432,22 +432,24 @@ public class TestController {
     ArrayList<Long> nodeIdList = new ArrayList<>();
     @PostMapping("/test/deserializeJourney")
     public void deserializeJourney(@RequestBody String journeyJson) {
-        SeDeFunction sede = new SeDeFunction();
-        // Map JourneyJson to JourneyJsonModel
-        JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
-        // Create Journey object using JourneyJson's info then store in DB
-        Journey oneJourney = new Journey();
-        oneJourney.setJourneySerialized(journeyJson);
-        oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
-        Long journeyid = dao.addNewJourney(oneJourney).getId();
-
-        // Traverse the journeyJsonModel object and add each node into DB
-        dfs(journeyJsonModel.getSequence(), 0);
-
-        // set first node as head
-        Node headNode = dao.searchNodeById(nodeIdList.get(0));
-        headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
-        dao.addNewNode(headNode);
+        Journey j = journeyRepository.searchJourneyById(1L);
+        System.out.println(j);
+//        SeDeFunction sede = new SeDeFunction();
+//        // Map JourneyJson to JourneyJsonModel
+//        JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
+//        // Create Journey object using JourneyJson's info then store in DB
+//        Journey oneJourney = new Journey();
+//        oneJourney.setJourneySerialized(journeyJson);
+//        oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
+//        Long journeyid = dao.addNewJourney(oneJourney).getId();
+//
+//        // Traverse the journeyJsonModel object and add each node into DB
+//        dfs(journeyJsonModel.getSequence(), 0);
+//
+//        // set first node as head
+//        Node headNode = dao.searchNodeById(nodeIdList.get(0));
+//        headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
+//        dao.addNewNode(headNode);
     }
 
     @PostMapping("/test/deNode")
