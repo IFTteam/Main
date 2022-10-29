@@ -16,10 +16,7 @@ import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 public class JourneyController {
@@ -40,11 +37,12 @@ public class JourneyController {
     public Journey saveJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
         SeDeFunction sede = new SeDeFunction();
+
         // Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
         // Create Journey object using JourneyJson's info then store in DB
         String journeyName = journeyJsonModel.getProperties().getJourneyName();
-        String frontEndId = journeyJsonModel.getProperties().getFrontEndId();
+        String frontEndId = journeyJsonModel.getProperties().getJourneyId();
         String thumbNailURL = journeyJsonModel.getProperties().getThumbNailURL();
         int status = journeyJsonModel.getProperties().getStatus();
         String stage = journeyJsonModel.getProperties().getStage();
@@ -52,99 +50,21 @@ public class JourneyController {
         String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
         LocalDateTime createdAt = LocalDateTime.parse(journeyJsonModel.getProperties().getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         LocalDateTime updatedAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-
+        // If this journey already in DB, we want to modify the existing one instead of storing a new journey.
         Journey existingJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
+
+        // Search and store all nodes with JourneyFrontEndId.
 
         Journey oneJourney = new Journey(journeyName, thumbNailURL, journeyJson, status, stage, frontEndId, createdAt, createdBy, updatedAt, updatedBy);
 
         if (existingJourney != null) {
+            oneJourney.setCreatedAt(existingJourney.getCreatedAt());
             oneJourney.setId(existingJourney.getId());
         }
 
         return journeyRepository.save(oneJourney);
     }
-    private Node createEndNode() {
-        Node endNode = new Node();
-        endNode.setType("end");
-        endNode.setHeadOrTail(2);
-        endNode.setName("endNode");
-        return endNode;
-    }
-    private Node createNodeFromNodeJsonModel(NodeJsonModel nodeJsonModel) {
-        Node newNode = new Node();
-        LocalDateTime createdAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-        LocalDateTime updatedAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
 
-        newNode.setFrontEndId(nodeJsonModel.getId());
-        newNode.setUpdatedBy(nodeJsonModel.getUpdatedBy());
-        newNode.setUpdatedAt(updatedAt);
-        newNode.setType(nodeJsonModel.getComponentType());
-        newNode.setHeadOrTail(0);
-        newNode.setCreatedBy(nodeJsonModel.getCreatedBy());
-        newNode.setCreatedAt(createdAt);
-        newNode.setName(nodeJsonModel.getName());
-        return newNode;
-    }
-    public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx) {
-        Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx]);
-        // We need to store the node in DB first
-        nodeRepository.save(newNode);
-        // so that we can get the node's id
-        Long nodeId = newNode.getId();
-        nodeIdList.add(newNode.getId());
-        newNode = nodeRepository.searchNodeByid(nodeId);
-
-        List<Long> nexts = new ArrayList<>();
-        // If it is an if/else node. It'll have two next nodes.
-        if (newNode.getType().equals("switch")) {
-            Long child1 = null;
-            Long child2 = null;
-            if (nodeJsonModelList[idx].getBranches().getTrue().length != 0) {
-                child1 = dfs(nodeJsonModelList[idx].getBranches().getTrue(), 0);
-            }
-            if (nodeJsonModelList[idx].getBranches().getFalse().length != 0) {
-                child2 = dfs(nodeJsonModelList[idx].getBranches().getFalse(), 0);
-            }
-            if (child1 == null) {
-                Node endNode = createEndNode();
-                child1 = nodeRepository.save(endNode).getId();
-                nodeIdList.add(endNode.getId());
-            }
-            if (child2 == null) {
-                Node endNode = createEndNode();
-                child2 = nodeRepository.save(endNode).getId();
-                nodeIdList.add(endNode.getId());
-            }
-            nexts.add(child1);
-            nexts.add(child2);
-        } else {
-            // Otherwise, it'll have only one next node.
-            Long child = null;
-            if (idx != nodeJsonModelList.length - 1) {
-                child = dfs(nodeJsonModelList, idx + 1);
-            } else {
-                Node endNode = createEndNode();
-                child = nodeRepository.save(endNode).getId();
-                nodeIdList.add(endNode.getId());
-            }
-            nexts.add(child);
-        }
-        newNode.setNexts(nexts);
-        nodeRepository.save(newNode);
-        newNode = nodeRepository.searchNodeByid(nodeId);
-        System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts());
-        return nodeId;
-    }
-
-    ArrayList<Long> nodeIdList = new ArrayList<>();
-    private void createActiveNodesAndMapToNodes(ActiveJourney activeJourney) {
-        for (int i = 0; i < nodeIdList.size(); i++) {
-            ActiveNode activeNode = new ActiveNode();
-            activeNode.setActiveJourney(activeJourney);
-            activeNode.setNodeId(nodeIdList.get(i));
-            activeNodeRepository.save(activeNode);
-        }
-    }
     @PostMapping("/journey/activateJourney")//激活Journey,查取数据库，反序列化
     public Journey activateJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
@@ -152,32 +72,43 @@ public class JourneyController {
         SeDeFunction sede = new SeDeFunction();
 //         Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
-        // Create Journey object using JourneyJson's info then store in DB
-//        String journeyName = journeyJsonModel.getProperties().getJourneyName();
-//        String frontEndId = journeyJsonModel.getProperties().getFrontEndId();
-//        String thumbNailURL = journeyJsonModel.getProperties().getThumbNailURL();
-//        int status = journeyJsonModel.getProperties().getStatus();
-//        String stage = journeyJsonModel.getProperties().getStage();
-//        String createBy = journeyJsonModel.getProperties().getCreatedBy();
-//        String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
-//        LocalDateTime createAt = LocalDateTime.parse(journeyJsonModel.getProperties().getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-//        LocalDateTime updateAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-//
-//        Journey oneJourney = new Journey(journeyName, thumbNailURL, journeyJson, status, stage, frontEndId, createAt, createBy, updateAt, updatedBy);
         Long journeyId = journeyRepository.save(oneJourney).getId();
+        String journeyFrontEndId = journeyRepository.searchJourneyById(journeyId).getFrontEndId();
 
+//        --------------------------------------------------------------------------------------------------
+//        a set to store the result of "findNodesByJourneyFrontEndId".
+//        Call DFS to modify/add nodes from the given journeyJson. After each (modify/add) operation, remove the nodeId from the set.
+//        The left ones are deleted nodes.
+        Node[] queryResult = nodeRepository.searchNodesByJourneyFrontEndId(journeyFrontEndId);
+        Set<Long> existingNode = new LinkedHashSet<Long>();
 
+        for (int i = 0; i < queryResult.length; i++) {
+            existingNode.add(queryResult[i].getId());
+        }
         // Traverse the journeyJsonModel object and add each node into DB
-        dfs(journeyJsonModel.getSequence(), 0);
-//        System.out.println(nodeIdList);
+        dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
+        for (int i = 0; i < nodeIdList.size(); i++) {
+            if (existingNode.contains(nodeIdList.get(i))) {
+                existingNode.remove(nodeIdList.get(i));
+            }
+        }
+
+        nodeRepository.deleteAllById(existingNode);
+        for (Long nodeId: existingNode) {
+            activeNodeRepository.deleteByNodeId(nodeId);
+        }
+//        --------------------------------------------------------------------------------------------------
 
         // Create an ActiveJourney object and map to journey
-        ActiveJourney activeJourney = new ActiveJourney();
-        activeJourney.setJourneyId(journeyId);
-        activeJourneyRepository.save(activeJourney);
+        ActiveJourney existingActiveJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(journeyId);
 
-        createActiveNodesAndMapToNodes(activeJourney);
+        if (existingActiveJourney == null) {
+            ActiveJourney activeJourney = new ActiveJourney();
+            activeJourney.setJourneyId(journeyId);
+            activeJourneyRepository.save(activeJourney);
 
+            createActiveNodesAndMapToNodes(activeJourney);
+        }
 
         // set first node as head
         Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
@@ -244,4 +175,100 @@ public class JourneyController {
         }
         return journey;
     }
+
+
+    private Node createEndNode(String journeyFrontEndId) {
+        Node endNode = new Node();
+        endNode.setType("end");
+        endNode.setHeadOrTail(2);
+        endNode.setName("endNode");
+        endNode.setJourneyFrontEndId(journeyFrontEndId);
+        return endNode;
+    }
+    private Node createNodeFromNodeJsonModel(NodeJsonModel nodeJsonModel, String journeyFrontEndId) {
+        LocalDateTime createdAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime updatedAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        String name = nodeJsonModel.getName();
+        String type  = nodeJsonModel.getComponentType();
+        String status = nodeJsonModel.getStatus();
+        String createdBy = nodeJsonModel.getCreatedBy();
+        String updatedBy = nodeJsonModel.getUpdatedBy();
+        Long frontEndId = nodeJsonModel.getId();
+
+        Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId);
+        newNode.setHeadOrTail(0);
+        newNode.setFrontEndId(frontEndId);
+
+        // If the user modifies the journey, we only want to keep the original version nodes' creation date.
+        Node existingNode = nodeRepository.searchNodeByFrontEndId(newNode.getFrontEndId());
+        if (existingNode != null) {
+            newNode.setCreatedAt(existingNode.getCreatedAt());
+            newNode.setId(existingNode.getId());
+        }
+        return newNode;
+    }
+    public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
+        Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx], journeyFrontEndId);
+        // We need to store the node in DB first
+        nodeRepository.save(newNode);
+        // so that we can get the node's id
+        Long nodeId = newNode.getId();
+        nodeIdList.add(newNode.getId());
+        newNode = nodeRepository.searchNodeByid(nodeId);
+
+        List<Long> nexts = new ArrayList<>();
+        // If it is an if/else node. It'll have two next nodes.
+        if (newNode.getType().equals("switch")) {
+            Long child1 = null;
+            Long child2 = null;
+            if (nodeJsonModelList[idx].getBranches().getTrue().length != 0) {
+                child1 = dfs(nodeJsonModelList[idx].getBranches().getTrue(), 0, journeyFrontEndId);
+            }
+            if (nodeJsonModelList[idx].getBranches().getFalse().length != 0) {
+                child2 = dfs(nodeJsonModelList[idx].getBranches().getFalse(), 0, journeyFrontEndId);
+            }
+            if (child1 == null) {
+                Node endNode = createEndNode(journeyFrontEndId);
+                child1 = nodeRepository.save(endNode).getId();
+                nodeIdList.add(endNode.getId());
+            }
+            if (child2 == null) {
+                Node endNode = createEndNode(journeyFrontEndId);
+                child2 = nodeRepository.save(endNode).getId();
+                nodeIdList.add(endNode.getId());
+            }
+            nexts.add(child1);
+            nexts.add(child2);
+        } else {
+            // Otherwise, it'll have only one next node.
+            Long child = null;
+            if (idx != nodeJsonModelList.length - 1) {
+                child = dfs(nodeJsonModelList, idx + 1, journeyFrontEndId);
+            } else {
+                Node endNode = createEndNode(journeyFrontEndId);
+                child = nodeRepository.save(endNode).getId();
+                nodeIdList.add(endNode.getId());
+            }
+            nexts.add(child);
+        }
+        newNode.setNexts(nexts);
+        nodeRepository.save(newNode);
+        newNode = nodeRepository.searchNodeByid(nodeId);
+        System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:"+journeyFrontEndId);
+        return nodeId;
+    }
+
+    ArrayList<Long> nodeIdList = new ArrayList<>();
+    private void createActiveNodesAndMapToNodes(ActiveJourney activeJourney) {
+        for (int i = 0; i < nodeIdList.size(); i++) {
+            ActiveNode existingActiveNode = activeNodeRepository.findByDBNodeId(nodeIdList.get(i));
+            if (existingActiveNode == null) {
+                ActiveNode activeNode = new ActiveNode();
+                activeNode.setActiveJourney(activeJourney);
+                activeNode.setNodeId(nodeIdList.get(i));
+                activeNodeRepository.save(activeNode);
+            }
+        }
+    }
+
 }

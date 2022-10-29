@@ -31,6 +31,7 @@ public class Node extends BaseEntity {
     private Integer headOrTail; // what if there's only one node
     private String status;
 
+    private String journeyFrontEndId;
     @ElementCollection
     private List<Long> nexts = new ArrayList<>();
     @ElementCollection
@@ -70,10 +71,18 @@ public class Node extends BaseEntity {
         super();
     }
 
-    public Node(String name, String type, String status, LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy) {
+    public Node(String name,
+                String type,
+                String status,
+                LocalDateTime createdAt,
+                String createdBy,
+                LocalDateTime updatedAt,
+                String updatedBy,
+                String journeyFrontEndId) {
         super(createdAt, createdBy, updatedAt,updatedBy);
         this.name = name;
         this.type = type;
         this.status = status;
+        this.journeyFrontEndId = journeyFrontEndId;
     }
 }

@@ -19,11 +19,23 @@ public class NodeJsonModel {
     String updatedAt;
     String createdBy;
     String updatedBy;
+    String status;
+    String journeyFrontEndId;
     Branch branches;
     List<Long> nexts = new ArrayList<>();
     List<Long> lasts = new ArrayList<>();
 
-    public NodeJsonModel(Long id, String componentType, String type, Property properties, String createdAt, String updatedAt, String createdBy, String updatedBy, Branch branches) {
+    public NodeJsonModel(Long id,
+                         String componentType,
+                         String type,
+                         Property properties,
+                         String createdAt,
+                         String updatedAt,
+                         String createdBy,
+                         String updatedBy,
+                         Branch branches,
+                         String status,
+                         String journeyFrontEndId) {
         this.id = id;
         this.componentType = componentType;
         this.type = type;
@@ -33,6 +45,8 @@ public class NodeJsonModel {
         this.updatedAt = updatedAt;
         this.updatedBy = updatedBy;
         this.branches = branches;
+        this.status = status;
+        this.journeyFrontEndId = journeyFrontEndId;
     }
     @Data
     public class Property {
