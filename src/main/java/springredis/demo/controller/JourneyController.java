@@ -102,12 +102,15 @@ public class JourneyController {
         // Create an ActiveJourney object and map to journey
         ActiveJourney existingActiveJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(journeyId);
 
+        // update activeNodes
         if (existingActiveJourney == null) {
             ActiveJourney activeJourney = new ActiveJourney();
             activeJourney.setJourneyId(journeyId);
             activeJourneyRepository.save(activeJourney);
-
             createActiveNodesAndMapToNodes(activeJourney);
+
+        } else {
+            createActiveNodesAndMapToNodes(existingActiveJourney);
         }
 
         // set first node as head
@@ -261,6 +264,7 @@ public class JourneyController {
     ArrayList<Long> nodeIdList = new ArrayList<>();
     private void createActiveNodesAndMapToNodes(ActiveJourney activeJourney) {
         for (int i = 0; i < nodeIdList.size(); i++) {
+            System.out.println(nodeIdList.get(i));
             ActiveNode existingActiveNode = activeNodeRepository.findByDBNodeId(nodeIdList.get(i));
             if (existingActiveNode == null) {
                 ActiveNode activeNode = new ActiveNode();
