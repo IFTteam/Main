@@ -136,7 +136,7 @@ public class JourneyController {
         System.out.println(n);
         System.out.println(deserializedJourney.get(0).getNexts());
         //1.Use map frontEndId->BackEndId and replace the node nexts frontEndId->BackEndId
-        HashMap<Long,Long> keyHash = new HashMap<>();
+        HashMap<String,Long> keyHash = new HashMap<>();
         List<Node> heads = new ArrayList<>();
         for (int i=0; i<n; i++){
             deserializedJourney.get(i).nextsSerialize();
@@ -196,7 +196,7 @@ public class JourneyController {
         String status = nodeJsonModel.getStatus();
         String createdBy = nodeJsonModel.getCreatedBy();
         String updatedBy = nodeJsonModel.getUpdatedBy();
-        Long frontEndId = nodeJsonModel.getId();
+        String frontEndId = nodeJsonModel.getId();
 
         Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId);
         newNode.setHeadOrTail(0);

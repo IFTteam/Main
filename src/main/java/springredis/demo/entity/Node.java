@@ -24,7 +24,7 @@ public class Node extends BaseEntity {
     @GeneratedValue
     private Long id;
 
-    private Long frontEndId; //改成string
+    private String frontEndId; //改成string
     private String name;
     private String type;
 

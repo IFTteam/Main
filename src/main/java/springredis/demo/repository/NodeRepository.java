@@ -13,7 +13,7 @@ public interface NodeRepository extends JpaRepository<Node, Long> {
     Node searchNodeByid(long Id);
 
     @Query(value="SELECT n from Node n WHERE n.frontEndId=:frontEndId")
-    Node searchNodeByFrontEndId(Long frontEndId);
+    Node searchNodeByFrontEndId(String frontEndId);
 
     @Query(value="SELECT n from Node n WHERE n.journeyFrontEndId=:journeyFrontEndId")
     Node[] searchNodesByJourneyFrontEndId(String journeyFrontEndId);

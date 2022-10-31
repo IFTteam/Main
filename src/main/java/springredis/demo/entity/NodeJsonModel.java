@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 public class NodeJsonModel {
-    Long id;
+    String id;
     String componentType;
     String type;
     String name;
@@ -25,7 +25,7 @@ public class NodeJsonModel {
     List<Long> nexts = new ArrayList<>();
     List<Long> lasts = new ArrayList<>();
 
-    public NodeJsonModel(Long id,
+    public NodeJsonModel(String id,
                          String componentType,
                          String type,
                          Property properties,
