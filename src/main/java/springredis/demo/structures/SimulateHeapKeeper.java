@@ -40,12 +40,14 @@ public class SimulateHeapKeeper implements Runnable{
 
                 while (redisTemplate.opsForList().size(inQueueKey)>0){
                     //maybe set a max loops
-                    HashMap outEvent = ((HashMap) redisTemplate.opsForList().rightPop(inQueueKey));
-                    Date time = new Date ((Integer) outEvent.get(timeKey));
-                    Integer id = (Integer) outEvent.get(idKey);
-
-                    Event event = new Event(time,(long)id);
-                    MinHeap.heapInsert(event);
+                    // 因为从redis中取出的数据类型就是 springredis.demo.entity.Event ，所以不能强转换成HashMap类型的，
+                    // 直接强制转换成 springredis.demo.entity.Event 类型就行了
+                    Event outEvent = (Event) redisTemplate.opsForList().rightPop(inQueueKey);
+                    if (outEvent != null) {
+                        System.out.println("从redis中获取Event，ID="+outEvent.getId());
+                        // 然后直接放到堆内存中。
+                        MinHeap.heapInsert(outEvent);
+                    }
                 }
             }
 

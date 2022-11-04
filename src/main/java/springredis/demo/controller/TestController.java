@@ -493,4 +493,35 @@ public class TestController {
         return userRepository.save(user);
     }
     //TODO: your own api
+
+    @PostMapping("/test/testDD")
+    public CoreModuleTask testDD(){
+        System.out.println("--------------------------");
+        CoreModuleTask coreModuleTask = new CoreModuleTask();
+        coreModuleTask.setNodeId(11L);
+        coreModuleTask.setName("dfdf");
+        return restTemplate.postForObject("http://localhost:8086/add", coreModuleTask,CoreModuleTask.class);
+    }
+
+    @PostMapping("/test/testD")
+    public CoreModuleTask testD(){
+        System.out.println("--------------------------");
+        CoreModuleTask coreModuleTask = new CoreModuleTask();
+        return restTemplate.postForObject("http://localhost:8086/addNewTaskWithSpecificTime", coreModuleTask,CoreModuleTask.class);
+    }
+
+    @PostMapping("/test/testThird")
+    public CoreModuleTask testThird(){
+        System.out.println("--------------------------");
+        CoreModuleTask coreModuleTask = new CoreModuleTask();
+        coreModuleTask.setNodeId(11L);
+        coreModuleTask.setName("dfdf");
+        coreModuleTask.setId(12L);
+        return restTemplate.postForObject("http://localhost:8086/addNewTask", coreModuleTask,CoreModuleTask.class);
+    }
+
+
+
+
+
 }

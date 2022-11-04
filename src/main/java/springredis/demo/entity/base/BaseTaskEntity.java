@@ -1,5 +1,6 @@
 package springredis.demo.entity.base;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 @NoArgsConstructor
 @Data
+@AllArgsConstructor
 public class BaseTaskEntity extends BaseEntity{
 
     //这三个是CoreModule的Key,无需处理直接返回即可
@@ -24,6 +26,7 @@ public class BaseTaskEntity extends BaseEntity{
     private List<Long> audienceId1= new ArrayList<>();
     private List<Long> audienceId2= new ArrayList<>();
 
+
     public BaseTaskEntity(BaseTaskEntity baseTaskEntity){
         super();
         this.targetNodeId = baseTaskEntity.getTargetNodeId();
@@ -31,6 +34,7 @@ public class BaseTaskEntity extends BaseEntity{
         this.nodeId = baseTaskEntity.getNodeId();
         this.journeyId = baseTaskEntity.getJourneyId();
         this.userId = baseTaskEntity.getUserId();
+
     }
 
 }

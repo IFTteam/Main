@@ -11,8 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
 
-public class OutAPICaller implements Runnable{
-
+public class OutAPICaller implements Runnable {
 
 
     private TimeDelayRepository timeDelayRepository;
@@ -23,6 +22,14 @@ public class OutAPICaller implements Runnable{
     public String idKey = "id";
     final String url = "http://localhost:3000";
 
+
+    private HashMap<String, String> urlDict = new HashMap<String, String>() {{
+        put("APITrigger", "   ");
+        put("ActionSend", "   ");
+        put("TimeDelay", "    ");
+        //put("if/else", " ")
+    }};
+
     public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate) {
         this.timeDelayRepository = timeDelayRepository;
         this.redisTemplate = redisTemplate;
@@ -31,17 +38,18 @@ public class OutAPICaller implements Runnable{
     //Debug??? connection with core module?
     @Override
     public void run() {
-        while (redisTemplate.opsForList().size(outQueueKey)>0){
+        while (redisTemplate.opsForList().size(outQueueKey) > 0) {
             HashMap outEvent = ((HashMap) redisTemplate.opsForList().rightPop(outQueueKey));
-            Long id = ((Number)outEvent.get(idKey)).longValue();
+            Long id = ((Number) outEvent.get(idKey)).longValue();
             Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
-            if (timeTaskOp.isPresent()){
-                String result = restTemplate.postForObject(url, timeTaskOp.get(),String.class);
+            if (timeTaskOp.isPresent()) {
+//            	TaskExecutor taskExectuor = new TaskExecutor(timeTaskOp.get().getCoreModuleTask());
+                String type = timeTaskOp.get().getCoreModuleTask().getType();
+                String url = urlDict.get(type);
+                String result = restTemplate.postForObject(url, timeTaskOp.get(), String.class);
+//                String result = restTemplate.postForObject(url, timeTaskOp.get(),String.class);
             }
 
-
-
         }
-
     }
 }
