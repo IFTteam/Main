@@ -42,6 +42,7 @@ public class TaskExecutor implements Runnable {
             put("SendEmail", "http://localhost:8080/SendEmail");
             put("If/else", "http://localhost:8080/If_Else");
             put("tag", "http://localhost:8080/Tag");
+            put("Brithday", "http://localhost:8080/Brithday");
         }
 
     };
@@ -63,7 +64,8 @@ public class TaskExecutor implements Runnable {
         //first, if this coremoduletask's type is "end", we dont do anythong and simply returns
         if (coreModuleTask.getType().equals("End")) return;
         //else, we can first call the respective functional API's based on task type:
-        CoreModuleTask restask = restTemplate.exchange(urlDict.get(coreModuleTask.getType()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
+        String url = urlDict.get(coreModuleTask.getType());
+        CoreModuleTask restask = restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
         if (restask.getMakenext() == 0) return;
         //else: first move audience from curnode to next node, or create new active audience in nextnode
@@ -97,9 +99,8 @@ public class TaskExecutor implements Runnable {
             }
             newtask.setActiveAudienceId1(activeIDs);
             newtask.setAudienceId1(IDs);
-            String url = "https://localhost:8080/ReturnTask";
             HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
-            Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
+            Long taskid = restTemplate.exchange("https://localhost:8080/ReturnTask", HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
         }
     }
 }

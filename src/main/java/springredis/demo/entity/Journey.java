@@ -15,6 +15,9 @@ public class Journey extends BaseEntity {
     private Long id;
     private String journeyName;
     private String thumbnailUrl;
+    /**
+     * 可以反序列化出List<Node>
+     */
     private String journeySerialized;
 
     private Integer status;

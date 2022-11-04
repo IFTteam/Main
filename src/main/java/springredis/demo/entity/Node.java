@@ -31,6 +31,7 @@ public class Node extends BaseEntity {
     private Integer headOrTail;
     private String status;
 
+    // 下一个节点的id
     @ElementCollection
     private List<Long> nexts = new ArrayList<>();
     @ElementCollection

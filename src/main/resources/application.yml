@@ -5,9 +5,9 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/customer_journey
+    url: jdbc:mysql://localhost:13306/customer_journey
     username: root
-    password: wangzihe0218
+    password: root
 
   jpa:
     show-sql: true

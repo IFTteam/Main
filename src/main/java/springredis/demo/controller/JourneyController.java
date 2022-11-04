@@ -111,6 +111,7 @@ public class JourneyController {
             coreModuleTask.setTargetNodeId(activeNodeRepository.findByDBNodeId(heads.get(i).getId()).getId());//Target node ->source
             TaskExecutor taskExecutor = new TaskExecutor(coreModuleTask);
 //            taskExecutor.callModule(heads.get(i));
+            // todo:应该放到线程池,去执行.
         }
         return journey;
     }
