@@ -2,17 +2,25 @@ package springredis.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import springredis.demo.entity.Audience;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Node;
+import springredis.demo.entity.TimeTask;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.repository.AudienceRepository;
 import springredis.demo.repository.NodeRepository;
+import springredis.demo.repository.TimeDelayRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 
+import java.sql.Date;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 //the API controller to receive task from other module
@@ -86,6 +94,63 @@ public class TaskController {
         }
         System.out.println("success");
         return 1L;
+    }
+
+
+    @Autowired
+    private TimeDelayRepository timeDelayRepository;
+    @Autowired
+    AudienceRepository audienceRepository;
+    /**
+     * 执行Brithday类型的任务
+     * @param coreModuleTask
+     * @return
+     */
+    @PostMapping("/Brithday")
+    public List<TimeTask> Brithday(@RequestBody CoreModuleTask coreModuleTask){
+        Long id = coreModuleTask.getId();
+        Long nodeId = coreModuleTask.getNodeId();
+        String type = coreModuleTask.getType();
+        /**
+         * active_node 表的id
+         */
+        Long targetNodeId = coreModuleTask.getTargetNodeId();
+
+        List<ActiveAudience> activeAudienceList =  activeAudienceRepository.findByAudienceNodeId(targetNodeId);
+        if (!CollectionUtils.isEmpty(activeAudienceList)) {
+            for (ActiveAudience activeAudience : activeAudienceList) {
+                // 用户id,就是给这个人发送的生日邮件.
+                Long audienceId = activeAudience.getAudienceId();
+                Audience audience = audienceRepository.searchAudienceByid(audienceId);
+                Date birthday = audience.getBirthday();
+
+                TimeTask x = new TimeTask();
+                x.setTriggerTime(birthday.getTime());// todo:只有年月日没有时分秒,也就是会00:00:00给audience发送邮件.
+                x.setRepeatTimes(1);// todo:
+                x.setRepeatInterval("");// todo:
+                x.setTaskStatus(0);// 状态:在数据库中
+                // 把timeTask保存到 time_task 表中.
+                x.setCreatedAt(LocalDateTime.now());
+                x.setCreatedBy("BrithdayTask");
+                timeDelayRepository.save(x);
+                //  todo:疑问:时间延迟之后,如何设置下一个发送邮件的节点?nextNodeId.
+//                   生日 类型的任务执行时，会隐式生成一个TimeTask Node，       A -> timeTask -> B
+//                   所以需要修改node表中的数据。
+//                   第一个节点是：active_node.node_id
+//                   第二个节点是，程序中自动生成的延迟节点。
+//                   x = new timeTask
+//                   BNodeId = a.next
+//                   A.next = x.NodeId
+//                   x.next = BNodeId
+
+
+
+
+            }
+        }
+
+
+        return null;
     }
 
 }
