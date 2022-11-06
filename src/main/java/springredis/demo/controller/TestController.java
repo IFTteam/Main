@@ -8,6 +8,7 @@ import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.repository.*;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
@@ -493,4 +494,61 @@ public class TestController {
         return userRepository.save(user);
     }
     //TODO: your own api
+    
+    @GetMapping("/test/addDelayTask")
+    public TimeTask addTask() {  //for testing purpose by Delong Bao
+    	CoreModuleTask coreModuleTask = new CoreModuleTask(new BaseTaskEntity());
+    	coreModuleTask.setId((long) 1234567);
+    	Node node = new Node();
+    	node.setName("DelayTimeInSecond 5 1 1");
+    	node.getNexts().add((long) 1);
+    	node.getNexts().add((long) 4);
+    	node.nextsSerialize();
+    	System.out.println("Node sNexts===================================" + node.getSNexts());
+    	nodeRepository.save(node);  //node id is only generated when you save it into repository
+    	System.out.println(nodeRepository.findAll());
+    	System.out.println("==============================TestController Node ID: " + node.getId());
+    	coreModuleTask.setNodeId(node.getId());
+    	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
+    	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
+    	return timeTask;
+    }
+    
+    @GetMapping("/test/addSpecificTask")
+    public TimeTask addTask1() {  //for testing purpose by Delong Bao
+    	CoreModuleTask coreModuleTask = new CoreModuleTask(new BaseTaskEntity());
+    	coreModuleTask.setId((long) 1234567);
+    	Node node = new Node();
+    	node.setName("SpecificTime 2022-11-06 17:25:10 1 1");
+    	node.getNexts().add((long) 1);
+    	node.getNexts().add((long) 4);
+    	node.nextsSerialize();
+    	System.out.println("Node sNexts===================================" + node.getSNexts());
+    	nodeRepository.save(node);  //node id is only generated when you save it into repository
+    	System.out.println(nodeRepository.findAll());
+    	System.out.println("==============================TestController Node ID: " + node.getId());
+    	coreModuleTask.setNodeId(node.getId());
+    	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
+    	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
+    	return timeTask;
+    }
+    
+    @GetMapping("/test/addUnitTask")
+    public TimeTask addTask2() {  //for testing purpose by Delong Bao
+    	CoreModuleTask coreModuleTask = new CoreModuleTask(new BaseTaskEntity());
+    	coreModuleTask.setId((long) 1234567);
+    	Node node = new Node();
+    	node.setName("TimeUnit 1 HOURS 1 1");
+    	node.getNexts().add((long) 1);
+    	node.getNexts().add((long) 4);
+    	node.nextsSerialize();
+    	System.out.println("Node sNexts===================================" + node.getSNexts());
+    	nodeRepository.save(node);  //node id is only generated when you save it into repository
+    	System.out.println(nodeRepository.findAll());
+    	System.out.println("==============================TestController Node ID: " + node.getId());
+    	coreModuleTask.setNodeId(node.getId());
+    	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
+    	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
+    	return timeTask;
+    }
 }
