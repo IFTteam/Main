@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import springredis.demo.entity.Audience;
 import springredis.demo.entity.CoreModuleTask;
@@ -120,9 +122,10 @@ public class TaskController {
         /**
          * active_node 表的id
          */
-        Long targetNodeId = coreModuleTask.getTargetNodeId();
+        Long activeNodeId = coreModuleTask.getTargetNodeId();
+        List<ActiveAudience> activeAudienceList =  activeAudienceRepository.findByAudienceNodeId(activeNodeId);
+        ActiveNode activeNode = activeNodeRepository.findById(activeNodeId).orElse(null);
 
-        List<ActiveAudience> activeAudienceList =  activeAudienceRepository.findByAudienceNodeId(targetNodeId);
         if (!CollectionUtils.isEmpty(activeAudienceList)) {
             for (ActiveAudience activeAudience : activeAudienceList) {
                 // 用户id,就是给这个人发送的生日邮件.
@@ -130,28 +133,55 @@ public class TaskController {
                 Audience audience = audienceRepository.searchAudienceByid(audienceId);
                 Date birthday = audience.getBirthday();
 
-                TimeTask x = new TimeTask();
-                x.setTriggerTime(birthday.getTime());// todo:只有年月日没有时分秒,也就是会00:00:00给audience发送邮件.
-                x.setRepeatTimes(1);// todo:
-                x.setRepeatInterval("");// todo:
-                x.setTaskStatus(0);// 状态:在数据库中
-                // 把timeTask保存到 time_task 表中.
-                x.setCreatedAt(LocalDateTime.now());
-                x.setCreatedBy("BrithdayTask");
-                timeDelayRepository.save(x);
-                //  todo:疑问:时间延迟之后,如何设置下一个发送邮件的节点?nextNodeId.
-//                   生日 类型的任务执行时，会隐式生成一个TimeTask Node，       A -> timeTask -> B
+                Node a = nodeRepository.searchNodeByid(nodeId);
+                a.nextsDeserialize();
+                Long bNodeId = a.getNexts().get(0);
+                Node b = nodeRepository.searchNodeByid(bNodeId);
+
+
+                // 创建一个新的node
 //                   所以需要修改node表中的数据。
 //                   第一个节点是：active_node.node_id
 //                   第二个节点是，程序中自动生成的延迟节点。
-//                   x = new timeTask
+//                   x = new Node()
 //                   BNodeId = a.next
 //                   A.next = x.NodeId
 //                   x.next = BNodeId
+                // todo:疑问:这里添加了一个node,但是这个node需要做的事情,是在哪里设置的?比如发邮件就需要和campaign表进行关联.这两个表是如何关联的?
+                Node x = new Node();
+                x.setType("TimeDelay");
+                x.setName("TimeDelay");
+                x.setStatus(a.getStatus());
+                x.setCreatedAt(LocalDateTime.now());
+                x.setCreatedBy("BrithdayTask");
+
+                x.setNexts(Collections.singletonList(bNodeId));
+                nodeRepository.save(x);
+                a.setNexts(Collections.singletonList(x.getId()));
+                nodeRepository.save(a);
+                nodeRepository.save(b);
 
 
+                // 根据journeyId,查询 active_journey
+                ActiveNode newActiveNode = new ActiveNode();
+                newActiveNode.setNodeId(x.getId());
+                ActiveAudience o = new ActiveAudience();
+                o.setAudienceId(audienceId);
+                o.setActiveNode(newActiveNode);
+                newActiveNode.setActiveAudienceList(Collections.singletonList(o));
+                activeNodeRepository.save(newActiveNode);
 
 
+                // 最后创建一个timeTask放到数据库中.
+                TimeTask brithdayTimeTask = new TimeTask();
+                brithdayTimeTask.setTriggerTime(birthday.getTime());// todo:只有年月日没有时分秒,也就是会00:00:00给audience发送邮件.
+                brithdayTimeTask.setRepeatTimes(1);// todo:重复次数
+                brithdayTimeTask.setRepeatInterval("1Y");// 重复间隔:1年
+                brithdayTimeTask.setTaskStatus(0);// 状态:在数据库中
+                // 把timeTask保存到 time_task 表中.
+                brithdayTimeTask.setCreatedAt(LocalDateTime.now());
+                brithdayTimeTask.setCreatedBy("BrithdayTask");
+                timeDelayRepository.save(brithdayTimeTask);
             }
         }
 
