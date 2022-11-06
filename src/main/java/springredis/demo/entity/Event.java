@@ -12,7 +12,9 @@ public class Event implements Serializable {
     private Date triggerTime;
     private Long id;
 
-
+    public Event() {
+    	
+    }
 
     public Event(Date triggerTime){
         this.triggerTime = triggerTime;
