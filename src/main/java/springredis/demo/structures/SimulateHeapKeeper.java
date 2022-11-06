@@ -36,15 +36,15 @@ public class SimulateHeapKeeper implements Runnable{
                     Event event = MinHeap.heapPop();
                     redisTemplate.opsForList().leftPush(outQueueKey,event);
                     System.out.println("Out Event: "+event.getTriggerTime());
+                    System.out.println("OutQueue Size: "+redisTemplate.opsForList().size(outQueueKey));
                 }
 
                 while (redisTemplate.opsForList().size(inQueueKey)>0){
                     //maybe set a max loops
-                    HashMap outEvent = ((HashMap) redisTemplate.opsForList().rightPop(inQueueKey));
-                    Date time = new Date ((Integer) outEvent.get(timeKey));
-                    Integer id = (Integer) outEvent.get(idKey);
-
-                    Event event = new Event(time,(long)id);
+                    Event outEvent = (Event) redisTemplate.opsForList().rightPop(inQueueKey);
+                    Date time = outEvent.getTriggerTime();
+                    Long id = outEvent.getId();
+                    Event event = new Event(time,id);
                     MinHeap.heapInsert(event);
                 }
             }
