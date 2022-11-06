@@ -63,6 +63,7 @@ public class Node extends BaseEntity {
         StringBuffer buffer = new StringBuffer();
         for(Long num:nexts){
             buffer.append(num.toString());
+            buffer.append(" ");  //separate by spaces for deserializatiing
         }
         sNexts = buffer.toString();
     }
