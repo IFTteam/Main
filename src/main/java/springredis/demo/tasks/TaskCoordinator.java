@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import springredis.demo.entity.CoreModuleTask;
+import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
 import springredis.demo.structures.OutAPICaller;
 import springredis.demo.structures.SimulateHeapKeeper;
@@ -33,17 +34,17 @@ public class TaskCoordinator implements DisposableBean,Runnable {
 
     // dao 和service注入
     @Autowired
-    public TaskCoordinator(RedisTemplate redisTemplate, TimeDelayRepository timeDelayRepository) {
+    public TaskCoordinator(RedisTemplate redisTemplate, TimeDelayRepository timeDelayRepository, NodeRepository nodeRepository) {
         RedisConnection redisConnection = RedisConnectionUtils.getConnection(redisTemplate.getConnectionFactory(),true);
         redisConnection.flushDb();
         SimulateHeapKeeper simulateHeapKeeper = new SimulateHeapKeeper(redisTemplate);
-        OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate);
+        OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate, nodeRepository);
         SimulateNewEvent simulateNewEvent = new SimulateNewEvent(timeDelayRepository, redisTemplate);
         this.m_redisTemplate = redisTemplate;
         new Thread(simulateNewEvent).start();
         new Thread(simulateHeapKeeper).start();
         new Thread(outAPICaller).start();
-//        new Thread(this).start();                   //since task coordinator itself is also a runnable,its run function is also started when it is constructed
+        new Thread(this).start();                   //since task coordinator itself is also a runnable,its run function is also started when it is constructed
     }
 
 
