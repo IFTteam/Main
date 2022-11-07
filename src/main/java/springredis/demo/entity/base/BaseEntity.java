@@ -27,12 +27,12 @@ public class BaseEntity {
     private String createdBy;
 
     @LastModifiedDate
-    @Column(insertable = false)
+    @Column()
     @JsonIgnore
     private LocalDateTime updatedAt;
 
     @LastModifiedBy
-    @Column(insertable = false)
+    @Column()
     @JsonIgnore
     private String updatedBy;
 

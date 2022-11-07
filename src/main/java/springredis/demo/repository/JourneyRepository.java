@@ -15,4 +15,6 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     @Query(value="SELECT j from Journey j WHERE j.id=:Id")                 //search audience by id in audience repo
     Journey searchJourneyById(long Id);
 
+    @Query(value="SELECT j from Journey j WHERE j.frontEndId=:frontEndId")
+    Journey searchJourneyByFrontEndId(String frontEndId);
 }

@@ -24,13 +24,14 @@ public class Node extends BaseEntity {
     @GeneratedValue
     private Long id;
 
-    private Long frontEndId;
+    private String frontEndId; //改成string
     private String name;
     private String type;
 
-    private Integer headOrTail;
+    private Integer headOrTail; // what if there's only one node
     private String status;
 
+    private String journeyFrontEndId;
     @ElementCollection
     private List<Long> nexts = new ArrayList<>();
     @ElementCollection
@@ -62,6 +63,7 @@ public class Node extends BaseEntity {
         StringBuffer buffer = new StringBuffer();
         for(Long num:nexts){
             buffer.append(num.toString());
+            buffer.append(" ");  //separate by spaces for deserializatiing
         }
         sNexts = buffer.toString();
     }
@@ -70,10 +72,18 @@ public class Node extends BaseEntity {
         super();
     }
 
-    public Node(String name, String type, String status, LocalDateTime createdAt, String createdBy, LocalDateTime updatedAt, String updatedBy) {
-        super(createdAt, createdBy,updatedAt,updatedBy);
+    public Node(String name,
+                String type,
+                String status,
+                LocalDateTime createdAt,
+                String createdBy,
+                LocalDateTime updatedAt,
+                String updatedBy,
+                String journeyFrontEndId) {
+        super(createdAt, createdBy, updatedAt,updatedBy);
         this.name = name;
         this.type = type;
         this.status = status;
+        this.journeyFrontEndId = journeyFrontEndId;
     }
 }

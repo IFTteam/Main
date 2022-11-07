@@ -8,6 +8,7 @@ import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.repository.*;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
@@ -17,6 +18,8 @@ import springredis.demo.tasks.CMTExecutor;
 
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -285,12 +288,12 @@ public class TestController {
     @GetMapping("/test/serializeNode")
     public String serializeNode() {
         SeDeFunction sede = new SeDeFunction();
-        Node node1 = nodeRepository.searchNodeByid(7);
-        Node node2 = nodeRepository.searchNodeByid(8);
+        Node node1 = nodeRepository.searchNodeByid(1);
+        Node node2 = nodeRepository.searchNodeByid(2);
+        Node node3 = nodeRepository.searchNodeByid(3);
+        Node node4 = nodeRepository.searchNodeByid(4);
 
-        node1.setCreatedAt(LocalDateTime.now());
-        node2.setCreatedAt(LocalDateTime.now());
-        ArrayList<Node> node_list = new ArrayList<>(Arrays.asList(node1, node2));
+        ArrayList<Node> node_list = new ArrayList<>(Arrays.asList(node1, node2, node3, node4));
 
         String nodeListString = sede.serializing(node_list);
         return nodeListString;
@@ -298,17 +301,184 @@ public class TestController {
     @GetMapping("/test/deserializeNode")
     public List<Node> deserializeNode() {
         SeDeFunction sede = new SeDeFunction();
-        Node node1 = nodeRepository.searchNodeByid(7);
-        Node node2 = nodeRepository.searchNodeByid(8);
+        Node node1 = nodeRepository.searchNodeByid(1);
+        Node node2 = nodeRepository.searchNodeByid(2);
+        Node node3 = nodeRepository.searchNodeByid(3);
+        Node node4 = nodeRepository.searchNodeByid(4);
 
-        node1.setCreatedAt(LocalDateTime.now());
-        node2.setCreatedAt(LocalDateTime.now());
 
-        ArrayList<Node> node_list = new ArrayList<>(Arrays.asList(node1, node2));
+        ArrayList<Node> node_list = new ArrayList<>(Arrays.asList(node1, node2, node3, node4));
         String nodeListString = sede.serializing(node_list);
         List<Node> nodeListArray = sede.deserializing(nodeListString);
         return nodeListArray;
     }
+
+    @GetMapping("/test/addTestNodes")
+    public void addTestNodes() {
+        Node node1 = new Node();
+        Node node2 = new Node();
+        Node node3 = new Node();
+        Node node4 = new Node();
+
+        node1.setType("trigger");
+        node2.setType("action");
+        node2.setName("someName1");
+        node3.setType("if/else");
+        node3.setName("someName2");
+        node1.setCreatedAt(LocalDateTime.now());
+
+        Long node1id = dao.addNewNode(node1).getId();
+        Long node2id = dao.addNewNode(node2).getId();
+        Long node3id = dao.addNewNode(node3).getId();
+        Long node4id = dao.addNewNode(node4).getId();
+
+        List<Long> onesNexts = new ArrayList<>();
+        onesNexts.add(node2id);
+        List<Long> twosNexts = new ArrayList<>();
+        twosNexts.add(node3id);
+        twosNexts.add(node4id);
+        node1.setHeadOrTail(1);
+        node2.setHeadOrTail(0);
+        node3.setHeadOrTail(2);
+        node4.setHeadOrTail(2);
+        List<Long> twosLasts = new ArrayList<>();
+        twosLasts.add(node1id);
+        List<Long> threesLasts = new ArrayList<>();
+        threesLasts.add(node2id);
+        List<Long> foursLasts = new ArrayList<>();
+        foursLasts.add(node2id);
+        node2.setLasts(twosLasts);
+        node3.setLasts(threesLasts);
+        node4.setLasts(foursLasts);
+
+        node1.setNexts(onesNexts);
+        node2.setNexts(twosNexts);
+
+        dao.addNewNode(node1);
+        dao.addNewNode(node2);
+        dao.addNewNode(node3);
+        dao.addNewNode(node4);
+    }
+
+    private Node createEndNode() {
+        Node endNode = new Node();
+        endNode.setType("end");
+        endNode.setHeadOrTail(2);
+        endNode.setName("endNode");
+        return endNode;
+    }
+    private Node createNodeFromNodeJsonModel(NodeJsonModel nodeJsonModel) {
+        Node newNode = new Node();
+        LocalDateTime createAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        LocalDateTime updateAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+
+        newNode.setFrontEndId(nodeJsonModel.getId());
+        newNode.setUpdatedBy(nodeJsonModel.getUpdatedBy());
+        newNode.setUpdatedAt(updateAt);
+        newNode.setType(nodeJsonModel.getComponentType());
+        newNode.setHeadOrTail(0);
+        newNode.setCreatedBy(nodeJsonModel.getCreatedBy());
+        newNode.setCreatedAt(createAt);
+        newNode.setName(nodeJsonModel.getName());
+        return newNode;
+    }
+    public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx) {
+        Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx]);
+        // We need to store the node in DB first
+        dao.addNewNode(newNode);
+        // so that we can get the node's id
+        Long nodeId = newNode.getId();
+        nodeIdList.add(newNode.getId());
+        newNode = dao.searchNodeById(nodeId);
+
+        List<Long> nexts = new ArrayList<>();
+        // If it is an if/else node. It'll have two next nodes.
+        if (newNode.getType().equals("switch")) {
+             Long child1 = null;
+             Long child2 = null;
+             if (nodeJsonModelList[idx].getBranches().getTrue().length != 0) {
+                 child1 = dfs(nodeJsonModelList[idx].getBranches().getTrue(), 0);
+             }
+             if (nodeJsonModelList[idx].getBranches().getFalse().length != 0) {
+                 child2 = dfs(nodeJsonModelList[idx].getBranches().getFalse(), 0);
+             }
+             if (child1 == null) {
+                 Node endNode = createEndNode();
+                 child1 = dao.addNewNode(endNode).getId();
+             }
+            if (child2 == null) {
+                Node endNode = createEndNode();
+                child2 = dao.addNewNode(endNode).getId();
+            }
+            nexts.add(child1);
+            nexts.add(child2);
+        } else {
+            // Otherwise, it'll have only one next node.
+            Long child = null;
+            if (idx != nodeJsonModelList.length - 1) {
+                child = dfs(nodeJsonModelList, idx + 1);
+            } else {
+                Node endNode = createEndNode();
+                child = dao.addNewNode(endNode).getId();
+            }
+            nexts.add(child);
+        }
+        newNode.setNexts(nexts);
+        dao.addNewNode(newNode);
+        newNode = dao.searchNodeById(nodeId);
+        System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts());
+        return nodeId;
+    }
+
+    ArrayList<Long> nodeIdList = new ArrayList<>();
+    @PostMapping("/test/deserializeJourney")
+    public void deserializeJourney(@RequestBody String journeyJson) {
+        Journey j = journeyRepository.searchJourneyById(1L);
+        System.out.println(j);
+//        SeDeFunction sede = new SeDeFunction();
+//        // Map JourneyJson to JourneyJsonModel
+//        JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
+//        // Create Journey object using JourneyJson's info then store in DB
+//        Journey oneJourney = new Journey();
+//        oneJourney.setJourneySerialized(journeyJson);
+//        oneJourney.setJourneyName(journeyJsonModel.getProperties().getJourneyName());
+//        Long journeyid = dao.addNewJourney(oneJourney).getId();
+//
+//        // Traverse the journeyJsonModel object and add each node into DB
+//        dfs(journeyJsonModel.getSequence(), 0);
+//
+//        // set first node as head
+//        Node headNode = dao.searchNodeById(nodeIdList.get(0));
+//        headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
+//        dao.addNewNode(headNode);
+    }
+
+    @PostMapping("/test/deNode")
+    public void deNode() {
+        Node node1 = dao.searchNodeById(13L);
+        Node node2 = dao.searchNodeById(3L);
+        Node node3 = dao.searchNodeById(19L);
+        Node node4 = dao.searchNodeById(20L);
+//        Node node10 = dao.searchNodeById(10L);
+//        Node node11 = dao.searchNodeById(11L);
+//        Node node12 = dao.searchNodeById(12L);
+//        Node node13 = dao.searchNodeById(13L);
+//        Node node14 = dao.searchNodeById(14L);
+//        Node node15 = dao.searchNodeById(15L);
+//        Node node16 = dao.searchNodeById(16L);
+        System.out.println(node1.getNexts());
+        System.out.println(node2.getNexts());
+        System.out.println(node3.getNexts());
+        System.out.println(node4.getNexts());
+//        System.out.println(node10.getNexts());
+//        System.out.println(node11.getNexts());
+//        System.out.println(node12.getNexts());
+//        System.out.println(node13.getNexts());
+//        System.out.println(node14.getNexts());
+//        System.out.println(node15.getNexts());
+//        System.out.println(node16.getNexts());
+    }
+
 
 
     @PostMapping("/test/addUser")
@@ -316,4 +486,61 @@ public class TestController {
         return userRepository.save(user);
     }
     //TODO: your own api
+    
+    @GetMapping("/test/addDelayTask")
+    public TimeTask addTask() {  //for testing purpose by Delong Bao
+    	CoreModuleTask coreModuleTask = new CoreModuleTask(new BaseTaskEntity());
+    	coreModuleTask.setId((long) 1234567);
+    	Node node = new Node();
+    	node.setName("DelayTimeInSecond 5 1 1");
+    	node.getNexts().add((long) 1);
+    	node.getNexts().add((long) 4);
+    	node.nextsSerialize();
+    	System.out.println("Node sNexts===================================" + node.getSNexts());
+    	nodeRepository.save(node);  //node id is only generated when you save it into repository
+    	System.out.println(nodeRepository.findAll());
+    	System.out.println("==============================TestController Node ID: " + node.getId());
+    	coreModuleTask.setNodeId(node.getId());
+    	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
+    	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
+    	return timeTask;
+    }
+    
+    @GetMapping("/test/addSpecificTask")
+    public TimeTask addTask1() {  //for testing purpose by Delong Bao
+    	CoreModuleTask coreModuleTask = new CoreModuleTask(new BaseTaskEntity());
+    	coreModuleTask.setId((long) 1234567);
+    	Node node = new Node();
+    	node.setName("SpecificTime 2022-11-06 17:25:10 1 1");
+    	node.getNexts().add((long) 1);
+    	node.getNexts().add((long) 4);
+    	node.nextsSerialize();
+    	System.out.println("Node sNexts===================================" + node.getSNexts());
+    	nodeRepository.save(node);  //node id is only generated when you save it into repository
+    	System.out.println(nodeRepository.findAll());
+    	System.out.println("==============================TestController Node ID: " + node.getId());
+    	coreModuleTask.setNodeId(node.getId());
+    	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
+    	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
+    	return timeTask;
+    }
+    
+    @GetMapping("/test/addUnitTask")
+    public TimeTask addTask2() {  //for testing purpose by Delong Bao
+    	CoreModuleTask coreModuleTask = new CoreModuleTask(new BaseTaskEntity());
+    	coreModuleTask.setId((long) 1234567);
+    	Node node = new Node();
+    	node.setName("TimeUnit 1 HOURS 1 1");
+    	node.getNexts().add((long) 1);
+    	node.getNexts().add((long) 4);
+    	node.nextsSerialize();
+    	System.out.println("Node sNexts===================================" + node.getSNexts());
+    	nodeRepository.save(node);  //node id is only generated when you save it into repository
+    	System.out.println(nodeRepository.findAll());
+    	System.out.println("==============================TestController Node ID: " + node.getId());
+    	coreModuleTask.setNodeId(node.getId());
+    	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
+    	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
+    	return timeTask;
+    }
 }

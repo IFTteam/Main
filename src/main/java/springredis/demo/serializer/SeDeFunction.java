@@ -2,6 +2,8 @@ package springredis.demo.serializer;
 
 import com.google.gson.*;
 import springredis.demo.entity.Node;
+import springredis.demo.entity.JourneyJsonModel;
+import springredis.demo.entity.NodeJsonModel;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +13,27 @@ import java.util.List;
 public class SeDeFunction {
     //传进来的是node list，把一个一个node拿出来序列化，然后加入String，返回String
     GsonBuilder gsonBuilder = new GsonBuilder();
+
+    // used to parse the journey JSON from frontend to JourneyJsonModel object
+    public JourneyJsonModel deserializeJounrey(String journeyJson){
+        gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
+        Gson gson = gsonBuilder.setPrettyPrinting().create();
+        JourneyJsonModel journeyObject = gson.fromJson(journeyJson, JourneyJsonModel.class);
+        return journeyObject;
+    }
+
+    public String serializeJourney(JourneyJsonModel journeyJsonModel) {
+        gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
+        Gson gson = gsonBuilder.setPrettyPrinting().create();
+        return gson.toJson(journeyJsonModel);
+    }
+
+    public NodeJsonModel JsonToNodeJsonModel(String nodeJson) {
+        gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
+        Gson gson = gsonBuilder.setPrettyPrinting().create();
+        NodeJsonModel nodeObject = gson.fromJson(nodeJson, NodeJsonModel.class);
+        return nodeObject;
+    }
 
     public String serializing(ArrayList<Node> nodeArray){
         gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
