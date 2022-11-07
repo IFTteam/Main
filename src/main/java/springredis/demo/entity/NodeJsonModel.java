@@ -24,7 +24,9 @@ public class NodeJsonModel {
     Branch branches;
     List<Long> nexts = new ArrayList<>();
     List<Long> lasts = new ArrayList<>();
+    public NodeJsonModel(){
 
+    }
     public NodeJsonModel(String id,
                          String componentType,
                          String type,

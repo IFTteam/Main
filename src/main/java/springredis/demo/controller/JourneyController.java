@@ -116,7 +116,36 @@ public class JourneyController {
         // set first node as head
         Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
         headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
+
+        // Set dummyHead
+        Node dummyHead = nodeRepository.searchNodeByFrontEndId("dummyHead" + journeyFrontEndId);
+        if (dummyHead == null) {
+            dummyHead = new Node();
+            dummyHead.setFrontEndId("dummyHead" + journeyFrontEndId);
+        }
+        List<Long> nexts = new ArrayList<>();
+        nexts.add(headNode.getId());
+        dummyHead.setNexts(nexts);
+        Long dummyHeadId = nodeRepository.save(dummyHead).getId();
+        ActiveJourney activeJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(journeyId);
+        // Set activeDummyHead who corresponds to dummyHead
+        ActiveNode activeDummyHead = activeNodeRepository.findByDBNodeId(dummyHeadId);
+        if (activeDummyHead == null) {
+            activeDummyHead = new ActiveNode();
+            activeDummyHead.setNodeId(dummyHeadId);
+            activeDummyHead.setActiveJourney(activeJourney);
+        }
+
+        activeNodeRepository.save(activeDummyHead);
         nodeRepository.save(headNode);
+        nodeRepository.save(dummyHead);
+
+        // Call CoreModuleTask
+        CoreModuleTask cmt = new CoreModuleTask();
+        cmt.setNodeId(dummyHeadId);
+        cmt.setCallapi(0);
+        cmt.setTaskType(1);
+        cmtExecutor.execute(cmt);
 
         return oneJourney;
     }
