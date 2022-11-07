@@ -65,6 +65,7 @@ public class CMTExecutor{
         CoreModuleTask restask = null;
         //else, we can first call the respective functional API's based on task type if the callapi attribute is 1:
         if(coreModuleTask.getCallapi()==1) {restask = restTemplate.exchange(urlDict.get(coreModuleTask.getType()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();}
+        else restask = coreModuleTask;
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
         if (restask.getMakenext() == 0) return;
         //else: first move audience from curnode to next node, or create new active audience in nextnode
