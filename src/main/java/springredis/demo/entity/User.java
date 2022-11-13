@@ -1,42 +1,79 @@
 package springredis.demo.entity;
 
 import lombok.Data;
+
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.relational.core.sql.In;
-import springredis.demo.entity.base.BaseEntity;
+import org.springframework.validation.annotation.Validated;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.sql.Date;
 
 @Entity
-@Data
-@Table
+@Getter
+@Setter
+@Table(name="user")
+@Validated
 public class User extends BaseEntity {
     @Id
-    @GeneratedValue    private Long id;
+    @GeneratedValue(strategy= GenerationType.AUTO,generator="native")
+    @GenericGenerator(name = "native", strategy = "native")
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "username")
     private String username;
-    private String password_hash;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    @Column(name = "avatar_url")
     private String avatarUrl;
+
+    @Column(name = "domain")
     private String domain;
-    private Long companyId;
+
+    @Column(name = "company_id")
+    private String companyId;
+
+    @Column(name = "unsubscribe_link")
     private String unsubscribeLink;
+
+    @Column(name = "subscription_type")
     private String subscriptionType;
+
+    @Column(name = "unsubscribe_type")
     private String unsubscribeType;
+
+    @Column(name = "contact_name")
     private String contactName;
+
+    @Column(name = "contact_email")
     private String contactEmail;
+
+    @Column(name = "contact_phone")
     private String contactPhone;
+
+    @Column(name = "address")
     private String address;
-    private Long apiId;
-    private Long apiKey;
-//    private Integer preferEmailSvcProvider;
-//    private Integer onlySendDeliverableEmail;
 
-    private String salesforceApiKey;
-    private String hubspotApiKey;
+    @Column(name = "api_key")
+    private String apiKey;
+
+    @Column(name = "salesforce_api_key")
+    private String salesForceApiKey;
+
+    @Column(name = "shopify_api_key")
     private String shopifyApiKey;
-    private String facebookAdsApiKey;
-    private String shopifydevstore;                 //shopify development store name for this user
 
-    public User() {
-        super();
-    }
+    @Column(name = "hubspot_api_key")
+    private String hubspotApiKey;
+
+    @Column(name = "facebook_ads_api_key")
+    private String facebookAdsApiKey;
+
+
 }
