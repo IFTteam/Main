@@ -1,16 +1,23 @@
 package springredis.demo.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.entity.base.BaseEntity;
 
 import javax.persistence.*;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Audience extends BaseEntity {
     @Id
     @SequenceGenerator(
@@ -29,7 +36,7 @@ public class Audience extends BaseEntity {
     private String phone;
     private String address;
 
-    private Date birthday;
+    private LocalDate birthday;
     private String source;
 
     @ManyToOne(targetEntity = Node.class)
@@ -63,4 +70,6 @@ public class Audience extends BaseEntity {
         if(tags == null) tags = new ArrayList<>();
         tags.add(tag);
     }
+    private LocalDate date_added;
+    private LocalDate last_updated_time;
 }
