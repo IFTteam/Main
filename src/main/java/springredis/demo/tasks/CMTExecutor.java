@@ -83,6 +83,9 @@ public class CMTExecutor{
             Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
             CoreModuleTask newtask = new CoreModuleTask();
+            newtask.setUserId(restask.getUserId());
+            newtask.setJourneyId(restask.getJourneyId());
+            newtask.setNodeId(id);
             newtask.setTaskType(0);                 //all tasks are move-user except for trigger hit, which is not taken care of here
             newtask.setType(nextnode.getType());
             newtask.setName(nextnode.getName());
