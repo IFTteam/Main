@@ -125,7 +125,13 @@ public class TaskController {
                 // 用户id,就是给这个人发送的生日邮件.
                 Long audienceId = activeAudience.getAudienceId();
                 Audience audience = audienceRepository.searchAudienceByid(audienceId);
+                if (audience == null) {
+                    continue;
+                }
                 Date birthday = audience.getBirthday();
+                if (birthday == null) {
+                    continue;
+                }
 
                 Node a = nodeRepository.searchNodeByid(nodeId);
                 a.nextsDeserialize();
