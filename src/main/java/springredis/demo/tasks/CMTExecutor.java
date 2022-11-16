@@ -40,6 +40,7 @@ public class CMTExecutor{
             put("SendEmail", "http://localhost:8080/SendEmail");
             put("If/else", "http://localhost:8080/If_Else");
             put("tag", "http://localhost:8080/Tag");
+            put("Birthday", "http://localhost:8080/Birthday");
         }
 
     };
