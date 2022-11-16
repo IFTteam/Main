@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
-@CrossOrigin
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class JourneyController {
     @Autowired
     private JourneyRepository journeyRepository;

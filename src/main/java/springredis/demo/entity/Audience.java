@@ -11,7 +11,8 @@ import java.sql.Date;
 @Data
 public class Audience extends BaseEntity {
     @Id
-    @GeneratedValue    private Long id;
+    @GeneratedValue
+    private Long id;
     private String email;
     private String firstName;
     private String lastName;
