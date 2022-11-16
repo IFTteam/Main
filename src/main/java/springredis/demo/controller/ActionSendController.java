@@ -1,5 +1,7 @@
 package springredis.demo.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,13 +15,18 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Optional;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import springredis.demo.entity.Transmission;
 import springredis.demo.entity.base.BaseTaskEntity;
+import springredis.demo.entity.request.Address;
+import springredis.demo.entity.request.Content;
 import springredis.demo.entity.request.ScheduledTransmissionRequest;
+import springredis.demo.entity.request.Sender;
 import springredis.demo.entity.request.TransmissionRequest;
 import springredis.demo.entity.response.Response;
 import springredis.demo.entity.response.SparkPostResponse;
@@ -57,7 +64,50 @@ public class ActionSendController {
         this.webClient = webClient;
     }
 
+    @SneakyThrows
+    public static void main(String[] args) {
+        TransmissionRequest a = new TransmissionRequest();
+        a.setCampaignId("");
+        a.setAddressList(Collections.singletonList(new Address().setAddress(""))); // 邮箱
+        Content content = new Content();
+        content.setSender(new Sender("邮箱@google.cn", "wang"));
+        content.setText("这是各测试邮件的内容");
+        content.setSubject("这是邮件标题");
+        a.setContent(content);
+        System.out.println(new ObjectMapper().writeValueAsString(a));
+    }
 
+    /**
+     * <pre>
+     * {@code
+       curl -X POST --location "http://localhost:8080/actionSend/createTransmission" \
+          -H "Content-Type: application/json" \
+          -d "{
+                \"campaign_id\": \"\",
+                \"recipients\": [
+                  {
+                    \"address\": \"\"
+                  }
+                ],
+                \"content\": {
+                  \"from\": {
+                    \"email\": \"ikirawang@gmail.com\",
+                    \"name\": \"wang\"
+                  },
+                  \"subject\": \"这是邮件标题\",
+                  \"html\": null,
+                  \"text\": \"这是各测试邮件的内容\"
+                },
+                \"audience_id\": null,
+                \"user_id\": null,
+                \"journey_id\": null
+              }"
+     *
+     * }
+     * </pre>
+     * @param transmissionRequest
+     * @return
+     */
     @RequestMapping(value={"/createTransmission"}, method = POST)
     @ResponseBody
     public ResponseEntity<Response> createTransmission(@RequestBody TransmissionRequest transmissionRequest){
