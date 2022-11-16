@@ -33,7 +33,7 @@ public class FrontendTagServiceImpl implements FrontendTagService {
     private AudienceRepository audienceRepository;
 
     @Override
-    public List<Tag> getDistinctTagByUser(Long userId) throws UserNotFoundException {
+    public List<String> getDistinctTagByUser(Long userId) throws UserNotFoundException {
         Optional<User> user = userRepository.findById(userId);
 
         if (!user.isPresent()) {
@@ -51,7 +51,11 @@ public class FrontendTagServiceImpl implements FrontendTagService {
                 resultList.add(t);
             }
         }
-        return resultList;
+        List<String> tagname=new ArrayList<>();
+        for(Tag element : resultList){
+            tagname.add(element.getTag_name());
+        }
+        return tagname;
     }
 
     @Override
