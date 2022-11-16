@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Optional;
 
 import lombok.SneakyThrows;
@@ -111,6 +112,65 @@ public class ActionSendController {
     @RequestMapping(value={"/createTransmission"}, method = POST)
     @ResponseBody
     public ResponseEntity<Response> createTransmission(@RequestBody TransmissionRequest transmissionRequest){
+
+/*
+
+  {
+      "options": {
+          "open_tracking": true,
+          "click_tracking": true
+      },
+      "metadata": {
+          "user_type": "students",
+          "education_level": "college"
+      },
+      "substitution_data": {
+          "discount": "25"
+      },
+      "recipients": [
+          {
+              "address": {
+                  "email": "wilma@flintstone.com",
+                  "name": "Wilma Flintstone"
+              },
+              "substitution_data": {
+                  "customer_type": "Platinum",
+              }
+          }
+      ],
+      "content": {
+          "from": {
+              "name": "Fred Flintstone",
+              "email": "fred@flintstone.com"
+          },
+          "subject": "Big Christmas savings!",
+          "reply_to": "Christmas Sales <sales@flintstone.com>",
+          "headers": {
+              "X-Customer-Campaign-ID": "christmas_campaign"
+          },
+          "html": "<p>Hi {{address.name}} \nSave big this Christmas in your area {{place}}! \nClick http://www.mysite.com and get a {{discount}}% discount\n</p><p>Hurry, this offer is only to {{user_type}}\n</p>"
+      }
+  }
+
+ */
+
+        HashMap<Object, Object> param = new HashMap<>();
+        param.put("options", new HashMap<String, Object>() {{
+            //"open_tracking": true,
+                    //"click_tracking": true
+            put("open_tracking", true);
+            put("click_tracking", true);
+        }});
+        // "metadata": {
+        //          "user_type": "students",
+        //          "education_level": "college"
+        //      }
+        param.put("metadata", new HashMap<String, Object>() {{
+            put("user_type", "students");
+            put("education_level", "college");
+        }});
+
+
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                                                                  .uri("/api/v1/transmissions?num_rcpt_errors=3")
                                                                  .header("Content-Type", "application/json")
