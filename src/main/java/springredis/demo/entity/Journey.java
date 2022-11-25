@@ -5,13 +5,23 @@ import springredis.demo.entity.base.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
 @Table
 public class Journey extends BaseEntity {
     @Id
-    @GeneratedValue
+    @SequenceGenerator(
+            name = "journey_sequence",
+            sequenceName = "journey_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "journey_sequence"
+    )
     private Long id;
     private String journeyName;
     private String thumbnailUrl;
@@ -32,4 +42,7 @@ public class Journey extends BaseEntity {
         this.stage = stage;
         this.frontEndId = frontEndId;
     }
+
+    @OneToMany(mappedBy = "journey")
+    private List<Tag> sendermessage = new ArrayList<>();
 }

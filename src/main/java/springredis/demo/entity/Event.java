@@ -1,13 +1,23 @@
 package springredis.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 
+import javax.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Date;
 
 //public class Event implements Serializable{
 //This is the data format in the heap
+@Embeddable
+@Data
+@AllArgsConstructor
+@Builder
 public class Event implements Serializable {
     private Date triggerTime;
     private Long id;
@@ -43,6 +53,8 @@ public class Event implements Serializable {
         this.triggerTime = triggerTime;
     }
 
+    @JsonProperty("msys")
+    private Msys msys;
 
 
 
