@@ -35,7 +35,6 @@ public class CMTExecutor{
         {
             put("TimeDelay", "http://localhost:8080/TimeDelay");
             put("APITrigger", "http://localhost:8080/API_trigger");
-            put("End", "http://localhost:8080/End");
             put("TimeTrigger", "http://localhost:8080/TimeTrigger");
             put("SendEmail", "http://localhost:8080/SendEmail");
             put("If/else", "http://localhost:8080/If_Else");
