@@ -1,27 +1,20 @@
 package springredis.demo.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Optional;
+import java.util.*;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
+import springredis.demo.entity.Journey;
 import springredis.demo.entity.Transmission;
 import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.entity.request.Address;
@@ -65,7 +58,7 @@ public class ActionSendController {
         this.webClient = webClient;
     }
 
-    @SneakyThrows
+   /* @SneakyThrows
     public static void main(String[] args) {
         TransmissionRequest a = new TransmissionRequest();
         a.setCampaignId("");
@@ -77,6 +70,35 @@ public class ActionSendController {
         a.setContent(content);
         System.out.println(new ObjectMapper().writeValueAsString(a));
     }
+
+    */
+   @GetMapping("/test/addTransmission")
+   public TransmissionRequest createTransmission() {
+       TransmissionRequest request = new TransmissionRequest();
+       Address address = new Address();
+       address.setAddress("ikirawang@gmail.com");
+       List<Address> list = new ArrayList<>();
+       list.add(address);
+       request.setCampaignId("1");
+       request.setAddressList(list);
+       Content content = new Content();
+       Sender sender = new Sender();
+       sender.setEmail("testing@sub.paradx.net");
+       sender.setName("Luke Leon");
+       content.setSender(sender);
+       content.setSubject("News1");
+       content.setHtml(" ");
+       content.setText("Piggy ZHu Mi Bun");
+       request.setContent(content);
+       request.setAudienceId((long)1);
+       request.setJourneyId((long)1);
+       request.setCampaignId("1");
+       request.setUserId((long)2);
+       restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
+
+
+       return request;
+   }
 
     /**
      * <pre>
@@ -104,13 +126,13 @@ public class ActionSendController {
                 \"journey_id\": null
               }"
      *
-     * }
-     * </pre>
+     * } */
+    /**
+     *
      * @param transmissionRequest
      * @return
      */
     @RequestMapping(value={"/createTransmission"}, method = POST)
-    @ResponseBody
     public ResponseEntity<Response> createTransmission(@RequestBody TransmissionRequest transmissionRequest){
 
 /*
@@ -193,7 +215,9 @@ public class ActionSendController {
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
-        transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+        Optional<Journey> optional = journeyRepository.findById(transmissionRequest.getJourneyId());
+        //transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+        transmission.setJourney(optional.get());
         transmissionRepository.save(transmission);
 
         Response response = new Response();
