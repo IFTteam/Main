@@ -232,8 +232,11 @@ public class JourneyController {
         String createdBy = nodeJsonModel.getCreatedBy();
         String updatedBy = nodeJsonModel.getUpdatedBy();
         String frontEndId = nodeJsonModel.getId();
-
-        Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId);
+        NodeJsonModel.Property properties = nodeJsonModel.getProperties();
+//        System.out.println("PPPPPPPPPPPPPP" + properties);
+        String propertiesString = new SeDeFunction().serializeNodeProperty(properties);
+//        System.out.println("BBBBBBBBBBBBBB" + propertiesString);
+        Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId, propertiesString);
         newNode.setHeadOrTail(0);
         newNode.setFrontEndId(frontEndId);
 
