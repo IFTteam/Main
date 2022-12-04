@@ -1,5 +1,6 @@
 package springredis.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -52,7 +53,10 @@ public class NodeJsonModel {
     }
     @Data
     public class Property {
-        String dummyVariable;
+        String Run;
+
+        @JsonProperty("Select List")
+        String SelectList;
     }
     @Data
     public class Branch {
