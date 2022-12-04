@@ -209,7 +209,8 @@ public class ActionSendController {
         //record keeping
         Transmission transmission = new Transmission();
         log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
-        transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        Long transmissionId = sparkPostResponse.get().getSparkPostResults().getTransmissionId();
+        transmission.setId(transmissionId);
         transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
