@@ -10,8 +10,4 @@ import springredis.demo.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value="SELECT u from User u WHERE u.id=:Id")                 //search audience by id in audience repo
     User searchUserById(long Id);
-
-    User findByUsername(String userName);
-
-    User findById(long l);
 }
