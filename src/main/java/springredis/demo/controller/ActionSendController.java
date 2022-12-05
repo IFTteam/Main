@@ -330,8 +330,8 @@ public class ActionSendController {
     	
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
     	
-    	restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
-    	
+    	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
+        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, Long.class);
     	//Ask JiaQi what needs to be done before returning the CMT
     	return coreModuleTask;
     	
