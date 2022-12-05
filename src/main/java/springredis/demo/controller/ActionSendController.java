@@ -361,7 +361,7 @@ public class ActionSendController {
     	request.setJourneyId((long)4);
     	request.setCampaignId("1");
     	request.setUserId((long)5);
-    	restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
+    	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
     	return request;
     }
     
@@ -399,7 +399,7 @@ public class ActionSendController {
     	request.setJourneyId((long)4);
     	request.setCampaignId("1");
     	request.setUserId((long)5);
-    	restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
+    	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
     	return request;
     }
     
