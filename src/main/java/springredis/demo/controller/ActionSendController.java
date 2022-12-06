@@ -230,7 +230,7 @@ public class ActionSendController {
         //return task to core module
         //BaseTaskEntity coreModuleTask = new BaseTaskEntity();
         CoreModuleTask coreModuleTask = new CoreModuleTask();
-        restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
+        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -343,7 +343,7 @@ public class ActionSendController {
     public TransmissionRequest createTransmission() {
     	TransmissionRequest request = new TransmissionRequest();
     	Address address = new Address();
-    	address.setAddress("brandon_bao@yahoo.com");
+    	address.setAddress("ikirawang@gmail.com");
     	List<Address> list = new ArrayList<>();
     	list.add(address);
     	request.setCampaignId("1");
@@ -364,62 +364,67 @@ public class ActionSendController {
     	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
     	return request;
     }
-    
+
     @GetMapping("/test/addCMTTransmission")
-    public TransmissionRequest addCMTTransmission() {
-    	CoreModuleTask coreModuleTask = new CoreModuleTask();
-    	coreModuleTask.getActiveAudienceId1().add((long)2);
-    	coreModuleTask.setNodeId((long)3);
-    	
-    	Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(0));
-    	System.out.println("ActiveAudience=======================" + activeAudience.isPresent());
-    	Optional<Audience> audience = audienceRepository.findById(activeAudience.get().getAudienceId());
-    	System.out.println("Audience=======================" + audience.isPresent());
-    	Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
-    	System.out.println("Node=======================" + node.isPresent());
-    	
-    	TransmissionRequest request = new TransmissionRequest();
-    	Address address = new Address();
-    	address.setAddress(audience.get().getEmail());
-    	List<Address> list = new ArrayList<>();
-    	list.add(address);
-    	request.setCampaignId("1");
-    	request.setAddressList(list);
-    	Content content = new Content();
-    	Sender sender = new Sender();
-    	List<String> typeList = ActionSendController.propertySerialize(node.get().getType());
-    	sender.setEmail(typeList.get(2));
-    	sender.setName(typeList.get(3));
-    	content.setSender(sender);
-    	content.setSubject(typeList.get(4));
-    	content.setHtml(typeList.get(5));
-    	content.setText(typeList.get(6));
-    	request.setContent(content);
-    	request.setAudienceId((long)1);
-    	request.setJourneyId((long)4);
-    	request.setCampaignId("1");
-    	request.setUserId((long)5);
-    	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
-    	return request;
+    public CoreModuleTask addCMTTransmission() {
+        CoreModuleTask coreModuleTask = new CoreModuleTask();
+        coreModuleTask.getActiveAudienceId1().add((long)2);
+        coreModuleTask.setNodeId((long)8);
+        List<Long> list = new ArrayList<Long>();
+        list.add((long)1);
+        coreModuleTask.setAudienceId1(list);
+        //coreModuleTask
+
+        Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(0));
+        System.out.println("ActiveAudience=======================" + activeAudience.isPresent());
+        Optional<Audience> audience = audienceRepository.findById(activeAudience.get().getAudienceId());
+        System.out.println("Audience=======================" + audience.isPresent());
+        Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
+        System.out.println("Node=======================" + node.isPresent());
+
+//    	TransmissionRequest request = new TransmissionRequest();
+//    	Address address = new Address();
+//    	address.setAddress(audience.get().getEmail());
+//    	List<Address> list = new ArrayList<>();
+//    	list.add(address);
+//    	request.setCampaignId("1");
+//    	request.setAddressList(list);
+//    	Content content = new Content();
+//    	Sender sender = new Sender();
+//    	List<String> typeList = ActionSendController.propertySerialize(node.get().getType());
+//    	sender.setEmail(typeList.get(2));
+//    	sender.setName(typeList.get(3));
+//    	content.setSender(sender);
+//    	content.setSubject(typeList.get(4));
+//    	content.setHtml(typeList.get(5));
+//    	content.setText(typeList.get(6));
+//    	request.setContent(content);
+//    	request.setAudienceId((long)1);
+//    	request.setJourneyId((long)4);
+//    	request.setCampaignId("1");
+//    	request.setUserId((long)5);
+        restTemplate.postForObject("http://localhost:8081/actionSend/createCMTTransmission", coreModuleTask, String.class);
+        return coreModuleTask;
     }
-    
+
     @GetMapping("/test/addDummyData")
     public void addDummyData() {
-    	Audience audience = new Audience();
-    	audience.setFirstName("Brandon");
-    	audience.setLastName("Bao");
-    	audience.setEmail("brandon_bao@yahoo.com");
-    	audienceRepository.save(audience);
-    	ActiveAudience activeAudience = new ActiveAudience();
-    	activeAudience.setAudienceId(audience.getId());
-    	activeAudienceRepository.save(activeAudience);
-    	Node node = new Node();
-    	node.setType("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
-    	nodeRepository.save(node);
-    	Journey journey = new Journey();
-    	journeyRepository.save(journey);
-    	User user = new User();
-    	userRepository.save(user);
+        Audience audience = new Audience();
+        audience.setFirstName("Brandon");
+        audience.setLastName("Bao");
+        audience.setEmail("ikirawang@gmail.com");
+        audienceRepository.save(audience);
+        ActiveAudience activeAudience = new ActiveAudience();
+        activeAudience.setAudienceId(audience.getId());
+        activeAudienceRepository.save(activeAudience);
+        Node node = new Node();
+        node.setType("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
+        node.setProperties("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun");
+        nodeRepository.save(node);
+        Journey journey = new Journey();
+        journeyRepository.save(journey);
+        User user = new User();
+        userRepository.save(user);
     }
     
     //Serialize properties in Node class
