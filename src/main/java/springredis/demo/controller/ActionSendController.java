@@ -331,7 +331,7 @@ public class ActionSendController {
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
     	
     	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
-        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, Long.class);
+        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
     	//Ask JiaQi what needs to be done before returning the CMT
     	return coreModuleTask;
     	
@@ -373,6 +373,8 @@ public class ActionSendController {
         List<Long> list = new ArrayList<Long>();
         list.add((long)1);
         coreModuleTask.setAudienceId1(list);
+        coreModuleTask.setJourneyId((long)4);
+        coreModuleTask.setUserId((long)5);
         //coreModuleTask
 
         Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(0));
@@ -403,7 +405,7 @@ public class ActionSendController {
 //    	request.setJourneyId((long)4);
 //    	request.setCampaignId("1");
 //    	request.setUserId((long)5);
-        restTemplate.postForObject("http://localhost:8081/actionSend/createCMTTransmission", coreModuleTask, String.class);
+        restTemplate.postForObject("http://localhost:8080/actionSend/createCMTTransmission", coreModuleTask, String.class);
         return coreModuleTask;
     }
 
