@@ -13,8 +13,8 @@ import java.util.Optional;
 public interface AudienceRepository extends JpaRepository<Audience, Long> {
     //equivalent to typed query with entitiy menager
 
-@Query(value="SELECT a from Audience a WHERE a.id=:Id")                 //search audience by id in audience repo
-Audience searchAudienceByid(long Id);
+    @Query(value="SELECT a from Audience a WHERE a.id=:Id")                 //search audience by id in audience repo
+    Audience searchAudienceByid(long Id);
 
     @Query(value = "SELECT a from Audience a WHERE a.email=:Email")
     Audience searchAudienceByEmail(String Email);

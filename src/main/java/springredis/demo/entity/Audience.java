@@ -75,3 +75,4 @@ public class Audience extends BaseEntity {
     private LocalDate date_added;
     private LocalDate last_updated_time;
 }
+
