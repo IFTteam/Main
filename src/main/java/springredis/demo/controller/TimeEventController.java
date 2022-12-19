@@ -135,6 +135,42 @@ public class TimeEventController {
         return coreModuleTask;
     }
 
+
+    @PostMapping("/TimetasktestRepeat")
+    public CoreModuleTask TimetasktestRepeat(@RequestBody CoreModuleTask coreModuleTask){
+        Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
+        String fstring = node.get().getName();
+        String[] flist = fstring.split(" ");
+        // fstring format "specificTime(yyyy-MM-dd HH:mm:ss) repeatTimes repeatInterval" 2022-12-18 20:10:12 3 4
+        // repeatInterval format "y m d"
+        int repeatTimes = Integer.parseInt(flist[2]);
+        for (int i = 0; i < repeatTimes; i++) {
+            try {
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date parse = format.parse(flist[0] + " " + flist[1]);
+
+                TimeTask timeTask = new TimeTask(coreModuleTask);
+                timeTask.setTaskStatus(0);
+                timeTask.setTriggerTime(parse.getTime());
+                timeTask.setRepeatTimes(Integer.parseInt(flist[2]));
+                timeTask.setRepeatInterval(flist[3]);
+                //auditing support
+                timeTask.setCreatedAt(LocalDateTime.now());
+                timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
+                //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
+                timeDelayRepository.save(timeTask);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return coreModuleTask;
+    }
+
+
+
+
+
     // need modification for set time trigger
     private static void parseFStringDelayTimeInSecond(String fstring, TimeTask timeTask) {
         // 数据格式： fstring format "DelayTimeInSecond repeatTimes repeatInterval"
