@@ -62,6 +62,14 @@ public class SeDeFunction {
 
         return nodeArray;
     }
-}
 
+    public String serializeNodeProperty(NodeJsonModel.Property property) {
+        Gson gson = gsonBuilder.setPrettyPrinting().create();
+        String result = "";
 
+        // parse each node to string
+        result = gson.toJson(property); // use ,, as delimiter to separate serialized nodes in string
+        System.out.println(result);
+        return result;
+    }
+    }

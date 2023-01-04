@@ -11,7 +11,6 @@ import springredis.demo.error.UserNotFoundException;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class FrontendTagController {
 
     @Autowired
@@ -20,7 +19,7 @@ public class FrontendTagController {
 
     // Task 2, input is user_id, change return to Tag object
     @GetMapping("/tag/{id}")
-    public List<String> getDistinctTagByUser(@PathVariable("id") Long userId) throws UserNotFoundException {
+    public List<Tag> getDistinctTagByUser(@PathVariable("id") Long userId) throws UserNotFoundException {
         return frontendTagService.getDistinctTagByUser(userId);
     }
 

@@ -543,4 +543,11 @@ public class TestController {
     	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
     	return timeTask;
     }
+    
+    @GetMapping("/test/addUser")
+    public User addUser() {
+    	User user = new User();
+    	userRepository.save(user);
+    	return user;
+    }
 }

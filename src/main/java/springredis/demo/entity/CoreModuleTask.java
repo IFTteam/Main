@@ -11,15 +11,7 @@ public class CoreModuleTask extends BaseTaskEntity {
     // Return this Entity when call core module
     //  also posts this task when calling other api
     @Id
-    @SequenceGenerator(
-            name = "task_sequence",
-            sequenceName = "task_sequence",
-            allocationSize = 1
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "task_sequence"
-    )
+    @GeneratedValue
     private Long id;
     private int taskType;       //0 for move audience, 1 for create audience
     private String createModule;

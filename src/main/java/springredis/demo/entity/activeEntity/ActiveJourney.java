@@ -25,7 +25,7 @@ public class ActiveJourney {
 
 //    @OneToMany(mappedBy = "activeJourney")
 //    private List<ActiveAudience> activeAudienceList = new ArrayList<>();
-
+  
     public ActiveJourney(Long journeyId) {
         this.journeyId = journeyId;
     }

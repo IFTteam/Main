@@ -1,5 +1,6 @@
 package springredis.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -64,7 +65,8 @@ public class Audience extends BaseEntity {
                     name = "tag_id"
             )
     )
-    private List<Tag> tags;
+    @JsonIgnore
+    private List<Tag> tags = new ArrayList<>();
 
     public void addTags(Tag tag){
         if(tags == null) tags = new ArrayList<>();
@@ -73,3 +75,4 @@ public class Audience extends BaseEntity {
     private LocalDate date_added;
     private LocalDate last_updated_time;
 }
+
