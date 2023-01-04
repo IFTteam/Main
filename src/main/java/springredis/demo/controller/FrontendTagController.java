@@ -11,6 +11,7 @@ import springredis.demo.error.UserNotFoundException;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class FrontendTagController {
 
     @Autowired

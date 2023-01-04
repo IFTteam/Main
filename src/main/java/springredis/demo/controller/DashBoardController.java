@@ -37,7 +37,8 @@ public class DashBoardController {
         List<Journey> journeys = journeyRepository.findAll();
         List<JourneyResponse> responses=new ArrayList<>();
         for(Journey journey: journeys) {
-            JourneyResponse response = new JourneyResponse(journey.getId(), journey.getJourneyName(), journey.getCreatedBy(), journey.getFrontEndId() );
+            String frontendLink = "http://localhost:3001/"+journey.getFrontEndId();
+            JourneyResponse response = new JourneyResponse(journey.getId(), journey.getJourneyName(), journey.getCreatedBy() ,frontendLink );
             responses.add(response);
         }
         return responses;
