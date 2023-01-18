@@ -2,6 +2,8 @@ package springredis.demo.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.ElementCollection;
@@ -51,6 +53,9 @@ public class NodeJsonModel {
         this.status = status;
         this.journeyFrontEndId = journeyFrontEndId;
     }
+
+    @Getter
+    @Setter
     @Data
     public class Property {
         String Run;

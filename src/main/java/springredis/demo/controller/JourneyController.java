@@ -1,5 +1,6 @@
 package springredis.demo.controller;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import springredis.demo.entity.*;
@@ -150,6 +151,11 @@ public class JourneyController {
         nodeRepository.save(headNode);
         nodeRepository.save(dummyHead);
 
+        //get audience list from properties
+        String audienceListName = GetAudienceListName(headNode.getId());
+        List<Long> audienceList = AudienceFromAudienceList(audienceListName);
+        System.out.println(audienceList);
+
         // Call CoreModuleTask
         CoreModuleTask cmt = new CoreModuleTask();
         cmt.setNodeId(dummyHeadId);
@@ -161,10 +167,23 @@ public class JourneyController {
     }
 
 
-    private List<Audience> AudienceFromAudienceList(String audienceListName){
+    private List<Long> AudienceFromAudienceList(String audienceListName){
             AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
             List<Audience> audiences = audienceList.getAudiences();
-            return audiences;
+            List<Long> audiencesId= new ArrayList<>();
+            for(Audience audience: audiences){
+                audiencesId.add(audience.getId());
+            }
+            return audiencesId;
+    }
+
+
+    private String GetAudienceListName(Long nodeId){
+        Node currentNode = nodeRepository.findById(nodeId).get();
+        String properties = currentNode.getProperties();
+        JSONObject jsonObject = new JSONObject(properties);
+        String name = jsonObject.getString("list");
+        return name;
     }
 
     //TODO: Node和Journey级联关系没保存，要写一下
