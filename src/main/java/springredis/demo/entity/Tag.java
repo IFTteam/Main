@@ -1,5 +1,6 @@
 package springredis.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,4 +47,8 @@ public class Tag {
             name = "journey_id"
     )
     private Journey journey;
+
+    @ManyToMany(mappedBy = "tags", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Audience> audiences = new ArrayList<>();
 }
