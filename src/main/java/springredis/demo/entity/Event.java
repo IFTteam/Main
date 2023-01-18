@@ -23,7 +23,7 @@ public class Event implements Serializable {
     private Long id;
 
     public Event() {
-    	
+
     }
 
     public Event(Date triggerTime){
