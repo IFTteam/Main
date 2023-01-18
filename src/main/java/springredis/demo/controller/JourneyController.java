@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveJourney;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
@@ -29,6 +30,9 @@ public class JourneyController {
 
     @Autowired
     private ActiveNodeRepository activeNodeRepository;
+
+    @Autowired
+    private AudienceListRepository audienceListRepository;
 
     @Autowired
     CMTExecutor cmtExecutor;
@@ -154,6 +158,13 @@ public class JourneyController {
         cmtExecutor.execute(cmt);
 
         return oneJourney;
+    }
+
+
+    private List<Audience> AudienceFromAudienceList(String audienceListName){
+            AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
+            List<Audience> audiences = audienceList.getAudiences();
+            return audiences;
     }
 
     //TODO: Node和Journey级联关系没保存，要写一下
