@@ -74,4 +74,8 @@ public class Audience extends BaseEntity {
     }
     private LocalDate date_added;
     private LocalDate last_updated_time;
+
+
+    @ManyToMany(mappedBy = "audiences")
+    private List<AudienceList> employees = new ArrayList<>();
 }
