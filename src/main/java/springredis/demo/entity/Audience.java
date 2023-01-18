@@ -77,5 +77,5 @@ public class Audience extends BaseEntity {
 
 
     @ManyToMany(mappedBy = "audiences")
-    private List<AudienceList> employees = new ArrayList<>();
+    private List<AudienceList> audienceLists = new ArrayList<>();
 }
