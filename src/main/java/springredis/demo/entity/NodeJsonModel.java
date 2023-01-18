@@ -54,9 +54,15 @@ public class NodeJsonModel {
     @Data
     public class Property {
         String Run;
-
-        @JsonProperty("Select List")
         String SelectList;
+        String send;
+        String frequency;
+        String list;
+        String sender;
+        String subject;
+        String tag;
+        String sendOn;
+        String waitFor;
     }
     @Data
     public class Branch {
