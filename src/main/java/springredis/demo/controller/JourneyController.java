@@ -152,15 +152,20 @@ public class JourneyController {
         nodeRepository.save(dummyHead);
 
         //get audience list from properties
-        String audienceListName = GetAudienceListName(headNode.getId());
-        List<Long> audienceList = AudienceFromAudienceList(audienceListName);
-        System.out.println(audienceList);
+        //todo: "Select list" attributes is not in property json object in table
+        //String audienceListName = GetAudienceListName(headNode.getId());
+        //System.out.println("the list name is:" + audienceListName);
+        //List<Long> audienceList = AudienceFromAudienceList(audienceListName);
+        //System.out.println(audienceList);
 
         // Call CoreModuleTask
         CoreModuleTask cmt = new CoreModuleTask();
         cmt.setNodeId(dummyHeadId);
         cmt.setCallapi(0);
         cmt.setTaskType(1);
+        ArrayList<Long> n_audienceID = new ArrayList<Long>(Arrays.asList(1L, 2L, 3L));
+        cmt.setAudienceId1(n_audienceID);
+        System.out.println("the size of Audience Id 1 is:" + cmt.getAudienceId1().toString());
         cmtExecutor.execute(cmt);
 
         return oneJourney;
@@ -179,10 +184,12 @@ public class JourneyController {
 
 
     private String GetAudienceListName(Long nodeId){
+        System.out.println("current node ID is:" + nodeId.toString());
         Node currentNode = nodeRepository.findById(nodeId).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-        String name = jsonObject.getString("list");
+        System.out.println("jobject is:" + jsonObject.toString());
+        String name = jsonObject.getString("Select List");
         return name;
     }
 
