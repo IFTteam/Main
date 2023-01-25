@@ -6,7 +6,7 @@ import springredis.demo.entity.Audience;
 import springredis.demo.entity.AudienceList;
 import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.AudienceRepository;
-import springredis.demo.response.AudienceListResponse;
+import springredis.demo.entity.response.AudienceListResponse;
 
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class DashBoardController {
     }
 
     @PostMapping("dashboard/UpdateRelation/{audienceListId}")
-    public AudienceList updateAudiencListRelation(@PathVariable Long audienceListId, @RequestBody AudienceListResponse response){
+    public AudienceList updateAudienceListRelation(@PathVariable Long audienceListId, @RequestBody AudienceListResponse response){
         AudienceList audienceList = audienceListRepository.findById(audienceListId).get();
         for(Long id: response.getAudienceId()){
             Audience audience = audienceRepository.findById(id).get();

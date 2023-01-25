@@ -17,4 +17,12 @@ public class Sender {
 
     @JsonProperty("name")
     private String name;
+
+    @Override
+    public String toString() {
+        return "Sender{" +
+                "email='" + email + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

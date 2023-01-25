@@ -23,4 +23,14 @@ public class Content {
 
     @JsonProperty("text")
     private String text;
+
+    @Override
+    public String toString() {
+        return "Content{" +
+                "sender=" + sender +
+                ", subject='" + subject + '\'' +
+                ", html='" + html + '\'' +
+                ", text='" + text + '\'' +
+                '}';
+    }
 }

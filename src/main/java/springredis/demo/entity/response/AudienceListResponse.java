@@ -1,4 +1,4 @@
-package springredis.demo.response;
+package springredis.demo.entity.response;
 
 import lombok.Getter;
 import lombok.Setter;
