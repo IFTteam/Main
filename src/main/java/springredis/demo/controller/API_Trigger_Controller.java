@@ -210,11 +210,9 @@ String url = "http://localhost:8080/show"; //for testing
         }
         return tasks;
     }
-    
     @RequestMapping(value="/salesforce-create-trigger",method=RequestMethod.POST)
     @ResponseBody
     public CoreModuleTask salesforce_create_trigger(@RequestBody CoreModuleTask task) {
         return null;
     }
-
 }

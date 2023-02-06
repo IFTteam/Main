@@ -2,6 +2,7 @@ package springredis.demo.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -126,48 +127,10 @@ public class ActionSendController {
      * @param transmissionRequest
      * @return
      */
-    @RequestMapping(value={"/createTransmission"}, method = POST)
-    @ResponseBody
-    public ResponseEntity<Response> createTransmission(@RequestBody TransmissionRequest transmissionRequest){
+    //@RequestMapping(value={"/createTransmission"}, method = POST)
+    //@ResponseBody
+    public ResponseEntity<Response> createTransmission(TransmissionRequest transmissionRequest){
 
-/*
-  {
-      "options": {
-          "open_tracking": true,
-          "click_tracking": true
-      },
-      "metadata": {
-          "user_type": "students",
-          "education_level": "college"
-      },
-      "substitution_data": {
-          "discount": "25"
-      },
-      "recipients": [
-          {
-              "address": {
-                  "email": "wilma@flintstone.com",
-                  "name": "Wilma Flintstone"
-              },
-              "substitution_data": {
-                  "customer_type": "Platinum",
-              }
-          }
-      ],
-      "content": {
-          "from": {
-              "name": "Fred Flintstone",
-              "email": "fred@flintstone.com"
-          },
-          "subject": "Big Christmas savings!",
-          "reply_to": "Christmas Sales <sales@flintstone.com>",
-          "headers": {
-              "X-Customer-Campaign-ID": "christmas_campaign"
-          },
-          "html": "<p>Hi {{address.name}} \nSave big this Christmas in your area {{place}}! \nClick http://www.mysite.com and get a {{discount}}% discount\n</p><p>Hurry, this offer is only to {{user_type}}\n</p>"
-      }
-  }
- */
 
         HashMap<Object, Object> param = new HashMap<>();
         param.put("options", new HashMap<String, Object>() {{
@@ -229,8 +192,8 @@ public class ActionSendController {
 
         //return task to core module
         //BaseTaskEntity coreModuleTask = new BaseTaskEntity();
-        CoreModuleTask coreModuleTask = new CoreModuleTask();
-        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
+        //CoreModuleTask coreModuleTask = new CoreModuleTask();
+        //restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -270,7 +233,7 @@ public class ActionSendController {
 
         //return task to core module
         BaseTaskEntity coreModuleTask = new BaseTaskEntity();
-        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
+        //restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -310,29 +273,39 @@ public class ActionSendController {
     		addressList.add(address);
     	}
     	request.setAddressList(addressList);
-    	
+
+        System.out.println(addressList.toString());
+
     	Content content = new Content();  //set content for the request
     	Node node = nodeRepository.findById(coreModuleTask.getNodeId()).get();
-    	List<String> propertyList = ActionSendController.propertySerialize(node.getProperties());
-    	Sender sender = new Sender();
+
+        String properties = node.getProperties();
+        JSONObject jsonObject = new JSONObject(properties);
+
+
+        Sender sender = new Sender();
     	//(sender, subject, email, name"sender", subject, html, text)
-    	sender.setEmail(propertyList.get(2)); 
-    	sender.setName(propertyList.get(3));
+    	sender.setEmail("duke.tang@sub.paradx.net");
+    	sender.setName(jsonObject.getString("sender"));
     	content.setSender(sender);
-    	content.setSubject(propertyList.get(4));
-    	content.setHtml(propertyList.get(5));
-    	content.setText(propertyList.get(6));
+    	content.setSubject(jsonObject.getString("subject"));
+    	//content.setHtml();
+    	content.setText("hello,testing");
     	request.setContent(content);
     	
     	request.setAudienceId(coreModuleTask.getAudienceId1().get(0));  //set audience id. Is it just the first audience id stored on CMT?
-    	
+
     	request.setUserId(coreModuleTask.getUserId());  //set user id
-    	
+
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
+
+
     	
-    	restTemplate.postForObject("http://localhost:8081/actionSend/createTransmission", request, String.class);
-        restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
+    	//restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
+        //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
     	//Ask JiaQi what needs to be done before returning the CMT
+        ResponseEntity<Response> response = createTransmission(request);
+        System.out.println(response);
     	return coreModuleTask;
     	
     }
@@ -430,15 +403,15 @@ public class ActionSendController {
     }
     
     //Serialize properties in Node class
-    public static List<String> propertySerialize(String type){
-        List<String> typeList = new ArrayList<>();
-        String[] s = type.split(",");
-        for (String value : s) {
-            if(!value.isEmpty()){
-                typeList.add(value);
-            }
-        }
-        return typeList;
-    }
+//    public static List<String> propertySerialize(String type){
+//        List<String> typeList = new ArrayList<>();
+//        String[] s = type.split(",");
+//        for (String value : s) {
+//            if(!value.isEmpty()){
+//                typeList.add(value);
+//            }
+//        }
+//        return typeList;
+//    }
 
 }

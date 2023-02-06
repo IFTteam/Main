@@ -19,7 +19,7 @@ public class FrontendTagController {
 
     // Task 2, input is user_id, change return to Tag object
     @GetMapping("/tag/{id}")
-    public List<Tag> getDistinctTagByUser(@PathVariable("id") Long userId) throws UserNotFoundException {
+    public List<String> getDistinctTagByUser(@PathVariable("id") Long userId) throws UserNotFoundException {
         return frontendTagService.getDistinctTagByUser(userId);
     }
 

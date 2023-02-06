@@ -16,4 +16,6 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     @Query("select t from Tag t where t.user = ?1")
     List<Tag> getTagByUser(User user);
+
+    List<Tag> findByUserId(Long id);
 }

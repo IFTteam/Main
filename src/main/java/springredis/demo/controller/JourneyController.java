@@ -1,13 +1,12 @@
 package springredis.demo.controller;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveJourney;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
@@ -20,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
-@CrossOrigin
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class JourneyController {
     @Autowired
     private JourneyRepository journeyRepository;
@@ -34,10 +33,14 @@ public class JourneyController {
     private ActiveNodeRepository activeNodeRepository;
 
     @Autowired
+    private AudienceListRepository audienceListRepository;
+
+    @Autowired
     CMTExecutor cmtExecutor;
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
+        System.out.println(journeyJson);
         SeDeFunction sede = new SeDeFunction();
 
         // Map JourneyJson to JourneyJsonModel
@@ -67,6 +70,12 @@ public class JourneyController {
         return journeyRepository.save(oneJourney);
     }
 
+    @GetMapping("/journey/get-saved-journey/{journeyFrontEndId}")//激活Journey,查取数据库，反序列化
+    public String getSavedJourney(@PathVariable("journeyFrontEndId") String journeyFrontEndId){
+        String journeyJson = journeyRepository.searchJourneyByFrontEndId(journeyFrontEndId).getJourneySerialized();
+        System.out.println(journeyJson);
+        return journeyJson;
+    }
     @PostMapping("/journey/activateJourney")//激活Journey,查取数据库，反序列化
     public Journey activateJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
@@ -142,6 +151,11 @@ public class JourneyController {
         nodeRepository.save(headNode);
         nodeRepository.save(dummyHead);
 
+        //get audience list from properties
+        String audienceListName = GetAudienceListName(headNode.getId());
+        List<Long> audienceList = AudienceFromAudienceList(audienceListName);
+        System.out.println(audienceList);
+
         // Call CoreModuleTask
         CoreModuleTask cmt = new CoreModuleTask();
         cmt.setNodeId(dummyHeadId);
@@ -150,6 +164,26 @@ public class JourneyController {
         cmtExecutor.execute(cmt);
 
         return oneJourney;
+    }
+
+
+    private List<Long> AudienceFromAudienceList(String audienceListName){
+            AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
+            List<Audience> audiences = audienceList.getAudiences();
+            List<Long> audiencesId= new ArrayList<>();
+            for(Audience audience: audiences){
+                audiencesId.add(audience.getId());
+            }
+            return audiencesId;
+    }
+
+
+    private String GetAudienceListName(Long nodeId){
+        Node currentNode = nodeRepository.findById(nodeId).get();
+        String properties = currentNode.getProperties();
+        JSONObject jsonObject = new JSONObject(properties);
+        String name = jsonObject.getString("list");
+        return name;
     }
 
     //TODO: Node和Journey级联关系没保存，要写一下
@@ -165,7 +199,7 @@ public class JourneyController {
         //Initialize Journey function
         int n = deserializedJourney.size();
         System.out.println(n);
-        //System.out.println(deserializedJourney.get(0).getNexts());
+        System.out.println(deserializedJourney.get(0).getNexts());
         //1.Use map frontEndId->BackEndId and replace the node nexts frontEndId->BackEndId
         HashMap<String,Long> keyHash = new HashMap<>();
         List<Node> heads = new ArrayList<>();
@@ -180,7 +214,7 @@ public class JourneyController {
             activeNode.setNodeId(deserializedJourney.get(i).getId());
             activeNodeRepository.save(activeNode);
         }
-        //System.out.println(keyHash);
+        System.out.println(keyHash);
         // replace nexts ID
 
         for (int i=0; i<n; i++){
@@ -228,10 +262,10 @@ public class JourneyController {
         String createdBy = nodeJsonModel.getCreatedBy();
         String updatedBy = nodeJsonModel.getUpdatedBy();
         String frontEndId = nodeJsonModel.getId();
-
-        //Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId);
         NodeJsonModel.Property properties = nodeJsonModel.getProperties();
+//        System.out.println("PPPPPPPPPPPPPP" + properties);
         String propertiesString = new SeDeFunction().serializeNodeProperty(properties);
+//        System.out.println("BBBBBBBBBBBBBB" + propertiesString);
         Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId, propertiesString);
         newNode.setHeadOrTail(0);
         newNode.setFrontEndId(frontEndId);
