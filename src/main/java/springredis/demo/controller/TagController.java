@@ -1,26 +1,32 @@
 package springredis.demo.controller;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import springredis.demo.entity.CoreModuleTask;
+import springredis.demo.entity.Node;
+import springredis.demo.repository.NodeRepository;
 
 @RestController
 public class TagController {
     @Autowired
     private TagController_create_tag backendTaskController;
 
+    @Autowired
+    private NodeRepository nodeRepository;
+
     @PostMapping("/Tag")
     public CoreModuleTask redirect(@RequestBody CoreModuleTask task) {
         CoreModuleTask nullTask = new CoreModuleTask();
         nullTask.setName("nullTask");
 
-        // {'tagId': XXX}
+        Node currentNode = nodeRepository.findById(task.getNodeId()).get();
+        String properties = currentNode.getProperties();
+        JSONObject jsonObject = new JSONObject(properties);
 
-        String json_text = task.getName();
-
-        if (json_text.contains("tagId")) {
+        if (jsonObject.has("tag")) {
 //            String find = "tagId";
 //            String substr = "";
 //            int i  = json_text.indexOf(find);
