@@ -1,6 +1,11 @@
 package springredis.demo.controller;
 
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
 public class AuthController {
-    //please write a user sign up method with the user name and password
+
+
+
 
 }
