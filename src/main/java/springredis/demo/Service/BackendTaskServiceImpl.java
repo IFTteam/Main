@@ -32,13 +32,6 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
     @Override
     public CoreModuleTask createRelationBetweenAudienceAndTag(CoreModuleTask coreModuleTask) {
-//        String json_text = coreModuleTask.getName();
-//        String find = "tagId";
-//        String substr = "";
-//        int i  = json_text.indexOf(find);
-//        substr = json_text.substring(i + find.length() + 3, json_text.length() - 1);
-//        Long tagId =  Long.parseLong(substr);
-//        Optional<Tag> tag = tagRepository.findById(tagId);
 
         Node currentNode = nodeRepository.findById(coreModuleTask.getNodeId()).get();
         String properties = currentNode.getProperties();
@@ -102,4 +95,8 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         newTask.setTaskType(1);
         return newTask;
     }
+
+    //please write a method take in coreModuleTask and return coreModuleTask and remove the tag_audience_relation if
+    //the id of the tag_audience_relation audience is  in the audienceId1
+
 }
