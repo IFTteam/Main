@@ -19,12 +19,9 @@ import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @RestController
 public class TestController {
@@ -51,47 +48,10 @@ public class TestController {
     @Autowired
     CMTExecutor cmtExecutor;
 
-    @Autowired
-    TagRepository tagRepository;
-
     private String str = new String(),str2=new String();
 
     private List<CoreModuleTask> tasks = new ArrayList<>();
 
-    //how test is conducted:
-    //first create multiple audiences and multiple tags
-    //then make core module tasks about making tags
-    //then use the tag controller's create_relation_between_audience_and_tags to make association between all audiences and all tags
-    //check each audience entity's list of tags to make sure it works
-    @GetMapping("/tag_test")
-    @ResponseBody
-    public List<String> tagtest(){
-        Audience aud1 = audienceRepository.save(new Audience()), aud2 = audienceRepository.save(new Audience());
-        Tag tag1 = tagRepository.save(new Tag()),tag2=tagRepository.save(new Tag());
-        Long id1 = tag1.getTagId();
-        tag1.setTag_name("tag1"); tag2.setTag_name("tag2");
-        tagRepository.save(tag1);tagRepository.save(tag2);
-        List<Long> audlist = new ArrayList<>();
-        audlist.add(aud1.getId());audlist.add(aud2.getId());
-        CoreModuleTask task = new CoreModuleTask();
-        task.setAudienceId1(audlist);
-        task.setType("tag");
-        task.setName("{'tagId': " + tag1.getTagId()+ "}");
-        CoreModuleTask restask1 = restTemplate.exchange("http://localhost:8080/Tag",HttpMethod.POST,new HttpEntity<>(task),CoreModuleTask.class).getBody();
-        CoreModuleTask task2 = new CoreModuleTask();
-        task2.setAudienceId1(audlist);
-        task2.setType("tag");
-        task2.setName("{'tagId': " + tag2.getTagId()+ "}");
-        CoreModuleTask restask2 = restTemplate.exchange("http://localhost:8080/Tag",HttpMethod.POST,new HttpEntity<>(task2),CoreModuleTask.class).getBody();
-        List<Long> newaudlist = restask1.getAudienceId1();
-        List<String> reslist = new ArrayList<>();
-        Audience aud3 = audienceRepository.searchAudienceByid(newaudlist.get(0));
-        Audience aud4 = audienceRepository.searchAudienceByid(newaudlist.get(1));
-        if(aud3.getTags().isEmpty()==false) for(int i=0;i<aud3.getTags().size();i++) reslist.add(aud3.getTags().get(i).getTag_name());
-
-        if(aud4.getTags().isEmpty()==false)for(int i=0;i<aud4.getTags().size();i++) reslist.add(aud4.getTags().get(i).getTag_name());
-        return reslist;
-    }
 
     //audience transfer test
     @GetMapping("/active_audience_transfer_test")
@@ -579,5 +539,12 @@ public class TestController {
     	System.out.println("==============================TestController CoreModuleTask Node ID: " + coreModuleTask.getNodeId());
     	TimeTask timeTask = restTemplate.postForObject("http://localhost:8080/addNewTask", coreModuleTask, TimeTask.class, TimeTask.class);
     	return timeTask;
+    }
+    
+    @GetMapping("/test/addUser")
+    public User addUser() {
+    	User user = new User();
+    	userRepository.save(user);
+    	return user;
     }
 }
