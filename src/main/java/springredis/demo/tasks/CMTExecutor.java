@@ -33,12 +33,13 @@ public class CMTExecutor{
     //Chanage the below to actual API endpoints of functional urls
     private HashMap<String, String> urlDict = new HashMap<String, String>() {
         {
-            put("TimeDelay", "http://localhost:8080/TimeDelay");
-            put("APITrigger", "http://localhost:8080/API_trigger");
-            put("TimeTrigger", "http://localhost:8080/TimeTrigger");
-            put("SendEmail", "http://localhost:8080/SendEmail");
+            put("Time Delay", "http://localhost:8080/TimeDelay");
+            put("API Trigger", "http://localhost:8080/API_trigger");
+            put("Time Trigger", "http://localhost:8080/add");
+            put("Send Email", "http://localhost:8080/SendEmail");
             put("If/else", "http://localhost:8080/If_Else");
             put("tag", "http://localhost:8080/Tag");
+            put("Subscribe", "http://localhost:8080/Subscribe"); //unknown
         }
 
     };
@@ -60,10 +61,20 @@ public class CMTExecutor{
     public void execute(CoreModuleTask coreModuleTask) {
 
         //first, if this coremoduletask's type is "end", we don't do anythong and simply returns
-        if (coreModuleTask.getType().equals("End")) return;
+        if (coreModuleTask.getType().equals("end")) return;
         CoreModuleTask restask = null;
         //else, we can first call the respective functional API's based on task type if the callapi attribute is 1:
-        if(coreModuleTask.getCallapi()==1) {restask = restTemplate.exchange(urlDict.get(coreModuleTask.getType()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();}
+        System.out.println("The task is:" + coreModuleTask.toString());
+        if (coreModuleTask.getName() != null) {
+            System.out.println("The type of the task is:" + coreModuleTask.getName().toString());
+            System.out.println("The taskID is:" + coreModuleTask.getId());
+            System.out.println("The getcallapi is:" + coreModuleTask.getCallapi());
+        }
+        else {
+            System.out.println("The getcallapi is:" + coreModuleTask.getCallapi());
+        }
+        //System.out.println("The url is:" + urlDict.get(coreModuleTask.getType()).toString());
+        if(coreModuleTask.getCallapi()==1) {restask = restTemplate.exchange(urlDict.get(coreModuleTask.getName()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();}
         else restask = coreModuleTask;
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
         if (restask.getMakenext() == 0) return;
@@ -76,9 +87,13 @@ public class CMTExecutor{
         } else {
             activeid = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
         }
+        System.out.println("restask node id: " + restask.getNodeId());
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
+        System.out.println("current node is: " + curnode);
         //finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {
+            System.out.println("++++++++++++++++get nexts is being excute");
+            System.out.println("curnode.getNexts() is" + curnode.getNexts().toString());
             Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
             CoreModuleTask newtask = new CoreModuleTask();
@@ -86,6 +101,7 @@ public class CMTExecutor{
             newtask.setJourneyId(restask.getJourneyId());
             newtask.setNodeId(id);
             newtask.setTaskType(0);                 //all tasks are move-user except for trigger hit, which is not taken care of here
+            System.out.println("The next node type is:" + nextnode.getType());
             newtask.setType(nextnode.getType());
             newtask.setName(nextnode.getName());
             newtask.setSourceNodeId(nextnode.getId());

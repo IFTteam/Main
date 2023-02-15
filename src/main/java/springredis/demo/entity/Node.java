@@ -61,6 +61,11 @@ public class Node extends BaseEntity {
     //nexts->sNexts
     public void nextsSerialize(){
         StringBuffer buffer = new StringBuffer();
+        if (nexts == null) {
+            sNexts = "";
+            return;
+        }
+        System.out.println(nexts);
         for(Long num:nexts){
             buffer.append(num.toString());
             buffer.append(" ");  //separate by spaces for deserializatiing

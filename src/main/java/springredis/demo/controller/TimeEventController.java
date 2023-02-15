@@ -1,5 +1,6 @@
 package springredis.demo.controller;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -39,13 +40,18 @@ public class TimeEventController {
         Node node1 = node.get();
         // 为什么节点的名称，是fstring呢？
         String fstring = node1.getName();
+        System.out.println("The fstring is " + fstring);
         CoreModuleTask coreModuleTask = new CoreModuleTask(baseTaskEntity);
+        /*
+        *   initialize new Time task
+         */
         TimeTask timeTask = new TimeTask();
         
         timeTask.setCoreModuleTask(coreModuleTask);
         timeTask.setNodeId(baseTaskEntity.getNodeId());
         timeTask.activeAudienceId1SDeserialize(baseTaskEntity.getActiveAudienceId1());
         timeTask.activeAudienceId2SDeserialize(baseTaskEntity.getActiveAudienceId2());
+        System.out.println("The ActiveAudienceId1 is" + baseTaskEntity.getActiveAudienceId1());
         timeTask.audienceId1SDeserialize(baseTaskEntity.getAudienceId1());
         timeTask.audienceId2SDeserialize(baseTaskEntity.getAudienceId2());
         timeTask.setTaskStatus(0);
@@ -122,16 +128,41 @@ public class TimeEventController {
      */
     @PostMapping("/add")
     public CoreModuleTask add(@RequestBody CoreModuleTask coreModuleTask){
-        Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
+        Long node_id = coreModuleTask.getNodeId();
+        System.out.println("the core mode: " + coreModuleTask);
+        Optional<Node> node = nodeRepository.findById(node_id);
+
+        /*
+        *   Set the dummy coreModuleTask
+         */
+        coreModuleTask.setMakenext(0);
+
+        /*
+        *   Initialize the new time task
+         */
         TimeTask timeTask = new TimeTask(coreModuleTask);
+
         timeTask.setTaskStatus(0);
-        parseFStringWithSpecificTime(node.get().getName(), timeTask);
+
+        //parsing the time information
+        JSONObject jsonObject = new JSONObject(node.get().getProperties());
+        String time = jsonObject.getString("send");
+        parseFStringWithSpecificTime(time, timeTask);
 
         //auditing support
+        timeTask.setNodeId(node_id);
         timeTask.setCreatedAt(LocalDateTime.now());
         timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
+        timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
+        timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
+        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
+        timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
+        timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
+        timeTask.setTaskStatus(0);
         //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
         timeDelayRepository.save(timeTask);
+
+        System.out.println("dummy task returned");
         return coreModuleTask;
     }
 
@@ -152,12 +183,13 @@ public class TimeEventController {
         try {
             // fstring format "specificTime(yyyy-MM-dd HH:mm:ss) repeatTimes repeatInterval"
             // repeatInterval format "y m d"
-            String[] flist = fstring.split(" ");
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String[] flist = fstring.split("T");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             Date parse = format.parse(flist[0] + " " + flist[1]);
             timeTask.setTriggerTime(parse.getTime());
-            timeTask.setRepeatTimes(Integer.parseInt(flist[2]));
-            timeTask.setRepeatInterval(flist[3]);
+            //todo: fix the two parameter
+            //timeTask.setRepeatTimes(Integer.parseInt(flist[2]));
+            //timeTask.setRepeatInterval(flist[3]);
         } catch (ParseException e) {
             e.printStackTrace();
         }
