@@ -1,5 +1,6 @@
 package springredis.demo.structures;
 
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestTemplate;
@@ -10,6 +11,7 @@ import springredis.demo.entity.Event;
 import springredis.demo.entity.Node;
 import springredis.demo.entity.TimeTask;
 import springredis.demo.entity.base.BaseTaskEntity;
+import springredis.demo.error.TimeTaskNotExistException;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
 import springredis.demo.tasks.CMTExecutor;
@@ -45,9 +47,9 @@ public class OutAPICaller implements Runnable{
         //put("TimeDelay", "http://localhost:8080/add");
         //put("if/else", " ")
     }};
-    
 
-    
+
+
     public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository) {
         this.timeDelayRepository = timeDelayRepository;
         this.redisTemplate = redisTemplate;
@@ -55,7 +57,8 @@ public class OutAPICaller implements Runnable{
     }
 
     //Debug??? connection with core module?
-    @Override
+    @SneakyThrows
+	@Override
     public void run() {
     	System.out.println("================================================OUTAPI Running=====================================================");
     	System.out.println(redisTemplate.opsForList().size(outQueueKey));
@@ -68,9 +71,10 @@ public class OutAPICaller implements Runnable{
 	        	Long id = ((Number)outEvent.getId()).longValue();
 				System.out.println("the id is: " + id);
 	            Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
-	            System.out.println("================================================OUTAPI successful 0=====================================================");
-	            
-	            if (timeTaskOp.isPresent()){
+				if (timeTaskOp == null) {
+					throw new TimeTaskNotExistException("message");
+				}
+				if (timeTaskOp.isPresent()){
 					TimeTask timetask = timeTaskOp.get();
 	            	System.out.println("================================================OUTAPI successful 1=====================================================");
 	//            	TaskExecutor taskExectuor = new TaskExecutor(timeTaskOp.get().getCoreModuleTask());
@@ -133,7 +137,7 @@ public class OutAPICaller implements Runnable{
 					System.out.println("In outAPI the CM is:" + coreModuleTask);
 					System.out.println("In outAPI the type is:" + type);
 	            	String url = urlDict.get(type);
-	            	String result = restTemplate.postForObject(url, timeTaskOp.get(), String.class);
+	            	String result = restTemplate.postForObject(url, timetask, String.class);
 	            }
 	
 	        }
