@@ -96,7 +96,28 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         return newTask;
     }
 
-    //please write a method take in coreModuleTask and return coreModuleTask and remove the tag_audience_relation if
+    @Override
+    public CoreModuleTask removeRelationBetweenAudienceAndTag(CoreModuleTask coreModuleTask) {
+
+        Node currentNode = nodeRepository.findById(coreModuleTask.getNodeId()).get();
+        String properties = currentNode.getProperties();
+        JSONObject jsonObject = new JSONObject(properties);
+        String name = jsonObject.getString("tag");
+        Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
+        User user=userRepository.findById(coreModuleTask.getUserId()).get();
+        Tag tag = tagRepository.findByUserIdName(name,user).get();
+
+        Long tagId = tag.getTagId();
+
+
+        coreModuleTask.setTaskType(1);
+        coreModuleTask.setTaskType(1);
+        return coreModuleTask;
+    }
+
+
+
+        //please write a method take in coreModuleTask and return coreModuleTask and remove the tag_audience_relation if
     //the id of the tag_audience_relation audience is  in the audienceId1
 
 }

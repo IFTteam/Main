@@ -17,8 +17,8 @@ public class TagController {
     @Autowired
     private NodeRepository nodeRepository;
 
-    @PostMapping("/Tag")
-    public CoreModuleTask redirect(@RequestBody CoreModuleTask task) {
+    @PostMapping("/AddTag")
+    public CoreModuleTask addTag(@RequestBody CoreModuleTask task) {
         CoreModuleTask nullTask = new CoreModuleTask();
         nullTask.setName("nullTask");
 
@@ -37,4 +37,29 @@ public class TagController {
         }
         return nullTask;
     }
+
+    @PostMapping("/RemoveTag")
+    public CoreModuleTask removeTag(@RequestBody CoreModuleTask task) {
+        CoreModuleTask nullTask = new CoreModuleTask();
+        nullTask.setName("nullTask");
+
+        Node currentNode = nodeRepository.findById(task.getNodeId()).get();
+        String properties = currentNode.getProperties();
+        JSONObject jsonObject = new JSONObject(properties);
+
+        if (jsonObject.has("tag")) {
+//            String find = "tagId";
+//            String substr = "";
+//            int i  = json_text.indexOf(find);
+//            substr = json_text.substring(i + find.length() + 3, json_text.length() - 1);
+//            Long tagId =  Long.parseLong(substr);
+//            System.out.println(task.getName());
+            return backendTaskController.createRelationBetweenAudienceAndTag(task);
+        }
+        return nullTask;
+    }
+
+
+
+
 }
