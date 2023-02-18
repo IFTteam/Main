@@ -14,6 +14,7 @@ import java.io.Serializable;
 public class ActiveAudience implements Serializable {
     @Id
     @GeneratedValue
+    @JoinColumn(name="ID",referencedColumnName = "id")
     private Long id;
 
     @Column(name="AudienceId")
