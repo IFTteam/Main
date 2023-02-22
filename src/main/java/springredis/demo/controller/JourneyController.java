@@ -100,6 +100,7 @@ public class JourneyController {
             existingNode.add(queryResult[i].getId());
         }
         // Traverse the journeyJsonModel object and add each node into DB
+        System.out.println("The node list bfdfs is: " + nodeIdList);
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
         System.out.println("The node list is: " + nodeIdList);
         for (int i = 0; i < nodeIdList.size(); i++) {
@@ -306,10 +307,11 @@ public class JourneyController {
         // We need to store the node in DB first
         //nodeRepository.save(newNode);
         // so that we can get the node's id
+        nodeRepository.save(newNode);
+        System.out.println("The new node is" + newNode);
 
         Long nodeId = newNode.getId();
-
-        nodeIdList.add(newNode.getId());
+        nodeIdList.add(nodeId);
         System.out.println("The node List in" + idx + "is "+ nodeIdList);
         //newNode = nodeRepository.searchNodeByid(nodeId);
 
@@ -347,6 +349,7 @@ public class JourneyController {
                 System.out.println("---------------end of dfs");
                 Node endNode = createEndNode(journeyFrontEndId);
                 child = nodeRepository.save(endNode).getId();
+                System.out.println("Node" + child + "has been added to nodeIdList");
                 nodeIdList.add(endNode.getId());
             }
             nexts.add(child);

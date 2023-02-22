@@ -36,7 +36,7 @@ public class CMTExecutor{
             put("Time Delay", "http://localhost:8080/TimeDelay");
             put("API Trigger", "http://localhost:8080/API_trigger");
             put("Time Trigger", "http://localhost:8080/add");
-            put("Send Email", "http://localhost:8080/SendEmail");
+            put("Send Email", "http://localhost:8080/actionSend");
             put("If/else", "http://localhost:8080/If_Else");
             put("tag", "http://localhost:8080/Tag");
             put("Subscribe", "http://localhost:8080/Subscribe"); //unknown
@@ -59,7 +59,7 @@ public class CMTExecutor{
     }
 
     public void execute(CoreModuleTask coreModuleTask) {
-
+        System.out.println("The module to be execute is " + coreModuleTask);
         //first, if this coremoduletask's type is "end", we don't do anythong and simply returns
         if (coreModuleTask.getType().equals("end")) return;
         CoreModuleTask restask = null;
