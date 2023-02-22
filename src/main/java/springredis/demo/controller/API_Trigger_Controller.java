@@ -89,7 +89,7 @@ public class API_Trigger_Controller {
         Journey journey = productService.searchJourneyById(task.getJourneyId());
         Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"abandon_cart");
         if(!opstnr.isPresent()){
-            triggerType_node_relation tnr = new triggerType_node_relation("abandon_checkout",user.getId());
+            triggerType_node_relation tnr = new triggerType_node_relation("abandon_cart",user.getId());
             productService.addNewTNR(tnr);
         }
         triggerType_node_relation restnr = productService.searchTNR(user.getId(),"abandon_cart").get();
@@ -106,7 +106,7 @@ public class API_Trigger_Controller {
             node = productService.addNewNode(node);
         }
         String devstore = user.getShopifydevstore();
-        String token = user.getShopifyApiKey();
+        String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
         String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://a31e-172-58-27-112.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
