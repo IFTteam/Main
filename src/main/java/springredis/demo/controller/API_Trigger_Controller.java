@@ -43,7 +43,7 @@ public class API_Trigger_Controller {
         return nulltask;
     }
 
-    @RequestMapping(value="/shopify_create_puchase_webhook",method=RequestMethod.POST)
+    @RequestMapping(value="/shopify_create_purchase_webhook",method=RequestMethod.POST)
     @ResponseBody
     public CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
         User user = productService.searchUserById(task.getUserId());
@@ -68,10 +68,10 @@ public class API_Trigger_Controller {
             node = productService.addNewNode(node);
         }
         String devstore = user.getShopifydevstore();
-        String token = user.getShopifyApiKey();
-//        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-String url = "http://localhost:8080/show"; //for testing
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String token = user.getShopifyApiAccessToken();
+        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+//String url = "http://localhost:8080/show"; //for testing
+        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://a31e-172-58-27-112.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -108,7 +108,7 @@ String url = "http://localhost:8080/show"; //for testing
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"localhost:8080/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://a31e-172-58-27-112.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);

@@ -35,7 +35,7 @@ public class User extends BaseEntity {
     private String shopifyApiKey;
     private String facebookAdsApiKey;
     private String shopifydevstore;                 //shopify development store name for this user
-
+    private String shopifyApiAccessToken;
     public User() {
         super();
     }
