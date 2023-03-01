@@ -19,6 +19,8 @@ public class Journey extends BaseEntity {
     private Long id;
     private String journeyName;
     private String thumbnailUrl;
+
+    @Lob
     private String journeySerialized;
     private Integer status;
     private String stage;

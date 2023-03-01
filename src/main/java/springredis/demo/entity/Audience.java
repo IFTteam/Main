@@ -56,21 +56,22 @@ public class Audience extends BaseEntity {
             fetch = FetchType.EAGER,
             cascade = CascadeType.ALL
     )
+
     @JoinTable(
-            name = "map",
+            name = "tag_audience",
             joinColumns = @JoinColumn(
                     name = "audience_id"
             ),
             inverseJoinColumns = @JoinColumn(
-                    name = "tag_id"
+                    name = "tag_detail_id"
             )
     )
     @JsonIgnore
-    private List<Tag> tags = new ArrayList<>();
+    private List<TagDetail>  tagDetails= new ArrayList<>();
 
-    public void addTags(Tag tag){
-        if(tags == null) tags = new ArrayList<>();
-        tags.add(tag);
+    public void addTags(TagDetail tag){
+        if(tagDetails == null) tagDetails = new ArrayList<>();
+        tagDetails.add(tag);
     }
     private LocalDate date_added;
     private LocalDate last_updated_time;

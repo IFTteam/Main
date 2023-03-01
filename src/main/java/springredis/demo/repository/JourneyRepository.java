@@ -20,4 +20,6 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
 
     Journey findById(long l);
 
+    List<Journey> findByCreatedBy(String userid);
+
 }

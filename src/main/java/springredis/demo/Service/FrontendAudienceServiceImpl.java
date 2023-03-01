@@ -38,30 +38,29 @@ public class FrontendAudienceServiceImpl implements FrontendAudienceService {
         List<Audience> audienceList = audienceRepository.getAudienceByUser(real_user);
         return audienceList;
     }
-
-    @Override
-    public Audience createRelationBetweenAudienceAndTag(Long audienceId, Long tagId) throws AudienceNotFoundException, TagNotFoundException {
-        Optional<Audience> audience = audienceRepository.findById(audienceId);
-
-        if (!audience.isPresent()) {
-            throw new AudienceNotFoundException("Audience Not Available");
-        }
-
-        Audience real_audience = audience.get();
-
-        Optional<Tag> tag = tagRepository.findById(tagId);
-
-        if (!tag.isPresent()) {
-            throw new TagNotFoundException("Tag Not Available");
-        }
-
-        Tag real_tag = tag.get();
-
-        // Audience audience = audienceRepository.findById(audienceId).get();
-        // Tag tag = tagRepository.findById(tagId).get();
-        real_audience.addTags(real_tag);
-        return audienceRepository.save(real_audience);
-    }
+    //   @Override
+//    public Audience createRelationBetweenAudienceAndTag(Long audienceId, Long tagId) throws AudienceNotFoundException, TagNotFoundException {
+//        Optional<Audience> audience = audienceRepository.findById(audienceId);
+//
+//        if (!audience.isPresent()) {
+//            throw new AudienceNotFoundException("Audience Not Available");
+//        }
+//
+//        Audience real_audience = audience.get();
+//
+//        Optional<Tag> tag = tagRepository.findById(tagId);
+//
+//        if (!tag.isPresent()) {
+//            throw new TagNotFoundException("Tag Not Available");
+//        }
+//
+//        Tag real_tag = tag.get();
+//
+//        // Audience audience = audienceRepository.findById(audienceId).get();
+//        // Tag tag = tagRepository.findById(tagId).get();
+//        real_audience.addTags();
+//        return audienceRepository.save(real_audience);
+//    }
 
 
 }
