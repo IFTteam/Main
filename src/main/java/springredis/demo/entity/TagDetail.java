@@ -2,7 +2,6 @@ package springredis.demo.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,24 +13,24 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class Tag {
+public class TagDetail {
     @Id
     @GeneratedValue(
             strategy = GenerationType.AUTO
     )
-    private long tagId;
+    private long id;
 
-    private String tag_name;
+    private long tagId;
 
     @ManyToOne(
             cascade = CascadeType.ALL
     )
     @JoinColumn(
-            name = "user_id"
+            name = "journey_id"
     )
-    private User user;
+    private Journey journey;
 
-
-
+    @ManyToMany(mappedBy = "tagDetails", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Audience> audiences = new ArrayList<>();
 }

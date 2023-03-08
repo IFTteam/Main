@@ -79,7 +79,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         Long journeyId = coreModuleTask.getJourneyId();
 
         Optional<Journey> journey = journeyRepository.findById(journeyId);
-        List<Transmission> transmissionList = transmissionRepository.getTransmissionByJourney(journey);
+        //need to fix
+        List<Transmission> transmissionList = transmissionRepository.findAll();
 
 
 

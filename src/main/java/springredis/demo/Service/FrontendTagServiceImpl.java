@@ -3,14 +3,10 @@ package springredis.demo.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import springredis.demo.entity.Audience;
-import springredis.demo.entity.Journey;
-import springredis.demo.entity.Tag;
-import springredis.demo.entity.User;
+import springredis.demo.entity.*;
 import springredis.demo.error.AudienceNotFoundException;
 import springredis.demo.error.UserNotFoundException;
 import springredis.demo.repository.AudienceRepository;
-import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.TagRepository;
 import springredis.demo.repository.UserRepository;
 
@@ -26,8 +22,6 @@ public class FrontendTagServiceImpl implements FrontendTagService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private JourneyRepository journeyRepository;
 
     @Autowired
     private AudienceRepository audienceRepository;
@@ -59,20 +53,18 @@ public class FrontendTagServiceImpl implements FrontendTagService {
     }
 
     @Override
-    public Tag saveTagWithUserAndJourney(long userId, long journeyId, Tag tag) {
+    public Tag saveTagWithUserAndJourney(long userId, Tag tag) {
         User user = userRepository.findById(userId);
-        Journey journey = journeyRepository.findById(journeyId);
         String tag_name = tag.getTag_name();
         Tag new_tag = Tag.builder()
                 .tag_name(tag_name)
                 .user(user)
-                .journey(journey)
                 .build();
         return tagRepository.save(new_tag);
     }
 
     @Override
-    public List<Tag> getTagAndJourneyByAudience(Long audienceId) throws AudienceNotFoundException {
+    public List<TagDetail> getTagAndJourneyByAudience(Long audienceId) throws AudienceNotFoundException {
         Optional<Audience> audience = audienceRepository.findById(audienceId);
 
         if (!audience.isPresent()) {
@@ -82,7 +74,7 @@ public class FrontendTagServiceImpl implements FrontendTagService {
         Audience real_audience = audience.get();
 
         // Audience audience = audienceRepository.findById(audienceId).get();
-        List<Tag> tagList = real_audience.getTags();
+        List<TagDetail> tagList = real_audience.getTagDetails();
         return tagList;
     }
 

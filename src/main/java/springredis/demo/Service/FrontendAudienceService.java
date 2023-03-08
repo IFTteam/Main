@@ -11,5 +11,5 @@ import java.util.List;
 public interface FrontendAudienceService {
     List<Audience> getAudienceAndTagByUser(Long userId) throws UserNotFoundException;
 
-    Audience createRelationBetweenAudienceAndTag(Long audienceId, Long tagId) throws AudienceNotFoundException, TagNotFoundException;
+   // Audience createRelationBetweenAudienceAndTag(Long audienceId, Long tagId) throws AudienceNotFoundException, TagNotFoundException;
 }

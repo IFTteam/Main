@@ -20,10 +20,3 @@ spring:
 SPARKPOST_API_KEY: 358294aeb167a63aa0ade3a287ef013559e3d964
 SP_BASE_URI: https://api.sparkpost.com
 TESTING_DOMAIN: sub.paradx.net
-#  jackson:
-#    serialization:
-#      wrap-root-value: true # env variables
-
-#SPARKPOST_API_KEY: 358294aeb167a63aa0ade3a287ef013559e3d964
-#SP_BASE_URI: https://api.sparkpost.com
-#TESTING_DOMAIN: sub.paradx.net
