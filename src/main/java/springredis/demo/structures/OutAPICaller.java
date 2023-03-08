@@ -42,7 +42,7 @@ public class OutAPICaller implements Runnable{
 		put("Time Trigger", "http://localhost:8080/add");
 		put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
 		put("If/else", "http://localhost:8080/If_Else");
-		put("tag", "http://localhost:8080/Tag");
+		put("Add Tag", "http://localhost:8080/Tag");
         //put("APITrigger", "   ");
         //put("ActionSend", "   ");
         //put("TimeDelay", "http://localhost:8080/add");
@@ -106,6 +106,7 @@ public class OutAPICaller implements Runnable{
            		nextCoreModuleTask.setType(nextNode.getType());
            		nextCoreModuleTask.setName(nextNode.getName());
             	//This information will be lost when saved into DB. Does CoreModuleTask need its own attributes for nodeId and audience?
+				System.out.println("next node id is:" + nextNode.getId());
             	nextCoreModuleTask.setNodeId(nextNode.getId());  //set the node id to next node
             	nextCoreModuleTask.setActiveAudienceId1(timeTaskOp.get().activeAudienceId1SSerialize());
             	nextCoreModuleTask.setActiveAudienceId2(timeTaskOp.get().activeAudienceId2SSerialize());

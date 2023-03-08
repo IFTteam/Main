@@ -53,9 +53,10 @@ public class TaskController {
                     //add the active-audience to core module attributes
                     List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
                     activeaudiencelist.add(activeAudience.getId());
-                    coreModuleTask.setAudienceId1(activeaudiencelist);
+                    coreModuleTask.setActiveAudienceId1(activeaudiencelist);
                 }
             }
+            System.out.println("after create user, the au is:" + coreModuleTask.getActiveAudienceId1());
         }
         if (coreModuleTask.getAudienceId2().size() != 0) {                  //this means we have audience to create in the second connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId2()) {
@@ -65,14 +66,15 @@ public class TaskController {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
                     //add the active-audience to core module attributes
-                    List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
-                    activeaudiencelist.add(activeAudience.getId());
-                    coreModuleTask.setAudienceId1(activeaudiencelist);
-                    System.out.println("the active audience list is:" + activeaudiencelist.toString());
+                    List<Long> activeaudiencelist2 = coreModuleTask.getActiveAudienceId2();
+                    activeaudiencelist2.add(activeAudience.getId());
+                    coreModuleTask.setActiveAudienceId2(activeaudiencelist2);
+                    System.out.println("the active audience list is:" + activeaudiencelist2.toString());
                 }
             }
         }
         System.out.println("success");
+        System.out.println("after create user, the au is:" + coreModuleTask.getActiveAudienceId1());
         return 1L;
     }
 

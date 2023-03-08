@@ -36,6 +36,10 @@ public class TimeTask extends BaseTaskEntity {
 
     private Long triggerTime;
 
+    private int callapi = 0;
+
+    private int makenext = 0;
+
     private Integer taskStatus;
     @OneToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "core_module_task", referencedColumnName = "id")

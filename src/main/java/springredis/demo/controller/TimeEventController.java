@@ -163,6 +163,7 @@ public class TimeEventController {
         timeDelayRepository.save(timeTask);
 
         System.out.println("dummy task returned");
+        System.out.println(coreModuleTask);
         return coreModuleTask;
     }
 

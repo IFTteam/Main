@@ -180,6 +180,7 @@ public class ActionSendController {
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
+        System.out.println(transmissionRequest.getUserId());
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
@@ -304,7 +305,11 @@ public class ActionSendController {
     	
     	request.setAudienceId(coreModuleTask.getAudienceId1().get(0));  //set audience id. Is it just the first audience id stored on CMT?
 
+        //System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
+        System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
+        request.setUserId(new Long(1));  //set user id
+
 
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
 

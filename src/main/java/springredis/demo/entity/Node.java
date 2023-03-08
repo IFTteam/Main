@@ -50,6 +50,7 @@ public class Node extends BaseEntity {
     //Make Sure that sNexts is not empty when call this. sNexts->nexts
     public void nextsDeserialize(){
         nexts = new ArrayList<>();
+        if (sNexts == null) return;
         String[] s = sNexts.split(" ");
         for (String value : s) {
             if(!value.isEmpty()){

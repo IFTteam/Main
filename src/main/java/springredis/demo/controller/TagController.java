@@ -29,6 +29,6 @@ public class TagController {
 //            System.out.println(task.getName());
             return backendTaskController.createRelationBetweenAudienceAndTag(task);
         }
-        return nullTask;
+        return task;
     }
 }

@@ -36,9 +36,9 @@ public class CMTExecutor{
             put("Time Delay", "http://localhost:8080/TimeDelay");
             put("API Trigger", "http://localhost:8080/API_trigger");
             put("Time Trigger", "http://localhost:8080/add");
-            put("Send Email", "http://localhost:8080/actionSend");
+            put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
             put("If/else", "http://localhost:8080/If_Else");
-            put("tag", "http://localhost:8080/Tag");
+            put("Add Tag", "http://localhost:8080/Tag");
             put("Subscribe", "http://localhost:8080/Subscribe"); //unknown
         }
 
@@ -89,13 +89,18 @@ public class CMTExecutor{
         }
         System.out.println("restask node id: " + restask.getNodeId());
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
-        System.out.println("current node is: " + curnode);
+        //restask.setActiveAudienceId1(restask.getAudienceId1());
+        System.out.println("after user, the au is:" + restask.getActiveAudienceId1());
+        System.out.println("after user, the au is:" + restask.getAudienceId1());
+        curnode.nextsDeserialize();
+        System.out.println("current node is: " + curnode.getName());
         //finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {
             System.out.println("++++++++++++++++get nexts is being excute");
             System.out.println("curnode.getNexts() is" + curnode.getNexts().toString());
             Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
+            nextnode.nextsDeserialize();
             CoreModuleTask newtask = new CoreModuleTask();
             newtask.setUserId(restask.getUserId());
             newtask.setJourneyId(restask.getJourneyId());
@@ -105,18 +110,21 @@ public class CMTExecutor{
             newtask.setType(nextnode.getType());
             newtask.setName(nextnode.getName());
             newtask.setSourceNodeId(nextnode.getId());
-            if(nextnode.getNexts().size()>0) newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
+            if(nextnode.getNexts().size()>0) {
+                newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
+            }
             //now we identify the current activeNode
             ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
+            Node node = nodeRepository.searchNodeByid(id);
             List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
             List<Long> activeIDs = new ArrayList<>();
             List<Long> IDs = new ArrayList<>();
-            for (ActiveAudience aud : activeAudienceList) {
+            /*for (ActiveAudience aud : activeAudienceList) {
                 activeIDs.add(aud.getId());
                 IDs.add(aud.getAudienceId());
-            }
-            newtask.setActiveAudienceId1(activeIDs);
-            newtask.setAudienceId1(IDs);
+            }*/
+            newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
+            newtask.setAudienceId1(restask.getAudienceId1());
             String url = "http://localhost:8080/ReturnTask";
             HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
             Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
