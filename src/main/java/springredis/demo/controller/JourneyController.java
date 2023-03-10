@@ -183,6 +183,7 @@ public class JourneyController {
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
         String name = jsonObject.getString("list");
+        System.out.println(name);
         return name;
     }
 

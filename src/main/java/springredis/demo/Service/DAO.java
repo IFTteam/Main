@@ -58,6 +58,9 @@ public class DAO {
     public Audience searchAudienceByEmail(String email) {
         return audienceRepository.searchAudienceByEmail(email);
     }
+    public Audience searchAudienceByPhone(String phone) {
+        return audienceRepository.searchAudienceByPhone(phone);
+    }
 
     public ActiveNode searchActiveNodeById(Long id){return activeNodeRepository.findByActiveNodeId(id);}
 
@@ -91,4 +94,5 @@ public class DAO {
         return tnr_repository.save(tnr);
     }
 
+    public void updateAudience(Audience audience) { audienceRepository.save(audience); }
 }
