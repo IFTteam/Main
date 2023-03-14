@@ -9,6 +9,7 @@ import springredis.demo.entity.Node;
 
 @Repository
 public interface NodeRepository extends JpaRepository<Node, Long> {
+
     @Query(value="SELECT n from Node n WHERE n.id=:Id")                 //search audience by id in audience repo
     Node searchNodeByid(long Id);
 

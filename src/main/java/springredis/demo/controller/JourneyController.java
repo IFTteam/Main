@@ -159,6 +159,7 @@ public class JourneyController {
         // Call CoreModuleTask
         CoreModuleTask cmt = new CoreModuleTask();
         cmt.setNodeId(dummyHeadId);
+        cmt.setAudienceId1(audienceList);
         cmt.setCallapi(0);
         cmt.setTaskType(1);
         cmtExecutor.execute(cmt);
@@ -168,13 +169,13 @@ public class JourneyController {
 
 
     private List<Long> AudienceFromAudienceList(String audienceListName){
-            AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
-            List<Audience> audiences = audienceList.getAudiences();
-            List<Long> audiencesId= new ArrayList<>();
-            for(Audience audience: audiences){
-                audiencesId.add(audience.getId());
-            }
-            return audiencesId;
+        AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
+        List<Audience> audiences = audienceList.getAudiences();
+        List<Long> audiencesId= new ArrayList<>();
+        for(Audience audience: audiences){
+            audiencesId.add(audience.getId());
+        }
+        return audiencesId;
     }
 
 

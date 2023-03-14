@@ -75,7 +75,7 @@ public class API_Trigger_Controller {
         String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
 //String url = "http://localhost:8080/show"; //for testing
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://85aa-24-85-229-120.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://4743-66-183-117-184.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -117,7 +117,7 @@ public class API_Trigger_Controller {
         String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
         System.out.println(url);
-        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://85aa-24-85-229-120.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://4743-66-183-117-184.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -129,25 +129,68 @@ public class API_Trigger_Controller {
     //the url now is only user-specific
     @RequestMapping(value="/shopify_purchase_update/{user}",method=RequestMethod.POST,produces=MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public List<CoreModuleTask> shopify_purchasetrigger_hit(@PathVariable("user") String username, @RequestBody String jsonstr)
+    public List<CoreModuleTask> shopifyPurchaseTriggerHit(@PathVariable("user") String username, @RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
+        Audience audience;
         JSONObject order = new JSONObject(jsonstr);
-        JSONObject tmp = order.getJSONObject("customer");
-        Long id = tmp.getLong("id");
-        String email=tmp.getString("email"),fi=tmp.getString("first_name"),li=tmp.getString("last_name");
-        Audience audience = new Audience();
-        audience.setEmail(email);audience.setFirstName(fi);audience.setLastName(li);
-        audience.setSource("shopify");
-        Long audienceid = 0L;
-        Audience exsitingaudience = productService.searchAudienceByEmail(email);
-        //add new audience if not included in the audience table
-        if(exsitingaudience!=null){
-            audienceid = productService.searchAudienceByEmail(email).getId();
+
+        JSONObject customer = order.getJSONObject("customer");
+        String firstName = customer.optString("first_name");
+        String lastName = customer.getString("last_name");
+        String updateAt = order.getString("updated_at");
+        OffsetDateTime offsetDateTime = OffsetDateTime.parse(updateAt);
+        LocalDateTime updateTime = offsetDateTime.toLocalDateTime();
+
+        // Email and phone, one of them will be null.
+        String email = customer.optString("email");
+        String phone = customer.optString("phone");
+
+        JSONObject defaultAddress = customer.getJSONObject("default_address");
+        String address1 = defaultAddress.getString("address1");
+        String address2 = defaultAddress.optString("address2");
+////
+        Long audienceId = null;
+        // The customer's contact will either be an email or a phone number
+        if (!email.isEmpty()) {
+            audience = productService.searchAudienceByEmail(email);
+        } else {
+            audience = productService.searchAudienceByPhone(phone);
         }
 
-        else
-            audienceid = productService.addNewAudience(audience).getId();
+        if (audience != null) {
+            audienceId = audience.getId();
+        } else {
+            audience = new Audience();
+        }
+
+        if (!email.isEmpty()) {
+            audience = productService.searchAudienceByEmail(email);
+        } else if (!phone.isEmpty()) {
+            audience = productService.searchAudienceByPhone(phone);
+        } else {
+            return null;
+        }
+
+        audience.setFirstName(firstName);
+        audience.setLastName(lastName);
+        audience.setUpdatedAt(updateTime);
+        audience.setCreatedAt(updateTime);////
+
+        if (address2.isEmpty()) {
+            audience.setAddress(address1);
+        } else {
+            audience.setAddress(address1 + ", " + address2);
+        }
+        audience.setSource("shopify");
+
+        if (audienceId == null) {
+            audience.setCreatedAt(updateTime);
+            audience = productService.addNewAudience(audience);
+            audienceId = audience.getId();
+        }
+        productService.updateAudience(audience);
+
         triggerType_node_relation tnr = productService.searchTNR(user.getId(),"purchase").get();
         List<Node> nodes = tnr.getNodes();
         List<CoreModuleTask> tasks = new ArrayList<>();                 //returns all new tasks pushed onto the task queue
@@ -156,7 +199,7 @@ public class API_Trigger_Controller {
             String url = "http://localhost:8080" + "/ReturnTask";   //replace with server domain name
             CoreModuleTask task = new CoreModuleTask();
             List<Long> newlist = new ArrayList<>();
-            newlist.add(audienceid);
+            newlist.add(audienceId);
             task.setAudienceId1(newlist);
             task.setNodeId(n.getId());                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
             task.setUserId(user.getId());
@@ -190,10 +233,13 @@ public class API_Trigger_Controller {
         // The customer's contact will either be an email or a phone number
         if (!email.isEmpty()) {
             audience = productService.searchAudienceByEmail(email);
-        } else {
+        } else if (!phone.isEmpty()) {
             audience = productService.searchAudienceByPhone(phone);
+        } else {
+            // 如果response裡沒有email也沒有phone就直接return null。(有時候會出現這種狀況)
+            return null;
         }
-
+        // 如果這個contact不在我們的DB裡，建一個新的audience
         if (audience != null) {
             audienceId = audience.getId();
         } else {
@@ -205,22 +251,30 @@ public class API_Trigger_Controller {
             String firstName = billingAddress.optString("first_name");
             String lastName = billingAddress.getString("last_name");
             String address1 = billingAddress.getString("address1");
-            String address2 = billingAddress.getString("address2");
-            audience.setEmail(email);
-            audience.setPhone(phone);
+            String address2 = billingAddress.optString("address2");
+            if (!email.isEmpty()) {
+                audience.setEmail(email);
+            } else {
+                audience.setPhone(phone);
+            }
             audience.setFirstName(firstName);
             audience.setLastName(lastName);
             audience.setUpdatedAt(updateTime);
-            audience.setAddress(address1 + ", " + address2);
+
+            if (address2.isEmpty()) {
+                audience.setAddress(address1);
+            } else {
+                audience.setAddress(address1 + ", " + address2);
+            }
             audience.setSource("shopify");
-            productService.updateAudience(audience);
         }
 
         if (audienceId == null) {
+            audience.setCreatedAt(updateTime);
             audience = productService.addNewAudience(audience);
-            audience.setUpdatedAt(updateTime);
             audienceId = audience.getId();
         }
+        productService.updateAudience(audience);
 
         triggerType_node_relation tnr = productService.searchTNR(user.getId(), "abandon_cart").get();
         List<Node> nodes = tnr.getNodes();

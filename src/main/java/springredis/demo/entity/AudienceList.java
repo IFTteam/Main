@@ -40,5 +40,16 @@ public class AudienceList extends BaseEntity {
     )
     List<Audience> audiences = new ArrayList<>();
 
+
+    @ManyToOne(
+            cascade = CascadeType.ALL
+    )
+    @JoinColumn(
+            name = "user_id"
+    )
+    private User user;
+
+
+
 }
 

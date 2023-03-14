@@ -8,6 +8,7 @@ import springredis.demo.entity.Tag;
 import springredis.demo.entity.User;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Long> {
@@ -18,4 +19,9 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
     List<Tag> getTagByUser(User user);
 
     List<Tag> findByUserId(Long id);
+
+    @Query("select t from Tag t where t.tag_name=:tagName and t.user=:user")
+    Optional<Tag> findByUserIdName(String tagName, User user);
+
+
 }

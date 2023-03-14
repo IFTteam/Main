@@ -9,10 +9,12 @@ import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Node;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.repository.AudienceRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 //the API controller to receive task from other module
@@ -26,6 +28,9 @@ public class TaskController {
     ActiveNodeRepository activeNodeRepository;
     @Autowired
     NodeRepository nodeRepository;
+    @Autowired
+    AudienceRepository audienceRepository;
+
 
 
     private final String taskQueueKey = "CoretaskQueue";
@@ -45,6 +50,10 @@ public class TaskController {
                 if (activeNode != null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
+                    //add the active-audience to core module attributes
+                    List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
+                    activeaudiencelist.add(activeAudience.getId());
+                    coreModuleTask.setAudienceId1(activeaudiencelist);
                 }
             }
         }
@@ -55,6 +64,11 @@ public class TaskController {
                 if (activeNode!=null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
+                    //add the active-audience to core module attributes
+                    List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
+                    activeaudiencelist.add(activeAudience.getId());
+                    coreModuleTask.setAudienceId1(activeaudiencelist);
+                    System.out.println("the active audience list is:" + activeaudiencelist.toString());
                 }
             }
         }
@@ -64,13 +78,22 @@ public class TaskController {
 
     @PostMapping("/move_user")
     private Long moveUser(@RequestBody CoreModuleTask coreModuleTask) {
-        if (coreModuleTask.getAudienceId1().size() != 0) {                  //this means we have audience to create in the first connected node of the source node
-            for (Long AudId : coreModuleTask.getAudienceId1()) {
-                ActiveAudience activeAudience = activeAudienceRepository.findByDBId(AudId);
+        if (coreModuleTask.getAudienceId1() != null) {
+            //this means we have audience to create in the first connected node of the source node
+            for (Long AudId : coreModuleTask.getActiveAudienceId1()) {
+                System.out.println("the aud_id is:" + AudId);
+                //System.out.println("the audience is:" + activeAudienceRepository.searchActiveAudienceByid(AudId).getAudienceId());
+                //ActiveAudience activeAudience = audienceRepository.searchAudienceByid(AudId);
+                ActiveAudience activeAudience = activeAudienceRepository.searchActiveAudienceByid(AudId);
                 ActiveNode activeNode = activeNodeRepository.findByDBNodeId(nodeRepository.searchNodeByid(nodeRepository.searchNodeByid(coreModuleTask.getNodeId()).getNexts().get(0)).getId());
                 if (activeNode != null) {
+                    System.out.println("1");
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
+                    //add the active-audience to core module attributes
+                    //List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
+                    //activeaudiencelist.add(activeAudience.getId());
+                    //coreModuleTask.setAudienceId1(activeaudiencelist);
                 }
             }
         }
@@ -81,6 +104,10 @@ public class TaskController {
                 if (activeNode!=null) {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
+                    //add the active-audience to core module attributes
+                    List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
+                    activeaudiencelist.add(activeAudience.getId());
+                    coreModuleTask.setAudienceId1(activeaudiencelist);
                 }
             }
         }

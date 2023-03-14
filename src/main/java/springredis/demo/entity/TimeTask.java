@@ -80,7 +80,7 @@ public class TimeTask extends BaseTaskEntity {
   public void activeAudienceId1SDeserialize(List<Long> activeAudienceId1List){
       StringBuffer buffer = new StringBuffer();
       for(Long num:activeAudienceId1List){
-          buffer.append(num.toString());
+          buffer.append(num.toString() + " ");
       }
       activeAudienceId1S = buffer.toString();
   }
@@ -100,7 +100,7 @@ public class TimeTask extends BaseTaskEntity {
   public void activeAudienceId2SDeserialize(List<Long> activeAudienceId2List){
       StringBuffer buffer = new StringBuffer();
       for(Long num:activeAudienceId2List){
-          buffer.append(num.toString());
+          buffer.append(num.toString() + " ");
       }
       activeAudienceId2S = buffer.toString();
   }
@@ -120,7 +120,7 @@ public class TimeTask extends BaseTaskEntity {
   public void audienceId1SDeserialize(List<Long> audienceId1List){
       StringBuffer buffer = new StringBuffer();
       for(Long num:audienceId1List){
-          buffer.append(num.toString());
+          buffer.append(num.toString() + " ");
       }
       audienceId1S = buffer.toString();
   }
@@ -140,7 +140,7 @@ public class TimeTask extends BaseTaskEntity {
   public void audienceId2SDeserialize(List<Long> audienceId2List){
       StringBuffer buffer = new StringBuffer();
       for(Long num:audienceId2List){
-          buffer.append(num.toString());
+          buffer.append(num.toString() + " ");
       }
       audienceId2S = buffer.toString();
   }
