@@ -62,7 +62,7 @@ public class EventWebhookController {
         audienceActivityRepository.save(audienceActivity);
 
         // Spark post requires 200 status code
-        Response response = new Response();
+        Response response = new Response(); // 直接把status code設定成200可能有問題，需要catch error等等...
         response.setStatusCode("200");
         response.setStatusMsg("Event data received!");
         return ResponseEntity.status(HttpStatus.OK).body(response);

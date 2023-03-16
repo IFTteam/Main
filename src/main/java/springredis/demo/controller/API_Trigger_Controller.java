@@ -75,7 +75,7 @@ public class API_Trigger_Controller {
         String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
 //String url = "http://localhost:8080/show"; //for testing
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://4743-66-183-117-184.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://a065-66-183-117-184.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -117,7 +117,7 @@ public class API_Trigger_Controller {
         String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
         System.out.println(url);
-        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://4743-66-183-117-184.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://a065-66-183-117-184.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -132,7 +132,7 @@ public class API_Trigger_Controller {
     public List<CoreModuleTask> shopifyPurchaseTriggerHit(@PathVariable("user") String username, @RequestBody String jsonstr)
     {
         User user = productService.searchUserById(Long.parseLong(username));
-        Audience audience;
+        Audience audience = null;
         JSONObject order = new JSONObject(jsonstr);
 
         JSONObject customer = order.getJSONObject("customer");
@@ -144,7 +144,6 @@ public class API_Trigger_Controller {
 
         // Email and phone, one of them will be null.
         String email = customer.optString("email");
-        String phone = customer.optString("phone");
 
         JSONObject defaultAddress = customer.getJSONObject("default_address");
         String address1 = defaultAddress.getString("address1");
@@ -155,7 +154,7 @@ public class API_Trigger_Controller {
         if (!email.isEmpty()) {
             audience = productService.searchAudienceByEmail(email);
         } else {
-            audience = productService.searchAudienceByPhone(phone);
+            return null;
         }
 
         if (audience != null) {
@@ -164,18 +163,11 @@ public class API_Trigger_Controller {
             audience = new Audience();
         }
 
-        if (!email.isEmpty()) {
-            audience = productService.searchAudienceByEmail(email);
-        } else if (!phone.isEmpty()) {
-            audience = productService.searchAudienceByPhone(phone);
-        } else {
-            return null;
-        }
-
         audience.setFirstName(firstName);
         audience.setLastName(lastName);
         audience.setUpdatedAt(updateTime);
         audience.setCreatedAt(updateTime);////
+        audience.setEmail(email);
 
         if (address2.isEmpty()) {
             audience.setAddress(address1);
@@ -233,8 +225,6 @@ public class API_Trigger_Controller {
         // The customer's contact will either be an email or a phone number
         if (!email.isEmpty()) {
             audience = productService.searchAudienceByEmail(email);
-        } else if (!phone.isEmpty()) {
-            audience = productService.searchAudienceByPhone(phone);
         } else {
             // 如果response裡沒有email也沒有phone就直接return null。(有時候會出現這種狀況)
             return null;
@@ -252,11 +242,7 @@ public class API_Trigger_Controller {
             String lastName = billingAddress.getString("last_name");
             String address1 = billingAddress.getString("address1");
             String address2 = billingAddress.optString("address2");
-            if (!email.isEmpty()) {
-                audience.setEmail(email);
-            } else {
-                audience.setPhone(phone);
-            }
+            audience.setEmail(email);
             audience.setFirstName(firstName);
             audience.setLastName(lastName);
             audience.setUpdatedAt(updateTime);
