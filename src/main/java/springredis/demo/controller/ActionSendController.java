@@ -130,7 +130,7 @@ public class ActionSendController {
     //@RequestMapping(value={"/createTransmission"}, method = POST)
     //@ResponseBody
     public ResponseEntity<Response> createTransmission(TransmissionRequest transmissionRequest){
-
+        System.out.println(transmissionRequest);
 
         HashMap<Object, Object> param = new HashMap<>();
         param.put("options", new HashMap<String, Object>() {{
@@ -147,7 +147,12 @@ public class ActionSendController {
             put("user_type", "students");
             put("education_level", "college");
         }});
-
+        List<Address> list = new ArrayList<>();
+        Address address1 = new Address("address1");
+        Address address2 = new Address("address2");
+        list.add(address1);
+        list.add(address2);
+        transmissionRequest.setAddressList(list);
         System.out.println("====================================================Request Campaign ID: " + transmissionRequest.getCampaignId());
         System.out.println("====================================================Request Audience ID: " + transmissionRequest.getAudienceId());
         System.out.println("====================================================Request Journey ID: " + transmissionRequest.getJourneyId());
@@ -292,7 +297,7 @@ public class ActionSendController {
     	//content.setHtml();
     	content.setText("hello,testing");
     	request.setContent(content);
-    	
+
     	request.setAudienceId(coreModuleTask.getAudienceId1().get(0));  //set audience id. Is it just the first audience id stored on CMT?
 
     	request.setUserId(coreModuleTask.getUserId());  //set user id

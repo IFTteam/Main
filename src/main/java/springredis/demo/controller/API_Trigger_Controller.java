@@ -75,7 +75,7 @@ public class API_Trigger_Controller {
         String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
 //String url = "http://localhost:8080/show"; //for testing
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://a065-66-183-117-184.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://e9f2-75-151-73-57.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -117,7 +117,7 @@ public class API_Trigger_Controller {
         String token = user.getShopifyApiAccessToken();
         String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
         System.out.println(url);
-        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://a065-66-183-117-184.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://e9f2-75-151-73-57.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
@@ -168,6 +168,7 @@ public class API_Trigger_Controller {
         audience.setUpdatedAt(updateTime);
         audience.setCreatedAt(updateTime);////
         audience.setEmail(email);
+        audience.setUser(user);
 
         if (address2.isEmpty()) {
             audience.setAddress(address1);
@@ -217,7 +218,6 @@ public class API_Trigger_Controller {
         Audience audience;
         JSONObject order = new JSONObject(jsonstr);
         String email = order.optString("email");
-        String phone = order.optString("phone");
         String updateAt = order.getString("updated_at");
         OffsetDateTime offsetDateTime = OffsetDateTime.parse(updateAt);
         LocalDateTime updateTime = offsetDateTime.toLocalDateTime();
@@ -246,6 +246,7 @@ public class API_Trigger_Controller {
             audience.setFirstName(firstName);
             audience.setLastName(lastName);
             audience.setUpdatedAt(updateTime);
+            audience.setUser(user);
 
             if (address2.isEmpty()) {
                 audience.setAddress(address1);
