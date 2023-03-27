@@ -46,12 +46,10 @@ public class TimeEventController {
         *   initialize new Time task
          */
         TimeTask timeTask = new TimeTask();
-        
         timeTask.setCoreModuleTask(coreModuleTask);
         timeTask.setNodeId(baseTaskEntity.getNodeId());
         timeTask.activeAudienceId1SDeserialize(baseTaskEntity.getActiveAudienceId1());
         timeTask.activeAudienceId2SDeserialize(baseTaskEntity.getActiveAudienceId2());
-        System.out.println("The ActiveAudienceId1 is" + baseTaskEntity.getActiveAudienceId1());
         timeTask.audienceId1SDeserialize(baseTaskEntity.getAudienceId1());
         timeTask.audienceId2SDeserialize(baseTaskEntity.getAudienceId2());
         timeTask.setTaskStatus(0);
@@ -151,14 +149,66 @@ public class TimeEventController {
 
         //auditing support
         timeTask.setNodeId(node_id);
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
+        timeTask.setCreatedAt(LocalDateTime.now());
+        timeTask.setUserId(coreModuleTask.getUserId());
+        timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
+        timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
+        timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
+        timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
+        timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
+        timeTask.setTaskStatus(0);
+        timeTask.setCoreModuleTask(coreModuleTask);
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
+
+        System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
+        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
+        //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
+        timeDelayRepository.save(timeTask);
+
+        System.out.println("dummy task returned");
+        System.out.println(coreModuleTask);
+        return coreModuleTask;
+    }
+
+    @PostMapping("/Time_Delay")
+    public CoreModuleTask Time_Delay(@RequestBody CoreModuleTask coreModuleTask){
+        Long node_id = coreModuleTask.getNodeId();
+        System.out.println("the core mode: " + coreModuleTask);
+        Optional<Node> node = nodeRepository.findById(node_id);
+
+        /*
+         *   Set the dummy coreModuleTask
+         */
+        coreModuleTask.setMakenext(0);
+
+        /*
+         *   Initialize the new time task
+         */
+        TimeTask timeTask = new TimeTask(coreModuleTask);
+
+        timeTask.setTaskStatus(0);
+
+        //parsing the time information
+        JSONObject jsonObject = new JSONObject(node.get().getProperties());
+        String time = jsonObject.getString("sendOn");
+        parseFStringWithSpecificTime(time, timeTask);
+
+        //auditing support
+        timeTask.setNodeId(node_id);
+
         timeTask.setCreatedAt(LocalDateTime.now());
         timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
         timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
         timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
-        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
         timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
         timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
         timeTask.setTaskStatus(0);
+        timeTask.setCoreModuleTask(coreModuleTask);
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
+
+        System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
+        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
         //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
         timeDelayRepository.save(timeTask);
 
@@ -195,7 +245,6 @@ public class TimeEventController {
                 e.printStackTrace();
             }
         }
-
         return coreModuleTask;
     }
 

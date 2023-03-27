@@ -173,6 +173,8 @@ public class JourneyController {
         cmt.setNodeId(dummyHeadId);
         cmt.setCallapi(0);
         cmt.setTaskType(1);
+        cmt.setJourneyId(journeyId);
+        System.out.println("Ini JI is " + journeyId);
 
         //get audience list from properties
         //todo: "Select list" attributes is not in property json object in table

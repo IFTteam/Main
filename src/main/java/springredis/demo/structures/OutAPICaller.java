@@ -37,12 +37,12 @@ public class OutAPICaller implements Runnable{
     public String idKey = "id";
     final String url = "http://localhost:3000";
     private HashMap<String, String> urlDict = new HashMap<String, String>() {{
-		put("Time Delay", "http://localhost:8080/TimeDelay");
+		put("Time Delay", "http://localhost:8080/Time_Delay");
 		put("API Trigger", "http://localhost:8080/API_trigger");
 		put("Time Trigger", "http://localhost:8080/add");
 		put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
-		put("If/else", "http://localhost:8080/If_Else");
-		put("Add Tag", "http://localhost:8080/Tag");
+		put("If/Else", "http://localhost:8080/IfElse");
+		put("Add Tag", "http://localhost:8080/AddTag");
         //put("APITrigger", "   ");
         //put("ActionSend", "   ");
         //put("TimeDelay", "http://localhost:8080/add");
@@ -75,11 +75,13 @@ public class OutAPICaller implements Runnable{
 	            	throw new DataBaseObjectNotFoundException("No Time Task Exist");
 				}
 				TimeTask timetask = timeTaskOp.get();
+				timetask.audience_serialize();
             	System.out.println("================================================Time Task retrieved=====================================================");
 //            	TaskExecutor taskExectuor = new TaskExecutor(timeTaskOp.get().getCoreModuleTask());
             	CoreModuleTask coreModuleTask = timetask.getCoreModuleTask();
-            	System.out.println(coreModuleTask);
-            	Long audienceMoveResult = restTemplate.postForObject("http://localhost:8080/move_user", coreModuleTask, Long.class);  //calls JiaQi's method
+            	System.out.println(coreModuleTask.getAudienceId1());
+				System.out.println("cur JI id is:" + timetask.getJourneyId());
+				coreModuleTask = restTemplate.postForObject("http://localhost:8080/move_user", coreModuleTask, CoreModuleTask.class);  //calls JiaQi's method
             	System.out.println("=================================CoreModuleTask ID: " + coreModuleTask.getId());
 				System.out.println("=================================Node: " + timetask);
             	Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
@@ -103,23 +105,28 @@ public class OutAPICaller implements Runnable{
            		Node nextNode = initializeNodeFromDB(optionalNextNode);
 
            		CoreModuleTask nextCoreModuleTask = new CoreModuleTask(coreModuleTask);  //create new CoreModuleTask based on current CoreModuleTask
-           		nextCoreModuleTask.setType(nextNode.getType());
+				System.out.println("cur CM id is:" + coreModuleTask);
+
+				nextCoreModuleTask.setType(nextNode.getType());
            		nextCoreModuleTask.setName(nextNode.getName());
             	//This information will be lost when saved into DB. Does CoreModuleTask need its own attributes for nodeId and audience?
 				System.out.println("next node id is:" + nextNode.getId());
+				nextCoreModuleTask.setJourneyId(timetask.getJourneyId());
             	nextCoreModuleTask.setNodeId(nextNode.getId());  //set the node id to next node
-            	nextCoreModuleTask.setActiveAudienceId1(timeTaskOp.get().activeAudienceId1SSerialize());
-            	nextCoreModuleTask.setActiveAudienceId2(timeTaskOp.get().activeAudienceId2SSerialize());
-            	nextCoreModuleTask.setAudienceId1(timeTaskOp.get().audienceId1SSerialize());
-            	nextCoreModuleTask.setAudienceId2(timeTaskOp.get().audienceId2SSerialize());
-				System.out.println("audience info" + timeTaskOp.get().activeAudienceId1SSerialize());
-				System.out.println("audience info" + timeTaskOp.get().activeAudienceId2SSerialize());
-				System.out.println("audience info" + timeTaskOp.get().audienceId1SSerialize());
-				System.out.println("audience info" + timeTaskOp.get().audienceId2SSerialize());
-				System.out.println("audience info" + nextCoreModuleTask.getActiveAudienceId1());
-				System.out.println("audience info" + nextCoreModuleTask.getActiveAudienceId2());
-				System.out.println("audience info" + nextCoreModuleTask.getAudienceId1());
-				System.out.println("audience info" + nextCoreModuleTask.getAudienceId2());
+//            	nextCoreModuleTask.setActiveAudienceId1(timeTaskOp.get().activeAudienceId1SSerialize());
+//            	nextCoreModuleTask.setActiveAudienceId2(timeTaskOp.get().activeAudienceId2SSerialize());
+				System.out.println("TTAA1 info" + timetask.getActiveAudienceId1());
+				System.out.println("TTAA2 info" + timetask.getActiveAudienceId2());
+				System.out.println("TTA1 info" + timetask.getAudienceId1());
+				System.out.println("TTA2 info" + timetask.getAudienceId2());
+				nextCoreModuleTask.setActiveAudienceId1(timetask.activeAudienceId1SSerialize());
+				nextCoreModuleTask.setActiveAudienceId2(timetask.audienceId2SSerialize());
+            	nextCoreModuleTask.setAudienceId1(timetask.audienceId1SSerialize());
+            	nextCoreModuleTask.setAudienceId2(timetask.audienceId2SSerialize());
+				System.out.println("NAA1 info" + nextCoreModuleTask.getActiveAudienceId1());
+				System.out.println("NAA2 info" + nextCoreModuleTask.getActiveAudienceId2());
+				System.out.println("NA1 info" + nextCoreModuleTask.getAudienceId1());
+				System.out.println("NA2 info" + nextCoreModuleTask.getAudienceId2());
             	//auditing support
             	nextCoreModuleTask.setCreatedAt(LocalDateTime.now());
             	nextCoreModuleTask.setCreatedBy("TimeModule");
@@ -127,7 +134,7 @@ public class OutAPICaller implements Runnable{
 //            	nextCoreModuleTask.getActiveAudienceId1().add(audienceMoveResult);  //set the active audience id to the one returned by JiaQi's method
 //          	nextCoreModuleTask.setSourceNodeId(coreModuleTask.getNodeId()); //set the source node id to that of the current node's id
 //            	nextCoreModuleTask.setTargetNodeId(nextNode.getNexts().get(0));  //set the target node id to that of the next node of nextNode
-            	Long addTaskResult = restTemplate.postForObject("http://localhost:8080/ReturnTask", nextCoreModuleTask, Long.class);  //using JiaQi's method
+            	//Long addTaskResult = restTemplate.postForObject("http://localhost:8080/ReturnTask", nextCoreModuleTask, Long.class);  //using JiaQi's method
             	System.out.println("================================================OUTAPI successful 3=====================================================");
 				/*String type = nextCoreModuleTask.getName();
 				System.out.println("In outAPI the CM is:" + nextCoreModuleTask);
@@ -143,10 +150,6 @@ public class OutAPICaller implements Runnable{
 				System.out.println("In outAPI the type is:" + type);
 	            String url = urlDict.get(type);
 				System.out.println("the usl is" + url);
-				System.out.println("audience info" + coreModuleTask.getActiveAudienceId1());
-				System.out.println("audience info" + coreModuleTask.getActiveAudienceId2());
-				System.out.println("audience info" + coreModuleTask.getAudienceId1());
-				System.out.println("audience info" + coreModuleTask.getAudienceId2());
 				ArrayList array = new ArrayList<Long>(1501);
 				//coreModuleTask.setAudienceId1(array);
 	            String result = restTemplate.postForObject(url, coreModuleTask, String.class);

@@ -42,7 +42,7 @@ public class TaskController {
 
     //returns the created user's id in buffer (not main DB!!)
     @PostMapping("/create_user")
-    private Long createUser(@RequestBody CoreModuleTask coreModuleTask) {
+    private CoreModuleTask createUser(@RequestBody CoreModuleTask coreModuleTask) {
         if (coreModuleTask.getAudienceId1().size() != 0) {                  //this means we have audience to create in the first connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId1()) {
                 ActiveAudience activeAudience = new ActiveAudience(Audid);
@@ -75,11 +75,11 @@ public class TaskController {
         }
         System.out.println("success");
         System.out.println("after create user, the au is:" + coreModuleTask.getActiveAudienceId1());
-        return 1L;
+        return coreModuleTask;
     }
 
     @PostMapping("/move_user")
-    private Long moveUser(@RequestBody CoreModuleTask coreModuleTask) {
+    private CoreModuleTask moveUser(@RequestBody CoreModuleTask coreModuleTask) {
         if (coreModuleTask.getAudienceId1() != null) {
             //this means we have audience to create in the first connected node of the source node
             for (Long AudId : coreModuleTask.getActiveAudienceId1()) {
@@ -114,7 +114,7 @@ public class TaskController {
             }
         }
         System.out.println("success");
-        return 1L;
+        return coreModuleTask;
     }
 
 }

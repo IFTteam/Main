@@ -33,12 +33,12 @@ public class CMTExecutor{
     //Chanage the below to actual API endpoints of functional urls
     private HashMap<String, String> urlDict = new HashMap<String, String>() {
         {
-            put("Time Delay", "http://localhost:8080/TimeDelay");
+            put("Time Delay", "http://localhost:8080/Time_Delay");
             put("API Trigger", "http://localhost:8080/API_trigger");
             put("Time Trigger", "http://localhost:8080/add");
             put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
-            put("If/else", "http://localhost:8080/If_Else");
-            put("Add Tag", "http://localhost:8080/Tag");
+            put("If/Else", "http://localhost:8080/IfElse");
+            put("Add Tag", "http://localhost:8080/AddTag");
             put("Subscribe", "http://localhost:8080/Subscribe"); //unknown
         }
 
@@ -83,15 +83,14 @@ public class CMTExecutor{
         //change local host to server domain!!
         //moving active audience pool from current node to next node (via method in task controller)
         if (restask.getTaskType() == 0) {
-            activeid = restTemplate.exchange("http://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
+            restask = restTemplate.exchange("http://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), CoreModuleTask.class).getBody();
         } else {
-            activeid = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), Long.class).getBody();
+            restask = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), CoreModuleTask.class).getBody();
+            System.out.println("in CMT, after create user, the au is:" +
+                    restask.getActiveAudienceId1());
         }
         System.out.println("restask node id: " + restask.getNodeId());
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
-        //restask.setActiveAudienceId1(restask.getAudienceId1());
-        System.out.println("after user, the au is:" + restask.getActiveAudienceId1());
-        System.out.println("after user, the au is:" + restask.getAudienceId1());
         curnode.nextsDeserialize();
         System.out.println("current node is: " + curnode.getName());
         //finally, make and push new tasks based on next node
@@ -105,11 +104,14 @@ public class CMTExecutor{
             newtask.setUserId(restask.getUserId());
             newtask.setJourneyId(restask.getJourneyId());
             newtask.setNodeId(id);
-            newtask.setTaskType(0);                 //all tasks are move-user except for trigger hit, which is not taken care of here
-            System.out.println("The next node type is:" + nextnode.getType());
+            newtask.setTaskType(0);
             newtask.setType(nextnode.getType());
             newtask.setName(nextnode.getName());
             newtask.setSourceNodeId(nextnode.getId());
+            newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
+            newtask.setActiveAudienceId2(restask.getActiveAudienceId2());
+            newtask.setAudienceId1(restask.getAudienceId1());
+            newtask.setAudienceId2(restask.getAudienceId2());
             if(nextnode.getNexts().size()>0) {
                 newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
             }

@@ -184,7 +184,8 @@ public class ActionSendController {
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
-        transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+        //transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+        transmission.setJourney(journeyRepository.findById(403));
         transmissionRepository.save(transmission);
 
         Response response = new Response();
@@ -280,6 +281,9 @@ public class ActionSendController {
     		address.setAddress(audienceList.get(i).getEmail());
     		addressList.add(address);
     	}
+        Address address = new Address();
+        address.setAddress("yuyangba@buffalo.edu");
+        addressList.add(address);
     	request.setAddressList(addressList);
 
         System.out.println(addressList.toString());
@@ -308,7 +312,7 @@ public class ActionSendController {
         //System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
         System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
-        request.setUserId(new Long(1));  //set user id
+        request.setUserId(1L);  //set user id
 
 
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id

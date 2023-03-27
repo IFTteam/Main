@@ -33,6 +33,17 @@ public class CoreModuleTask extends BaseTaskEntity {
 		super(baseTaskEntity);
 		// TODO Auto-generated constructor stub
 	}
+
+    public CoreModuleTask(CoreModuleTask cm) {
+        super(cm);
+        this.id = cm.id;
+        this.taskType = cm.taskType;
+        this.createModule = cm.createModule;
+        this.type = cm.type;
+        this.name = cm.name;
+        this.makenext = cm.makenext;
+        this.callapi = cm.callapi;
+    }
 	
 	public CoreModuleTask() {
 		super();
