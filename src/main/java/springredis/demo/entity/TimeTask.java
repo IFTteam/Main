@@ -53,7 +53,6 @@ public class TimeTask extends BaseTaskEntity {
  
     public TimeTask(BaseTaskEntity baseTaskEntity){
         super(baseTaskEntity);
-        coreModuleTask = new CoreModuleTask(baseTaskEntity);
     }
     
     public CoreModuleTask getCoreModuleTask() {

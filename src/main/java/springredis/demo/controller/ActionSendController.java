@@ -316,8 +316,6 @@ public class ActionSendController {
 
 
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
-
-
     	
     	//restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
         //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);

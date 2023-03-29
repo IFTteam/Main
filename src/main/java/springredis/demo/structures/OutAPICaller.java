@@ -78,11 +78,11 @@ public class OutAPICaller implements Runnable{
 				timetask.audience_serialize();
             	System.out.println("================================================Time Task retrieved=====================================================");
 //            	TaskExecutor taskExectuor = new TaskExecutor(timeTaskOp.get().getCoreModuleTask());
-            	CoreModuleTask coreModuleTask = timetask.getCoreModuleTask();
-            	System.out.println(coreModuleTask.getAudienceId1());
+            	//CoreModuleTask coreModuleTask = timetask.getCoreModuleTask();
+            	//System.out.println(coreModuleTask.getAudienceId1());
 				System.out.println("cur JI id is:" + timetask.getJourneyId());
-				coreModuleTask = restTemplate.postForObject("http://localhost:8080/move_user", coreModuleTask, CoreModuleTask.class);  //calls JiaQi's method
-            	System.out.println("=================================CoreModuleTask ID: " + coreModuleTask.getId());
+				//coreModuleTask = restTemplate.postForObject("http://localhost:8080/move_user", coreModuleTask, CoreModuleTask.class);  //calls JiaQi's method
+            	//System.out.println("=================================CoreModuleTask ID: " + coreModuleTask.getId());
 				System.out.println("=================================Node: " + timetask);
             	Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
 				if (!optionalNode.isPresent()) {
@@ -101,11 +101,14 @@ public class OutAPICaller implements Runnable{
 				if (!optionalNextNode.isPresent()) {
 					throw new DataBaseObjectNotFoundException("The Next node does not exist");
 				}
+				if (node.getNexts().size() > 1){
 
+				}
            		Node nextNode = initializeNodeFromDB(optionalNextNode);
 
-           		CoreModuleTask nextCoreModuleTask = new CoreModuleTask(coreModuleTask);  //create new CoreModuleTask based on current CoreModuleTask
-				System.out.println("cur CM id is:" + coreModuleTask);
+           		//CoreModuleTask nextCoreModuleTask = new CoreModuleTask(coreModuleTask);  //create new CoreModuleTask based on current CoreModuleTask
+				CoreModuleTask nextCoreModuleTask = new CoreModuleTask();
+				//System.out.println("cur CM id is:" + coreModuleTask);
 
 				nextCoreModuleTask.setType(nextNode.getType());
            		nextCoreModuleTask.setName(nextNode.getName());
@@ -142,17 +145,17 @@ public class OutAPICaller implements Runnable{
 				String url = urlDict.get(type);
 				String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
 				 */
-				coreModuleTask = nextCoreModuleTask;
+				//coreModuleTask = nextCoreModuleTask;
 
-	            String type = coreModuleTask.getType();
-				type = coreModuleTask.getName();
-				System.out.println("In outAPI the CM is:" + coreModuleTask);
+	            String type = nextCoreModuleTask.getType();
+				type = nextCoreModuleTask.getName();
+				System.out.println("In outAPI the CM is:" + nextCoreModuleTask);
 				System.out.println("In outAPI the type is:" + type);
 	            String url = urlDict.get(type);
 				System.out.println("the usl is" + url);
 				ArrayList array = new ArrayList<Long>(1501);
 				//coreModuleTask.setAudienceId1(array);
-	            String result = restTemplate.postForObject(url, coreModuleTask, String.class);
+	            String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
 
 	        }
     	}

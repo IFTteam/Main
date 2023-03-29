@@ -192,24 +192,22 @@ public class TimeEventController {
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.get().getProperties());
         String time = jsonObject.getString("sendOn");
+        String wait_time = jsonObject.getString("waitFor");
         parseFStringWithSpecificTime(time, timeTask);
 
         //auditing support
         timeTask.setNodeId(node_id);
-
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
         timeTask.setCreatedAt(LocalDateTime.now());
+        timeTask.setUserId(coreModuleTask.getUserId());
         timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
         timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
         timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
         timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
         timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
         timeTask.setTaskStatus(0);
-        timeTask.setCoreModuleTask(coreModuleTask);
         timeTask.setJourneyId(coreModuleTask.getJourneyId());
 
-        System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
-        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
-        //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
         timeDelayRepository.save(timeTask);
 
         System.out.println("dummy task returned");
