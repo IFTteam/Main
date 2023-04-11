@@ -40,6 +40,8 @@ public class Audience extends BaseEntity {
     private LocalDate birthday;
     private String source;
 
+    private String gender;
+
     @ManyToOne(targetEntity = Node.class)
     @JoinColumn(name="audience_node_id",referencedColumnName = "id")
     private Node node;

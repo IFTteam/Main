@@ -11,11 +11,10 @@ import org.springframework.stereotype.Service;
 import springredis.demo.controller.EventWebhookController;
 import springredis.demo.controller.TimeEventController;
 import springredis.demo.entity.*;
+import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.base.BaseTaskEntity;
-import springredis.demo.repository.AudienceActivityRepository;
-import springredis.demo.repository.AudienceRepository;
-import springredis.demo.repository.JourneyRepository;
-import springredis.demo.repository.TransmissionRepository;
+import springredis.demo.repository.*;
+import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDate;
@@ -27,10 +26,13 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
     @Autowired
     private AudienceRepository audienceRepository;
+    @Autowired
+    private ActiveAudienceRepository activeAudienceRepository;
 
     @Autowired
     private JourneyRepository journeyRepository;
-
+    @Autowired
+    NodeRepository NodeRepository;
     @Autowired
     private TransmissionRepository transmissionRepository;
 
@@ -177,19 +179,39 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         List<Audience> haveProperty = new ArrayList<>();
 
         List<Long> listOfAudienceId = coreModuleTask.getActiveAudienceId1();
+        System.out.println("size of active Audience Id1: "+listOfAudienceId.size());
+
         List<Audience> listOfAudiences = new ArrayList<>();
         for (Long id : listOfAudienceId) {
-            Audience audience = audienceRepository.findById(id).get();
+            //Audience audience = audienceRepository.findById(id).get();
+
+            // active_audience := id
+            ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
+            // active_audience := audience_id
+            Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
+
             listOfAudiences.add(audience);
         }
 
+        Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
+        String json_text = node.getProperties();
 
-        String json_text = coreModuleTask.getName();
-        String new_text = json_text.substring(1, json_text.length() - 1);
-        String[] items = new_text.split(", ");
-        String property = items[0].substring(13, items[0].length() - 1);
-        String condition = items[1].substring(14, items[1].length() - 1);
-        String value = items[2].substring(10, items[2].length() - 1);
+        String marker1 = "property";
+        String marker2 = "condition";
+        String marker3 = "value";
+        String property = "";
+        String condition = "";
+        String value = "";
+        int indexOfMarker1  = json_text.indexOf(marker1);
+        int indexOfMarker2  = json_text.indexOf(marker2);
+        int indexOfMarker3  = json_text.indexOf(marker3);
+        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
+        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
+        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.length() - 3);
+
+        System.out.println("property: "+property);
+        System.out.println("condition: "+condition);
+        System.out.println("value: "+value);
 
 //        for( Audience audience: listOfAudiences) {
 //            String audienceProperty = audience.toString();
@@ -215,7 +237,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
 // -------------------------------------- address --------------------------------------
         if (property.equals("address")) {
-            if (condition.equals("contains")) {
+            if (condition.equals("Contains")) {
                 for(Audience audience: listOfAudiences) {
                     if (audience.getAddress() == null) {
                         continue;
@@ -226,8 +248,52 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("does not contains")) {
+            if (condition.equals("Does Not Contain")) {
                 for( Audience audience: listOfAudiences) {
+                    if (audience.getAddress() == null) {
+                        continue;
+                    }
+                    if (!audience.getAddress().contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is in Country")) {
+                for(Audience audience: listOfAudiences) {
+                    if (audience.getAddress() == null) {
+                        continue;
+                    }
+                    if (audience.getAddress().contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is Not in Country")) {
+                for(Audience audience: listOfAudiences) {
+                    if (audience.getAddress() == null) {
+                        continue;
+                    }
+                    if (!audience.getAddress().contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is In US State")) {
+                for(Audience audience: listOfAudiences) {
+                    if (audience.getAddress() == null) {
+                        continue;
+                    }
+                    if (audience.getAddress().contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is Not In US State")) {
+                for(Audience audience: listOfAudiences) {
                     if (audience.getAddress() == null) {
                         continue;
                     }
@@ -279,11 +345,45 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     }
                 }
             }
+
+            if (condition.equals("is after")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getBirthday() == null) {
+                        continue;
+                    }
+
+                    int input_year = Integer.parseInt(value.substring(0, 4));
+                    int input_month = Integer.parseInt(value.substring(5, 7));
+                    int input_day = Integer.parseInt(value.substring(8, 10));
+
+                    LocalDate localDate = LocalDate.of(input_year,input_month,input_day);
+                    if (audience.getBirthday().compareTo(localDate) > 0) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is before")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getBirthday() == null) {
+                        continue;
+                    }
+
+                    int input_year = Integer.parseInt(value.substring(0, 4));
+                    int input_month = Integer.parseInt(value.substring(5, 7));
+                    int input_day = Integer.parseInt(value.substring(8, 10));
+
+                    LocalDate localDate = LocalDate.of(input_year,input_month,input_day);
+                    if (audience.getBirthday().compareTo(localDate) < 0) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
         }
 
 
 // -------------------------------------- email address --------------------------------------
-        if (property.equals("email address")) {
+        if (property.equals("Email Address")) {
             if (condition.equals("is")) {
                 for (Audience audience : listOfAudiences) {
                     if (audience.getEmail() == null) {
@@ -306,7 +406,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("contains")) {
+            if (condition.equals("Contains")) {
                 for (Audience audience : listOfAudiences) {
                     if (audience.getEmail() == null) {
                         continue;
@@ -317,7 +417,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("does not contains")) {
+            if (condition.equals("Does Not Contain")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getEmail() == null) {
                         continue;
@@ -403,7 +503,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("contains")) {
+            if (condition.equals("Contains")) {
                 for (Audience audience : listOfAudiences) {
                     if (audience.getFirstName() == null) {
                         continue;
@@ -414,7 +514,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("does not contains")) {
+            if (condition.equals("Does Not Contain")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getFirstName() == null) {
                         continue;
@@ -495,7 +595,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("contains")) {
+            if (condition.equals("Contains")) {
                 for (Audience audience : listOfAudiences) {
                     if (audience.getLastName() == null) {
                         continue;
@@ -506,7 +606,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("does not contains")) {
+            if (condition.equals("Does Not Contain")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getLastName() == null) {
                         continue;
@@ -563,6 +663,64 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         }
 
+
+// -------------------------------------- full name --------------------------------------
+        if (property.equals("full name")) {
+            if (condition.equals("is")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getFirstName() == null && audience.getLastName() == null) {
+                        continue;
+                    }
+
+                    String fullname = audience.getFirstName()+" "+audience.getLastName();
+                    if (fullname.equals(value)) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is not")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getFirstName() == null && audience.getLastName() == null) {
+                        continue;
+                    }
+
+                    String fullname = audience.getFirstName()+" "+audience.getLastName();
+                    if (!fullname.equals(value)) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("Contains")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getFirstName() == null && audience.getLastName() == null) {
+                        continue;
+                    }
+
+                    String fullname = audience.getFirstName()+" "+audience.getLastName();
+                    if (fullname.contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("Does Not Contain")) {
+                for( Audience audience: listOfAudiences) {
+                    if (audience.getFirstName() == null && audience.getLastName() == null) {
+                        continue;
+                    }
+
+                    String fullname = audience.getFirstName()+" "+audience.getLastName();
+                    if (!fullname.contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+        }
+
+
 // -------------------------------------- phone number --------------------------------------
         if (property.equals("phone number")) {
             if (condition.equals("is")) {
@@ -587,7 +745,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("contains")) {
+            if (condition.equals("Contains")) {
                 for (Audience audience : listOfAudiences) {
                     if (audience.getPhone() == null) {
                         continue;
@@ -598,7 +756,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-            if (condition.equals("does not contains")) {
+            if (condition.equals("Does Not Contain")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getPhone() == null) {
                         continue;
@@ -751,21 +909,42 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
 
 
+        // -------------------------------------- gender --------------------------------------
+        if (property.equals("gender")) {
+            if (condition.equals("is")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getGender() == null) {
+                        continue;
+                    }
+                    if (audience.getGender().equals(value)) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+        }
+
+
 
         List<Audience> noProperty = listOfAudiences;
         noProperty.removeAll(haveProperty);
 
+        System.out.println("________________audiencelist1: ");
         List<Long> audienceList1 = new ArrayList<>();
         for (Audience audience : haveProperty) {
             Long Id = audience.getId();
             audienceList1.add(Id);
+            System.out.print(" "+Id);
         }
+        System.out.println();
 
+        System.out.println("________________audiencelist2: ");
         List<Long> audienceList2 = new ArrayList<>();
         for (Audience audience : noProperty) {
             Long Id = audience.getId();
             audienceList2.add(Id);
+            System.out.print(" "+Id);
         }
+        System.out.println();
 
         CoreModuleTask newTask = coreModuleTask;
         newTask.setAudienceId1(audienceList1);
@@ -789,17 +968,33 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             listOfAudiences.add(audience);
         }
 
+        Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
+        String json_text = node.getProperties();
 
-        String json_text = coreModuleTask.getName();
+        String marker1 = "property";
+        String marker2 = "condition";
+        String property = "";
+        String condition = "";
+        int indexOfMarker1  = json_text.indexOf(marker1);
+        int indexOfMarker2  = json_text.indexOf(marker2);
+        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
+
+        // todo: 目前json text没有“value”这一项，但要考虑json text为null的情况
+        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, json_text.length() - 3);
+
+        /*
         String new_text = json_text.substring(1, json_text.length() - 1);
         String[] items = new_text.split(", ");
         String property = items[0].substring(13, items[0].length() - 1);
         String condition = items[1].substring(14, items[1].length() - 1);
+        */
+        System.out.println("property: "+property);
+        System.out.println("condition: "+condition);
 
 
 
         if (property.equals("address")) {
-            if (condition.equals("is blank")) {
+            if (condition.equals("Is blank")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getAddress() == null) {
                         haveProperty.add(audience);
@@ -817,7 +1012,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
 
         if (property.equals("birthday")) {
-            if (condition.equals("is blank")) {
+            if (condition.equals("Is blank")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getBirthday() == null) {
                         haveProperty.add(audience);
@@ -835,7 +1030,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
 
         if (property.equals("first name")) {
-            if (condition.equals("is blank")) {
+            if (condition.equals("Is blank")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getFirstName() == null) {
                         haveProperty.add(audience);
@@ -854,7 +1049,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
 
         if (property.equals("last name")) {
-            if (condition.equals("is blank")) {
+            if (condition.equals("Is blank")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getLastName() == null) {
                         haveProperty.add(audience);
@@ -871,8 +1066,26 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
         }
 
+        if (property.equals("full name")) {
+            if (condition.equals("Is blank")) {
+                for( Audience audience: listOfAudiences) {
+                    if (audience.getFirstName() == null && audience.getLastName() == null) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("is not blank")) {
+                for( Audience audience: listOfAudiences) {
+                    if (audience.getFirstName() != null || audience.getLastName() != null) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+        }
+
         if (property.equals("phone number")) {
-            if (condition.equals("is blank")) {
+            if (condition.equals("Is blank")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getPhone() == null) {
                         haveProperty.add(audience);
@@ -883,6 +1096,16 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             if (condition.equals("is not blank")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getPhone() != null) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+        }
+
+        if (property.equals("gender")) {
+            if (condition.equals("Is blank")) {
+                for( Audience audience: listOfAudiences) {
+                    if (audience.getGender() == null) {
                         haveProperty.add(audience);
                     }
                 }

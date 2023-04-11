@@ -36,6 +36,13 @@ public class TimeTask extends BaseTaskEntity {
 
     private Long triggerTime;
 
+    private int callapi = 0;
+
+    private Long journeyId;
+
+    private Long userId;
+    private int makenext = 0;
+
     private Integer taskStatus;
     @OneToOne(cascade = {CascadeType.ALL})
     @JoinColumn(name = "core_module_task", referencedColumnName = "id")
@@ -143,6 +150,13 @@ public class TimeTask extends BaseTaskEntity {
           buffer.append(num.toString() + " ");
       }
       audienceId2S = buffer.toString();
+  }
+
+  public void audience_serialize(){
+        this.setAudienceId1(this.audienceId1SSerialize());
+        this.setAudienceId2(this.audienceId2SSerialize());
+        this.setActiveAudienceId1(this.activeAudienceId1SSerialize());
+        this.setActiveAudienceId2(this.activeAudienceId2SSerialize());
   }
 
     //status of the task

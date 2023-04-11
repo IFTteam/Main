@@ -67,6 +67,9 @@ public class NodeJsonModel {
         String tag;
         String sendOn;
         String waitFor;
+        String property;
+        String condition;
+        String value;
     }
     @Data
     public class Branch {

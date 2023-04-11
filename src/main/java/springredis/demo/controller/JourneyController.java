@@ -79,6 +79,8 @@ public class JourneyController {
     @PostMapping("/journey/activateJourney")//激活Journey,查取数据库，反序列化
     public Journey activateJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
+        System.out.println("journeyJson is :"+journeyJson);
+        System.out.println("The node List1 is "+ nodeIdList);
         Journey oneJourney = saveJourney(journeyJson);
         SeDeFunction sede = new SeDeFunction();
 //         Map JourneyJson to JourneyJsonModel
@@ -86,10 +88,12 @@ public class JourneyController {
         Long journeyId = journeyRepository.save(oneJourney).getId();
         String journeyFrontEndId = journeyRepository.searchJourneyById(journeyId).getFrontEndId();
 
-//        --------------------------------------------------------------------------------------------------
-//        a set to store the result of "findNodesByJourneyFrontEndId".
-//        Call DFS to modify/add nodes from the given journeyJson. After each (modify/add) operation, remove the nodeId from the set.
-//        The left ones are deleted nodes.
+    /**
+    *   a set to store the result of "findNodesByJourneyFrontEndId".
+    *   Call DFS to modify/add nodes from the given journeyJson. After each (modify/add) operation, remove the nodeId from the set.
+    *   The left ones are deleted nodes.
+    */
+
         Node[] queryResult = nodeRepository.searchNodesByJourneyFrontEndId(journeyFrontEndId);
         Set<Long> existingNode = new LinkedHashSet<Long>();
 
@@ -97,12 +101,15 @@ public class JourneyController {
             existingNode.add(queryResult[i].getId());
         }
         // Traverse the journeyJsonModel object and add each node into DB
+        System.out.println("The node list bfdfs is: " + nodeIdList);
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
+        System.out.println("The node list is: " + nodeIdList);
         for (int i = 0; i < nodeIdList.size(); i++) {
             if (existingNode.contains(nodeIdList.get(i))) {
                 existingNode.remove(nodeIdList.get(i));
             }
         }
+        System.out.println("The node List2 is "+ nodeIdList);
 
         nodeRepository.deleteAllById(existingNode);
         for (Long nodeId: existingNode) {
@@ -125,10 +132,15 @@ public class JourneyController {
         }
 
         // set first node as head
+        System.out.println("The node List is "+ nodeIdList);
         Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
+        if (headNode == null) System.out.println("The headNode is null");
+        else System.out.println("The headNode is" + headNode);
         headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
 
-        // Set dummyHead
+        /**
+         * Dummy head initialization
+         */
         Node dummyHead = nodeRepository.searchNodeByFrontEndId("dummyHead" + journeyFrontEndId);
         if (dummyHead == null) {
             dummyHead = new Node();
@@ -137,6 +149,11 @@ public class JourneyController {
         List<Long> nexts = new ArrayList<>();
         nexts.add(headNode.getId());
         dummyHead.setNexts(nexts);
+        dummyHead.nextsSerialize();
+        dummyHead.setCreatedAt(LocalDateTime.now());
+        dummyHead.setUpdatedAt(LocalDateTime.now());
+        dummyHead.setCreatedBy("System");
+        dummyHead.setUpdatedBy("System");
         Long dummyHeadId = nodeRepository.save(dummyHead).getId();
         ActiveJourney activeJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(journeyId);
         // Set activeDummyHead who corresponds to dummyHead
@@ -151,17 +168,23 @@ public class JourneyController {
         nodeRepository.save(headNode);
         nodeRepository.save(dummyHead);
 
-        //get audience list from properties
-        String audienceListName = GetAudienceListName(headNode.getId());
-        List<Long> audienceList = AudienceFromAudienceList(audienceListName);
-        System.out.println(audienceList);
 
         // Call CoreModuleTask
         CoreModuleTask cmt = new CoreModuleTask();
         cmt.setNodeId(dummyHeadId);
-        cmt.setAudienceId1(audienceList);
         cmt.setCallapi(0);
         cmt.setTaskType(1);
+        cmt.setJourneyId(journeyId);
+        System.out.println("Ini JI is " + journeyId);
+
+        //get audience list from properties
+        //todo: "Select list" attributes is not in property json object in table
+        String audienceListName = GetAudienceListName(headNode.getId());
+        List<Long> audienceList = AudienceFromAudienceList(audienceListName);
+        cmt.setAudienceId1(audienceList);
+        //ArrayList<Long> n_audienceID = new ArrayList<Long>(Arrays.asList(0L,1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L));
+        //cmt.setAudienceId1(n_audienceID);
+        System.out.println("the size of Audience Id 1 is:" + cmt.getAudienceId1().toString());
         cmtExecutor.execute(cmt);
 
         return oneJourney;
@@ -169,20 +192,22 @@ public class JourneyController {
 
 
     private List<Long> AudienceFromAudienceList(String audienceListName){
-        AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
-        List<Audience> audiences = audienceList.getAudiences();
-        List<Long> audiencesId= new ArrayList<>();
-        for(Audience audience: audiences){
-            audiencesId.add(audience.getId());
-        }
-        return audiencesId;
+            AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
+            List<Audience> audiences = audienceList.getAudiences();
+            List<Long> audiencesId= new ArrayList<>();
+            for(Audience audience: audiences){
+                audiencesId.add(audience.getId());
+            }
+            return audiencesId;
     }
 
 
     private String GetAudienceListName(Long nodeId){
+        System.out.println("current node ID is:" + nodeId.toString());
         Node currentNode = nodeRepository.findById(nodeId).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
+        System.out.println("jobject is:" + jsonObject.toString());
         String name = jsonObject.getString("list");
         return name;
     }
@@ -199,7 +224,7 @@ public class JourneyController {
         activeJourneyRepository.save(activeJourney);
         //Initialize Journey function
         int n = deserializedJourney.size();
-        System.out.println(n);
+        System.out.println("the deserializedJourney size is:" + n);
         System.out.println(deserializedJourney.get(0).getNexts());
         //1.Use map frontEndId->BackEndId and replace the node nexts frontEndId->BackEndId
         HashMap<String,Long> keyHash = new HashMap<>();
@@ -258,15 +283,24 @@ public class JourneyController {
         LocalDateTime createdAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         LocalDateTime updatedAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         String name = nodeJsonModel.getName();
+        System.out.println("Node name: " + name);
+
         String type  = nodeJsonModel.getComponentType();
+        System.out.println("Node type: " + type);
+
         String status = nodeJsonModel.getStatus();
+
         String createdBy = nodeJsonModel.getCreatedBy();
         String updatedBy = nodeJsonModel.getUpdatedBy();
+
         String frontEndId = nodeJsonModel.getId();
+        System.out.println("Node frontEndId: " + frontEndId);
+
         NodeJsonModel.Property properties = nodeJsonModel.getProperties();
-//        System.out.println("PPPPPPPPPPPPPP" + properties);
+        System.out.println("PPPPPPPPPPPPPP " + properties);
+
         String propertiesString = new SeDeFunction().serializeNodeProperty(properties);
-//        System.out.println("BBBBBBBBBBBBBB" + propertiesString);
+        System.out.println("BBBBBBBBBBBBBB " + propertiesString);
         Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId, propertiesString);
         newNode.setHeadOrTail(0);
         newNode.setFrontEndId(frontEndId);
@@ -282,11 +316,15 @@ public class JourneyController {
     public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
         Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx], journeyFrontEndId);
         // We need to store the node in DB first
-        nodeRepository.save(newNode);
+        // nodeRepository.save(newNode);
         // so that we can get the node's id
+        nodeRepository.save(newNode);
+        System.out.println("The new node is " + newNode);
+
         Long nodeId = newNode.getId();
-        nodeIdList.add(newNode.getId());
-        newNode = nodeRepository.searchNodeByid(nodeId);
+        nodeIdList.add(nodeId);
+        System.out.println("The node List in " + idx + " is "+ nodeIdList);
+        //newNode = nodeRepository.searchNodeByid(nodeId);
 
         List<Long> nexts = new ArrayList<>();
         // If it is an if/else node. It'll have two next nodes.
@@ -311,21 +349,26 @@ public class JourneyController {
             }
             nexts.add(child1);
             nexts.add(child2);
-        } else {
+        }
+        else {
             // Otherwise, it'll have only one next node.
             Long child = null;
             if (idx != nodeJsonModelList.length - 1) {
+                System.out.println("---------------go on with dfs");
                 child = dfs(nodeJsonModelList, idx + 1, journeyFrontEndId);
             } else {
+                System.out.println("---------------end of dfs");
                 Node endNode = createEndNode(journeyFrontEndId);
                 child = nodeRepository.save(endNode).getId();
+                System.out.println("Node" + child + "has been added to nodeIdList");
                 nodeIdList.add(endNode.getId());
             }
             nexts.add(child);
         }
         newNode.setNexts(nexts);
+        newNode.nextsSerialize();
         nodeRepository.save(newNode);
-        newNode = nodeRepository.searchNodeByid(nodeId);
+        //newNode = nodeRepository.searchNodeByid(nodeId);
         System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:"+journeyFrontEndId);
         return nodeId;
     }
