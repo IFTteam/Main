@@ -25,6 +25,7 @@ public class IfElseController {
         String json_text = task.getName();
         System.out.println("In if/else, the json text is:" + json_text);
 
+        // todo: 无法进入no value的情况 -- 当condition为”is Blank“的时候，json里就没有value这一项
         if (json_text.contains("property") && json_text.contains("condition") && json_text.contains("value")) {
             String find = "value";
             String substr = "";
