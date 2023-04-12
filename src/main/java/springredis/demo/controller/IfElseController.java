@@ -43,10 +43,13 @@ public class IfElseController {
             String substr = "";
             int i  = json_text.indexOf(find);
             substr = json_text.substring(i + find.length() + 3, json_text.length() - 1);
-            if (substr.contains("null")) {
+
+            if (substr.contains("Blank") || substr.contains("Nothing Selected")) {
+                // 通常例子：Property - Full Name, Condition - Is Blank, Value - Nothing Selected
+                // 特殊例子：Property - Gender,    Condition - Is,       Value - Blank
                 System.out.println("handled by ifElseProperty NoValue:" + json_text);
                 return ifElseTaskController.ifElsePropertyWithoutValue(task);
-            } else if (!substr.contains("null")) {
+            } else {
                 System.out.println("handled by ifElseProperty:" + json_text);
                 return ifElseTaskController.ifElseProperty(task);
             }
