@@ -322,9 +322,17 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
-                    if (Integer.toString(audience.getBirthday().getDayOfMonth()).equals(value)) {
-                        haveProperty.add(audience);
+                    int parseIndex = value.indexOf("/");
+
+                    int input_month = Integer.parseInt(value.substring(0, parseIndex));
+                    int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
+
+                    if(audience.getBirthday().getMonthValue() == (input_month)){
+                        if ((audience.getBirthday().getDayOfMonth()) == (input_day)) {
+                            haveProperty.add(audience);
+                        }
                     }
+
                 }
             }
 
@@ -334,11 +342,17 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
+                    /*
                     int input_year = Integer.parseInt(value.substring(0, 4));
                     int input_month = Integer.parseInt(value.substring(5, 7));
                     int input_day = Integer.parseInt(value.substring(8, 10));
+                    */
 
-                    LocalDate localDate = LocalDate.of(input_year,input_month,input_day);
+                    int parseIndex = value.indexOf("/");
+                    int input_month = Integer.parseInt(value.substring(0, parseIndex));
+                    int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
+                    LocalDate localDate = LocalDate.of(audience.getBirthday().getYear(), input_month,input_day);
+
                     if (audience.getBirthday().compareTo(localDate) < 0) {
                         haveProperty.add(audience);
                     }
@@ -351,11 +365,18 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
+                    /*
                     int input_year = Integer.parseInt(value.substring(0, 4));
                     int input_month = Integer.parseInt(value.substring(5, 7));
                     int input_day = Integer.parseInt(value.substring(8, 10));
 
                     LocalDate localDate = LocalDate.of(input_year,input_month,input_day);
+                     */
+
+                    int parseIndex = value.indexOf("/");
+                    int input_month = Integer.parseInt(value.substring(0, parseIndex));
+                    int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
+                    LocalDate localDate = LocalDate.of(audience.getBirthday().getYear(), input_month,input_day);
                     if (audience.getBirthday().compareTo(localDate) > 0) {
                         haveProperty.add(audience);
                     }
@@ -988,7 +1009,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         String marker3 = "value";
         String property = "";
         String condition = "";
-        String value = "";
         int indexOfMarker1  = json_text.indexOf(marker1);
         int indexOfMarker2  = json_text.indexOf(marker2);
         int indexOfMarker3  = json_text.indexOf(marker3);
@@ -1018,7 +1038,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         if (property.equals("Email Address")) {
             if (condition.equals("Is Blank")) {
                 for( Audience audience: listOfAudiences) {
-                    if (audience.getEmail() == null) {
+                    if (audience.getEmail() == null || audience.getEmail().isEmpty()) {
                         haveProperty.add(audience);
                     }
                 }
@@ -1038,7 +1058,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         if (property.equals("First Name")) {
             if (condition.equals("Is Blank")) {
                 for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null) {
+                    if (audience.getFirstName() == null || audience.getFirstName().isEmpty()) {
                         haveProperty.add(audience);
                     }
                 }
@@ -1049,7 +1069,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         if (property.equals("Last Name")) {
             if (condition.equals("Is Blank")) {
                 for( Audience audience: listOfAudiences) {
-                    if (audience.getLastName() == null) {
+                    if (audience.getLastName() == null || audience.getLastName().isEmpty()) {
                         haveProperty.add(audience);
                     }
                 }
@@ -1060,8 +1080,10 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         if (property.equals("Full Name")) {
             if (condition.equals("Is Blank")) {
                 for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null && audience.getLastName() == null) {
-                        haveProperty.add(audience);
+                    if (audience.getFirstName() == null || audience.getFirstName().isEmpty()){
+                        if (audience.getLastName() == null || audience.getLastName().isEmpty()) {
+                            haveProperty.add(audience);
+                        }
                     }
                 }
             }
@@ -1071,7 +1093,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         if (property.equals("Phone Number")) {
             if (condition.equals("Is Blank")) {
                 for( Audience audience: listOfAudiences) {
-                    if (audience.getPhone() == null) {
+                    if (audience.getPhone() == null || audience.getPhone().isEmpty()) {
                         haveProperty.add(audience);
                     }
                 }
@@ -1087,9 +1109,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
         }
-
-
-
 
 
         List<Audience> noProperty = listOfAudiences;
