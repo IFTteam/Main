@@ -3,11 +3,10 @@ package springredis.demo.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import springredis.demo.controller.EventWebhookController;
 import springredis.demo.controller.TimeEventController;
 import springredis.demo.entity.*;
@@ -296,6 +295,27 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
                     if (!audience.getAddress().contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+            if (condition.equals("Is Within")) {
+                for(Audience audience: listOfAudiences) {
+                    if (audience.getAddress() == null) {
+                        continue;
+                    }
+
+                    String source = "New York";
+                    String destination = "Atlanta";
+                    String units = "imperial";
+
+                    MultiValueMap params = new LinkedMultiValueMap();
+
+                    String JsonObject = getDistance(source,destination,units);
+                    System.out.println(JsonObject);
+
+                    if (audience.getAddress().contains(value)){
                         haveProperty.add(audience);
                     }
                 }
@@ -1140,4 +1160,15 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         newTask.setTaskType(1);
         return newTask;
     }
+
+    public String getDistance(String source, String destination, String units){
+        String API_KEY = "AIzaSyDpN84uRC0A2aKpVb9ugW86xm4g5tsNlh0";
+
+        String url="https://maps.googleapis.com/maps/api/distancematrix/json?origins="+source+"&destinations="+destination+"&units="+units+"&key="+ API_KEY;
+        HttpMethod method = HttpMethod.GET;
+        MultiValueMap params = new LinkedMultiValueMap();
+
+        return (new HttpClient()).getResponse(url,method,params);
+    }
+
 }
