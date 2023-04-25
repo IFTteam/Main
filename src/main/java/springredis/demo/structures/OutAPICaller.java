@@ -30,6 +30,9 @@ public class OutAPICaller implements Runnable{
     private RedisTemplate redisTemplate;
     @Autowired
     private RestTemplate restTemplate = new RestTemplate();
+
+	@Autowired
+	CMTExecutor cmtExecutor;
     
     private boolean isRunning = true;
     private String outQueueKey = "OutQueue";
@@ -63,10 +66,7 @@ public class OutAPICaller implements Runnable{
     	System.out.println("================================================OutAPI Starts=====================================================");
     	System.out.println(redisTemplate.opsForList().size(outQueueKey));
     	while(isRunning = true) {
-
 	        while (redisTemplate.opsForList().size(outQueueKey) > 0){
-	            //HashMap outEvent = ((HashMap) redisTemplate.opsForList().rightPop(outQueueKey));
-	            //Long id = ((Number)outEvent.get(idKey)).longValue();
 	        	Event outEvent = ((Event) redisTemplate.opsForList().rightPop(outQueueKey));
 	        	Long id = ((Number)outEvent.getId()).longValue();
 				System.out.println("the id is: " + id);
@@ -153,9 +153,9 @@ public class OutAPICaller implements Runnable{
 				System.out.println("In outAPI the type is:" + type);
 	            String url = urlDict.get(type);
 				System.out.println("the usl is" + url);
-				ArrayList array = new ArrayList<Long>(1501);
 				//coreModuleTask.setAudienceId1(array);
 	            String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
+				//cmtExecutor.execute(nextCoreModuleTask);
 
 	        }
     	}

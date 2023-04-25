@@ -16,9 +16,7 @@ import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -144,8 +142,20 @@ public class TimeEventController {
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.get().getProperties());
-        String time = jsonObject.getString("send");
-        parseFStringWithSpecificTime(time, timeTask);
+        System.out.println(node.get());
+        JSONObject jsonObject2 = new JSONObject("{\n" +
+                "        \"time\": \"Tuesday01AM,End date:12/12/2023\",\n" +
+                "        \"Select List\": \"Any list\",\n" +
+                "        \"Runs\": \"Recurring\"\n" +
+                "      }");;
+        String time = jsonObject2.getString("time");
+        String frequency = jsonObject2.getString("Runs");
+        if (Objects.equals(frequency, "Once")) {
+            time_parser_once(time, timeTask);
+        }
+        else if (Objects.equals(frequency, "Recurring")){
+            time_parser_recurring(time, timeTask);
+        }
 
         //auditing support
         timeTask.setNodeId(node_id);
@@ -191,9 +201,14 @@ public class TimeEventController {
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.get().getProperties());
-        String time = jsonObject.getString("sendOn");
-        String wait_time = jsonObject.getString("waitFor");
-        parseFStringWithSpecificTime(time, timeTask);
+        String time = jsonObject.getString("date");
+        String[] parsed = time.split(" ");
+        if (parsed.length == 1) {
+            time_parser_wait_date(parsed[0], timeTask);
+        }
+        else {
+            time_parser_wait_duration(parsed, timeTask);
+        }
 
         //auditing support
         timeTask.setNodeId(node_id);
@@ -214,7 +229,6 @@ public class TimeEventController {
         System.out.println(coreModuleTask);
         return coreModuleTask;
     }
-
 
     @PostMapping("/TimetasktestRepeat")
     public CoreModuleTask TimetasktestRepeat(@RequestBody CoreModuleTask coreModuleTask){
@@ -247,9 +261,6 @@ public class TimeEventController {
     }
 
 
-
-
-
     // need modification for set time trigger
     private static void parseFStringDelayTimeInSecond(String fstring, TimeTask timeTask) {
         // 数据格式： fstring format "DelayTimeInSecond repeatTimes repeatInterval"
@@ -265,20 +276,161 @@ public class TimeEventController {
     // need modification for set time trigger
     private static void parseFStringWithSpecificTime(String fstring, TimeTask timeTask) {
         try {
-            // fstring format "specificTime(yyyy-MM-dd HH:mm:ss) repeatTimes repeatInterval"
-            // repeatInterval format "y m d"
             String[] flist = fstring.split("T");
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             Date parse = format.parse(flist[0] + " " + flist[1]);
             timeTask.setTriggerTime(parse.getTime());
-            //todo: fix the two parameter
-            //timeTask.setRepeatTimes(Integer.parseInt(flist[2]));
-            //timeTask.setRepeatInterval(flist[3]);
         } catch (ParseException e) {
             e.printStackTrace();
         }
     }
 
+    private void parseFStringWithFrequency(String frequency, TimeTask timeTask) {
+        Calendar now = Calendar.getInstance();
+        int weekday = now.get(Calendar.DAY_OF_WEEK);
+        int tar_date = Calendar.MONDAY;
+        switch (frequency){
+            case "Monday":
+                tar_date = Calendar.MONDAY;
+                break;
+            case "Tuesday":
+                tar_date = Calendar.TUESDAY;
+                break;
+            case "Wednesday":
+                tar_date = Calendar.WEDNESDAY;
+                break;
+            case "Thursday":
+                tar_date = Calendar.THURSDAY;
+                break;
+            case "Friday":
+                tar_date = Calendar.FRIDAY;
+                break;
+            case "Saturday":
+                tar_date = Calendar.SATURDAY;
+                break;
+            case "Sunday":
+                tar_date = Calendar.SUNDAY;
+                break;
+        }
+        if (weekday != tar_date)
+        {
+            // calculate how much to add
+            // the 2 is the difference between Saturday and Monday
+            int days = (Calendar.SATURDAY - weekday + 2) % 7;
+            now.add(Calendar.DAY_OF_YEAR, days);
+            now.set(Calendar.HOUR_OF_DAY, 0);
+            now.set(Calendar.MINUTE, 0);
+
+        }
+        Date date = now.getTime();
+        //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
+        System.out.println("The recurring monday is:" + format);
+
+    }
+
+    private void parseFStringWithWaitTime(String waitTime, TimeTask timeTask) {
+    }
+
+    private void time_parser_once(String time, TimeTask timeTask) {
+        String[] list = time.split(",");
+        List<String> alist = new ArrayList<>(Arrays.asList(list));
+        String date = alist.get(alist.size() - 1);
+        int hour = Integer.parseInt(date.substring(0, 2));
+        String clock = date.substring(2, 4);
+
+        if (clock.equals("PM")) hour += 12;
+
+        alist.remove(alist.size() - 1);
+        try {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Date parse = format.parse(alist.get(0) + " " + hour +":00");
+            System.out.println(parse);
+            timeTask.setTriggerTime(parse.getTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void time_parser_recurring(String frequency, TimeTask timeTask) {
+        String[] list = frequency.split(",");
+        System.out.println(list.length);
+        String d = list[0];
+        String week = d.substring(0, d.length() - 4);
+        String time = d.substring(d.length() - 4);
+        String end_date = list[1].split(":")[0];
+        Calendar now = Calendar.getInstance();
+        int weekday = now.get(Calendar.DAY_OF_WEEK);
+        int tar_date = Calendar.MONDAY;
+        switch (week){
+            case "Monday":
+                tar_date = Calendar.MONDAY;
+                break;
+            case "Tuesday":
+                tar_date = Calendar.TUESDAY;
+                break;
+            case "Wednesday":
+                tar_date = Calendar.WEDNESDAY;
+                break;
+            case "Thursday":
+                tar_date = Calendar.THURSDAY;
+                break;
+            case "Friday":
+                tar_date = Calendar.FRIDAY;
+                break;
+            case "Saturday":
+                tar_date = Calendar.SATURDAY;
+                break;
+            case "Sunday":
+                tar_date = Calendar.SUNDAY;
+                break;
+        }
+        if (weekday != tar_date)
+        {
+            int days = (Calendar.SATURDAY - weekday + 2) % 7;
+            now.add(Calendar.DAY_OF_YEAR, days);
+            now.set(Calendar.HOUR_OF_DAY, 0);
+            now.set(Calendar.MINUTE, 0);
+        }
+        Date date = now.getTime();
+        //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
+        System.out.println("The recurring monday is:" + format);
+
+    }
+
+    private void time_parser_wait_date(String time, TimeTask timeTask){
+        try {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+            Date parse = format.parse(time + " " +"00:00");
+            timeTask.setTriggerTime(parse.getTime());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void time_parser_wait_duration(String[] time, TimeTask timeTask){
+        int t = Integer.parseInt(time[0]);
+        String unit = time[1];
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime date = null;
+        switch (unit){
+            case "Hours":
+                date = now.plusHours(t);
+                break;
+            case "Days":
+                date = now.plusDays(t);
+                break;
+            case "Weeks":
+                date = now.plusWeeks(t);
+                break;
+            case "Months":
+                date = now.plusMonths(t);
+                break;
+        }
+        Date d = java.sql.Date.valueOf(String.valueOf(date));
+        timeTask.setTriggerTime(d.getTime());
+    }
     private static void parseFStringWithTimeUnit(String fstring, TimeTask timeTask) {
         try {
             // fstring format "num timeUnit(DAYS,HOURS,WEEKS) repeatTimes repeatInterval"

@@ -185,7 +185,7 @@ public class ActionSendController {
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
         //transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
-        transmission.setJourney(journeyRepository.findById(403));
+        transmission.setJourney(journeyRepository.findById(2063));
         transmissionRepository.save(transmission);
 
         Response response = new Response();

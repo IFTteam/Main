@@ -45,6 +45,7 @@ public class JourneyController {
 
         // Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
+        System.out.println("the properties is " + journeyJsonModel.getProperties());
         // Create Journey object using JourneyJson's info then store in DB
         String journeyName = journeyJsonModel.getProperties().getJourneyName();
         String frontEndId = journeyJsonModel.getProperties().getJourneyId();
