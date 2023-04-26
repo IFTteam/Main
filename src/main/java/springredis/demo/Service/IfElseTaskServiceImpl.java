@@ -2,11 +2,11 @@ package springredis.demo.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import springredis.demo.controller.EventWebhookController;
 import springredis.demo.controller.TimeEventController;
 import springredis.demo.entity.*;
@@ -310,10 +310,10 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     String destination = "Atlanta";
                     String units = "imperial";
 
-                    MultiValueMap params = new LinkedMultiValueMap();
+                    String JsonObject = getDistanceGoogle(source,destination,units);
+                    System.out.println("google distance: "+JsonObject);
+                    System.out.println("mapquest distance: "+getDistanceMapQuest(source,destination,units));
 
-                    String JsonObject = getDistance(source,destination,units);
-                    System.out.println(JsonObject);
 
                     if (audience.getAddress().contains(value)){
                         haveProperty.add(audience);
@@ -964,7 +964,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
 
 
-
         List<Audience> noProperty = listOfAudiences;
         noProperty.removeAll(haveProperty);
 
@@ -1161,14 +1160,55 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         return newTask;
     }
 
-    public String getDistance(String source, String destination, String units){
+    public String getDistanceGoogle(String source, String destination, String units){
+        // This function is used to call the Distance Matrix From Google Map API
+
+        // This API Key is my personal key
         String API_KEY = "AIzaSyDpN84uRC0A2aKpVb9ugW86xm4g5tsNlh0";
 
+        // This url link is the Distance Matrix from Google map api
         String url="https://maps.googleapis.com/maps/api/distancematrix/json?origins="+source+"&destinations="+destination+"&units="+units+"&key="+ API_KEY;
         HttpMethod method = HttpMethod.GET;
-        MultiValueMap params = new LinkedMultiValueMap();
+        String json_text = (new HttpClient()).getResponse(url,method,null);
 
-        return (new HttpClient()).getResponse(url,method,params);
+        // parse the distance
+        String marker1 = "text";
+        String marker2 = "mi";
+        String distance = "";
+        int indexOfMarker1  = json_text.indexOf(marker1);
+        int indexOfMarker2  = json_text.indexOf(marker2);
+        distance = json_text.substring(indexOfMarker1 + marker1.length() + 5, indexOfMarker2 - 1);
+
+        return distance;
+    }
+
+    public String getDistanceMapQuest(String source, String destination, String units){
+        // This function is used to call the Distance Matrix From MapQuest API
+
+        // This API Key is my personal key
+        String API_KEY = "RwnUtxgD9rEFPh2G7cbzyUAmEyfddDwK";
+
+        String url="https://www.mapquestapi.com/directions/v2/routematrix?key="+API_KEY;
+        HttpMethod method = HttpMethod.POST;
+
+        JSONArray params = new JSONArray();
+        params.put(source);
+        params.put(destination);
+
+        JSONObject json_input = new JSONObject();
+        json_input.put("locations",params);
+
+        String json_text = (new HttpClient()).getResponse(url,method,json_input.toString());
+
+        // parse the distance
+        String marker1 = "distance";
+        String marker2 = "locations";
+        String distance = "";
+        int indexOfMarker1  = json_text.indexOf(marker1);
+        int indexOfMarker2  = json_text.indexOf(marker2);
+        distance = json_text.substring(indexOfMarker1 + marker1.length() + 5, indexOfMarker2 - 3);
+
+        return distance;
     }
 
 }
