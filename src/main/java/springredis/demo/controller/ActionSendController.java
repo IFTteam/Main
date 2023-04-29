@@ -282,7 +282,7 @@ public class ActionSendController {
     		addressList.add(address);
     	}
         Address address = new Address();
-        address.setAddress("yuyangba@buffalo.edu");
+        address.setAddress("jingchen.tang@altomni.com");
         addressList.add(address);
     	request.setAddressList(addressList);
 
