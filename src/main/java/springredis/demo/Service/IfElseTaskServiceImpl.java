@@ -129,7 +129,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 //                bounce
 //        }
 
-
         Set<Audience> haveBehavior =new HashSet<>();
         Set<Audience> restAudience = new HashSet<>(allAudience);
 
@@ -190,12 +189,12 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             listOfAudiences.add(audience);
         }
 
+        // get the json_text from node
         Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
         String json_text = node.getProperties();
 
-        String marker1 = "property";
-        String marker2 = "condition";
-        String marker3 = "value";
+        // parse the property, condition, and value
+        String marker1 = "property"; String marker2 = "condition"; String marker3 = "value";
         String property = "";
         String condition = "";
         String value = "";
@@ -210,115 +209,82 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         System.out.println("condition: "+condition);
         System.out.println("value: "+value);
 
-//        for( Audience audience: listOfAudiences) {
-//            String audienceProperty = audience.toString();
-//            audienceProperty = audienceProperty.substring(0, audienceProperty.length() - 1);
-//            List<String> items = Arrays.asList(audienceProperty.split("\\s*,\\s*"));
-//            String find = "first_name";
-//            String substr = "";
-//            for (String item : items) {
-//                int i = item.indexOf(find);
-//                if( i >= 0 ) {
-//                    substr = item.substring(i+find.length()+2, item.length() - 1);
-//                    if (substr == condition) {
-//                        haveProperty.add(audience);
-//                    }
-//                }
-//            }
-//        }
-
-
-
-//        private String source;
-
-
 // -------------------------------------- address --------------------------------------
         if (property.equals("Location")) {
-            if (condition.equals("Contains")) {
-                for(Audience audience: listOfAudiences) {
-                    if (audience.getAddress() == null) {
-                        continue;
-                    }
-                    if (audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("Does Not Contain")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getAddress() == null) {
-                        continue;
-                    }
-                    if (!audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("Is In Country")) {
-                for(Audience audience: listOfAudiences) {
-                    if (audience.getAddress() == null) {
-                        continue;
-                    }
-                    if (audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("Is Not In Country")) {
-                for(Audience audience: listOfAudiences) {
-                    if (audience.getAddress() == null) {
-                        continue;
-                    }
-                    if (!audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("Is In US State")) {
-                for(Audience audience: listOfAudiences) {
-                    if (audience.getAddress() == null) {
-                        continue;
-                    }
-                    if (audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("Is Not In US State")) {
-                for(Audience audience: listOfAudiences) {
-                    if (audience.getAddress() == null) {
-                        continue;
-                    }
-                    if (!audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
             if (condition.equals("Is Within")) {
                 for(Audience audience: listOfAudiences) {
                     if (audience.getAddress() == null) {
                         continue;
                     }
 
-                    String source = "New York";
+                    int miles = 100;
                     String destination = "Atlanta";
                     String units = "imperial";
 
-                    String JsonObject = getDistanceGoogle(source,destination,units);
-                    System.out.println("google distance: "+JsonObject);
-                    System.out.println("mapquest distance: "+getDistanceMapQuest(source,destination,units));
+                    String audienceAddress = audience.getAddress();
+                    String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
 
+                    System.out.println("google distance: "+googleDistance);
+                    //System.out.println("mapquest distance: "+getDistanceMapQuest(audienceAddress,destination,units));
 
-                    if (audience.getAddress().contains(value)){
-                        haveProperty.add(audience);
+                    if(googleDistance != null) {
+                        if(googleDistance.contains(",")){
+                            googleDistance = googleDistance.replace(",","");
+                        }
+                        if(googleDistance.contains(".")){
+                            googleDistance = googleDistance.substring(0,googleDistance.indexOf("."));
+                        }
+                        if (Integer.valueOf(googleDistance) <= miles) {
+                            haveProperty.add(audience);
+                        }
                     }
                 }
+            }
+
+            if (condition.equals("Is Not Within")) {
+                for(Audience audience: listOfAudiences) {
+                    if (audience.getAddress() == null) {
+                        continue;
+                    }
+
+                    float miles = 100;
+                    String destination = "Atlanta";
+                    String units = "imperial";
+
+                    String audienceAddress = audience.getAddress();
+                    String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
+
+                    System.out.println("google distance: "+googleDistance);
+                    //System.out.println("mapquest distance: "+getDistanceMapQuest(audienceAddress,destination,units));
+
+                    if(googleDistance != null) {
+                        if(googleDistance.contains(",")){
+                            googleDistance = googleDistance.replace(",","");
+                        }
+                        if(googleDistance.contains(".")){
+                            googleDistance = googleDistance.substring(0,googleDistance.indexOf("."));
+                        }
+                        if (Integer.valueOf(googleDistance) > miles) {
+                            haveProperty.add(audience);
+                        }
+                    }
+                }
+            }
+
+            if (condition.equals("Is In Country")) {
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
+            }
+
+            if (condition.equals("Is Not In Country")) {
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
+            }
+
+            if (condition.equals("Is In US State")) {
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
+            }
+
+            if (condition.equals("Is Not In US State")) {
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
         }
@@ -337,72 +303,21 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
 
             if (condition.equals("Date is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getBirthday() == null) {
-                        continue;
-                    }
-
-                    int parseIndex = value.indexOf("/");
-
-                    int input_month = Integer.parseInt(value.substring(0, parseIndex));
-                    int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
-
-                    if(audience.getBirthday().getMonthValue() == (input_month)){
-                        if ((audience.getBirthday().getDayOfMonth()) == (input_day)) {
-                            haveProperty.add(audience);
-                        }
-                    }
-
-                }
+                //  1: is after date
+                //  0: Date is
+                // -1: is before date
+                filterBirthday(value, 0, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is Before Date")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getBirthday() == null) {
-                        continue;
-                    }
-
-                    /*
-                    int input_year = Integer.parseInt(value.substring(0, 4));
-                    int input_month = Integer.parseInt(value.substring(5, 7));
-                    int input_day = Integer.parseInt(value.substring(8, 10));
-                    */
-
-                    int parseIndex = value.indexOf("/");
-                    int input_month = Integer.parseInt(value.substring(0, parseIndex));
-                    int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
-                    LocalDate localDate = LocalDate.of(audience.getBirthday().getYear(), input_month,input_day);
-
-                    if (audience.getBirthday().compareTo(localDate) < 0) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterBirthday(value, -1, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is After Date")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getBirthday() == null) {
-                        continue;
-                    }
-
-                    /*
-                    int input_year = Integer.parseInt(value.substring(0, 4));
-                    int input_month = Integer.parseInt(value.substring(5, 7));
-                    int input_day = Integer.parseInt(value.substring(8, 10));
-
-                    LocalDate localDate = LocalDate.of(input_year,input_month,input_day);
-                     */
-
-                    int parseIndex = value.indexOf("/");
-                    int input_month = Integer.parseInt(value.substring(0, parseIndex));
-                    int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
-                    LocalDate localDate = LocalDate.of(audience.getBirthday().getYear(), input_month,input_day);
-                    if (audience.getBirthday().compareTo(localDate) > 0) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterBirthday(value, 1, listOfAudiences, haveProperty);
             }
 
+            /*
             if (condition.equals("is (mm.dd)")) {
                 for (Audience audience : listOfAudiences) {
                     if (audience.getBirthday() == null) {
@@ -418,441 +333,121 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         haveProperty.add(audience);
                     }
                 }
-            }
+            }*/
         }
-
 
 // -------------------------------------- email address --------------------------------------
         if (property.equals("Email Address")) {
             if (condition.equals("Is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (audience.getEmail().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (!audience.getEmail().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Contains")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (audience.getEmail().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Does Not Contain")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (!audience.getEmail().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
-
-            if (condition.equals("starts with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (audience.getEmail().startsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("ends with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (audience.getEmail().endsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            // 1 > 2 --> +
-            // 1 < 2 --> -
-            // audience's email greater than input
-            if (condition.equals("is greater than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (audience.getEmail().compareTo(value) > 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is less than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getEmail() == null) {
-                        continue;
-                    }
-                    if (audience.getEmail().compareTo(value) < 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-
         }
-
 
 // -------------------------------------- first name --------------------------------------
         if (property.equals("First Name")) {
             if (condition.equals("Is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (audience.getFirstName().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is Not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (!audience.getFirstName().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Contains")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (audience.getFirstName().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Does Not Contain")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (!audience.getFirstName().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
-
-            if (condition.equals("starts with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (audience.getFirstName().startsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("ends with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (audience.getFirstName().endsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is greater than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (audience.getFirstName().compareTo(value) > 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is less than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null) {
-                        continue;
-                    }
-                    if (audience.getFirstName().compareTo(value) < 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
         }
 
 // -------------------------------------- last name --------------------------------------
         if (property.equals("Last Name")) {
             if (condition.equals("Is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (audience.getLastName().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is Not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (!audience.getLastName().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Contains")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (audience.getLastName().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Does Not Contain")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (!audience.getLastName().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("starts with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (audience.getLastName().startsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("ends with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (audience.getLastName().endsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is greater than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (audience.getLastName().compareTo(value) > 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is less than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getLastName() == null) {
-                        continue;
-                    }
-                    if (audience.getLastName().compareTo(value) < 0){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
         }
-
 
 // -------------------------------------- full name --------------------------------------
         if (property.equals("Full Name")) {
             if (condition.equals("Is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getFirstName() == null && audience.getLastName() == null) {
-                        continue;
-                    }
-
-                    String fullname = audience.getFirstName()+" "+audience.getLastName();
-                    if (fullname.equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is Not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getFirstName() == null && audience.getLastName() == null) {
-                        continue;
-                    }
-
-                    String fullname = audience.getFirstName()+" "+audience.getLastName();
-                    if (!fullname.equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Contains")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getFirstName() == null && audience.getLastName() == null) {
-                        continue;
-                    }
-
-                    String fullname = audience.getFirstName()+" "+audience.getLastName();
-                    if (fullname.contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Does Not Contain")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getFirstName() == null && audience.getLastName() == null) {
-                        continue;
-                    }
-
-                    String fullname = audience.getFirstName()+" "+audience.getLastName();
-                    if (!fullname.contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
         }
-
 
 // -------------------------------------- phone number --------------------------------------
         if (property.equals("Phone Number")) {
             if (condition.equals("Is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (audience.getPhone().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Is Not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (!audience.getPhone().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Contains")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (audience.getPhone().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, true, listOfAudiences, haveProperty);
             }
 
             if (condition.equals("Does Not Contain")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (!audience.getPhone().contains(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("starts with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (audience.getPhone().startsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("ends with")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (audience.getPhone().endsWith(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is greater than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (audience.getPhone().compareTo(value) > 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is less than")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getPhone() == null) {
-                        continue;
-                    }
-                    if (audience.getPhone().compareTo(value) < 0){
-                        haveProperty.add(audience);
-                    }
-                }
+                filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
 
         }
 
+// -------------------------------------- gender --------------------------------------
+        if (property.equals("Gender")) {
+            if (condition.equals("Is")) {
+                for (Audience audience : listOfAudiences) {
+                    if (audience.getGender() == null) {
+                        continue;
+                    }
+                    if (audience.getGender().equals(value)) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+        }
+/*
 // -------------------------------------- date added --------------------------------------
 // input format: "XXXX-XX-XX"
 
@@ -947,22 +542,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
 
         }
-
-
-        // -------------------------------------- gender --------------------------------------
-        if (property.equals("Gender")) {
-            if (condition.equals("Is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getGender() == null) {
-                        continue;
-                    }
-                    if (audience.getGender().equals(value)) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-        }
-
+*/
 
         List<Audience> noProperty = listOfAudiences;
         noProperty.removeAll(haveProperty);
@@ -995,7 +575,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     }
 
 
-
     @Override
     public CoreModuleTask ifElsePropertyWithoutValue(CoreModuleTask coreModuleTask) {
         List<Audience> haveProperty = new ArrayList<>();
@@ -1003,14 +582,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         List<Long> listOfAudienceId = coreModuleTask.getActiveAudienceId1();
         List<Audience> listOfAudiences = new ArrayList<>();
 
-        /*for (Long id : listOfAudienceId) {
-            Audience audience = audienceRepository.findById(id).get();
-            listOfAudiences.add(audience);
-        }*/
-
         for (Long id : listOfAudienceId) {
-            //Audience audience = audienceRepository.findById(id).get();
-
             // active_audience := id
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
             // active_audience := audience_id
@@ -1019,8 +591,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             listOfAudiences.add(audience);
         }
 
-
-        // todo: 目前json text没有“value”这一项，但要考虑json text为null的情况
         Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
         String json_text = node.getProperties();
         String marker1 = "property";
@@ -1034,12 +604,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
         condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
 
-        /*
-        String new_text = json_text.substring(1, json_text.length() - 1);
-        String[] items = new_text.split(", ");
-        String property = items[0].substring(13, items[0].length() - 1);
-        String condition = items[1].substring(14, items[1].length() - 1);
-        */
         System.out.println("property: "+property);
         System.out.println("condition: "+condition);
 
@@ -1083,7 +647,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
         }
-
 
         if (property.equals("Last Name")) {
             if (condition.equals("Is Blank")) {
@@ -1129,7 +692,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
         }
 
-
         List<Audience> noProperty = listOfAudiences;
         noProperty.removeAll(haveProperty);
 
@@ -1160,7 +722,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         return newTask;
     }
 
-    public String getDistanceGoogle(String source, String destination, String units){
+    private String getDistanceGoogle(String source, String destination, String units){
         // This function is used to call the Distance Matrix From Google Map API
 
         // This API Key is my personal key
@@ -1171,18 +733,22 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         HttpMethod method = HttpMethod.GET;
         String json_text = (new HttpClient()).getResponse(url,method,null);
 
-        // parse the distance
-        String marker1 = "text";
-        String marker2 = "mi";
-        String distance = "";
-        int indexOfMarker1  = json_text.indexOf(marker1);
-        int indexOfMarker2  = json_text.indexOf(marker2);
-        distance = json_text.substring(indexOfMarker1 + marker1.length() + 5, indexOfMarker2 - 1);
+        String distance = null;
 
+        // parse to see whether the api function correctly
+        if(!json_text.contains("ZERO_RESULTS"))
+        {
+            // parse the distance
+            String marker1 = "text";
+            String marker2 = "mi";
+            int indexOfMarker1  = json_text.indexOf(marker1);
+            int indexOfMarker2  = json_text.indexOf(marker2);
+            distance = json_text.substring(indexOfMarker1 + marker1.length() + 5, indexOfMarker2 - 1);
+        }
         return distance;
     }
 
-    public String getDistanceMapQuest(String source, String destination, String units){
+    private String getDistanceMapQuest(String source, String destination, String units){
         // This function is used to call the Distance Matrix From MapQuest API
 
         // This API Key is my personal key
@@ -1210,5 +776,116 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         return distance;
     }
+
+    private void filterBirthday(String value, int condition, List<Audience> listOfAudiences, List<Audience> haveProperty)
+    {
+        //  1: is after date
+        //  0: Date is
+        // -1: is before date
+        for (Audience audience : listOfAudiences) {
+            if (audience.getBirthday() == null) {
+                continue;
+            }
+            int parseIndex = value.indexOf("/");
+            int input_month = Integer.parseInt(value.substring(0, parseIndex));
+            int input_day = Integer.parseInt(value.substring(parseIndex+1, value.length()));
+            if(condition != 0) {
+                LocalDate localDate = LocalDate.of(audience.getBirthday().getYear(), input_month, input_day);
+                if (condition < 0) {
+                    // -1: is before date
+                    if (audience.getBirthday().compareTo(localDate) < 0) {
+                        haveProperty.add(audience);
+                    }
+                } else {
+                    //  1: is after date
+                    if (audience.getBirthday().compareTo(localDate) > 0) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+            else{
+                //  0: Date is
+                if(audience.getBirthday().getMonthValue() == (input_month)){
+                    if ((audience.getBirthday().getDayOfMonth()) == (input_day)) {
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+        }
+    }
+
+
+    private void filterWithProperty(String property, String condition, String value, boolean flag, List<Audience> listOfAudiences, List<Audience> haveProperty)
+    {
+        String audienceValue = null;
+        for(Audience audience: listOfAudiences) {
+            if (property.equals("Location")) {
+                if (audience.getAddress() == null) {
+                    continue;
+                }else{
+                    audienceValue = audience.getAddress();
+                }
+            } else if (property.equals("Email Address")) {
+                if (audience.getEmail() == null) {
+                    continue;
+                }else{
+                    audienceValue = audience.getEmail();
+                }
+            } else if (property.equals("First Name")) {
+                if (audience.getFirstName() == null) {
+                    continue;
+                }else{
+                    audienceValue = audience.getFirstName();
+                }
+            } else if (property.equals("Last Name"))  {
+                if (audience.getFirstName() == null) {
+                    continue;
+                } else{
+                    audienceValue = audience.getLastName();
+                }
+            } else if (property.equals("Full Name")) {
+                if (audience.getFirstName() == null && audience.getLastName() == null) {
+                    continue;
+                }else{
+                    audienceValue = audience.getFirstName()+" "+audience.getLastName();
+                }
+
+            } else if (property.equals("Phone Number")) {
+                if (audience.getPhone() == null) {
+                    continue;
+                }
+                else{
+                    audienceValue = audience.getPhone();
+                }
+            }
+
+            if(condition.contains("Contain") || condition.contains("In"))
+            {
+                if(flag){
+                    if (audienceValue.contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+                else {
+                    if (!audienceValue.contains(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            } else if (condition.contains("Is")){
+                if(flag){
+                    if (audienceValue.equals(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+                else {
+                    if (!audienceValue.equals(value)){
+                        haveProperty.add(audience);
+                    }
+                }
+            }
+
+        }
+    }
+
 
 }

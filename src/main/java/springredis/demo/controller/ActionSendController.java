@@ -176,7 +176,7 @@ public class ActionSendController {
 
         //record keeping
         Transmission transmission = new Transmission();
-        log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        log.info("transmission id is " + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
@@ -185,7 +185,7 @@ public class ActionSendController {
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
         //transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
-        transmission.setJourney(journeyRepository.findById(403));
+        transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
         transmissionRepository.save(transmission);
 
         Response response = new Response();
@@ -277,12 +277,13 @@ public class ActionSendController {
     	List<Address> addressList = new ArrayList<Address>();  //set address list for the request
     	for(int i = 0; i < audienceList.size(); i++) 
     	{
+            // address -- email address
     		Address address = new Address();
     		address.setAddress(audienceList.get(i).getEmail());
     		addressList.add(address);
     	}
         Address address = new Address();
-        address.setAddress("yuyangba@buffalo.edu");
+        address.setAddress("shuangyang_li@outlook.com");
         addressList.add(address);
     	request.setAddressList(addressList);
 
@@ -300,9 +301,11 @@ public class ActionSendController {
         String user_name = "user1";
         String add = user_name + "@sub.paradx.net";
     	sender.setEmail("duke.tang@sub.paradx.net");
-    	sender.setName(jsonObject.getString("sender"));
+    	//sender.setName(jsonObject.getString("sender"));
+        sender.setName("lsy");
     	content.setSender(sender);
-    	content.setSubject(jsonObject.getString("subject"));
+    	//content.setSubject(jsonObject.getString("subject"));
+        content.setSubject("test email");
     	//content.setHtml();
     	content.setText("hello,testing");
     	request.setContent(content);
