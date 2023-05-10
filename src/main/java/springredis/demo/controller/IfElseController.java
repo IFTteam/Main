@@ -27,7 +27,7 @@ public class IfElseController {
 
         // {'property': 'XXX', 'condition': 'YYY', 'value': 'ZZZ'}
         // {'property': 'XXX', 'condition': 'YYY', 'value': null}
-        // {'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]}
+        // {}'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]
 
         // active_node table: node_id
         Node node = NodeRepository.searchNodeByid(task.getNodeId());
