@@ -65,8 +65,10 @@ public class OutAPICaller implements Runnable{
     public void run() {
     	System.out.println("================================================OutAPI Starts=====================================================");
     	System.out.println(redisTemplate.opsForList().size(outQueueKey));
+
     	while(isRunning = true) {
 	        while (redisTemplate.opsForList().size(outQueueKey) > 0){
+				System.out.println("========== (OutAPICaller) Event detected in outQueue ========");
 	        	Event outEvent = ((Event) redisTemplate.opsForList().rightPop(outQueueKey));
 	        	Long id = ((Number)outEvent.getId()).longValue();
 				System.out.println("the id is: " + id);
@@ -77,13 +79,8 @@ public class OutAPICaller implements Runnable{
 				TimeTask timetask = timeTaskOp.get();
 				timetask.audience_serialize();
             	System.out.println("================================================Time Task retrieved=====================================================");
-//            	TaskExecutor taskExectuor = new TaskExecutor(timeTaskOp.get().getCoreModuleTask());
-            	//CoreModuleTask coreModuleTask = timetask.getCoreModuleTask();
-            	//System.out.println(coreModuleTask.getAudienceId1());
 				System.out.println("cur JI id is:" + timetask.getJourneyId());
-				//coreModuleTask = restTemplate.postForObject("http://localhost:8080/move_user", coreModuleTask, CoreModuleTask.class);  //calls JiaQi's method
-            	//System.out.println("=================================CoreModuleTask ID: " + coreModuleTask.getId());
-				System.out.println("=================================Node: " + timetask);
+				System.out.println("Time Task Node: " + timetask);
             	Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
 				if (!optionalNode.isPresent()) {
 					throw new DataBaseObjectNotFoundException("The corresponding Time Trigger node does not exist");
@@ -92,17 +89,15 @@ public class OutAPICaller implements Runnable{
 
            		System.out.println("================================================Time Trigger node retrieved=====================================================");
 
-           		//node.nextsDeserialize();
-           		//node.setLasts(new ArrayList<>());
 				//for now, assume we only have one branch in the journey, so we only take nexts[0]
-           		System.out.println("Node getNexts Index 0 =======================" + node.getNexts().get(0));
+           		System.out.println("Node getNexts Index 0: " + node.getNexts().get(0));
            		Long next_node_id = node.getNexts().get(0);
            		Optional<Node> optionalNextNode = nodeRepository.findById(next_node_id);  //find next node by id from repository
 				if (!optionalNextNode.isPresent()) {
 					throw new DataBaseObjectNotFoundException("The Next node does not exist");
 				}
-				if (node.getNexts().size() > 1){
-
+				if (node.getNexts().size() > 1) {
+					// TODO: if more than one branch in the journey exists, there could be multiple next nodes
 				}
            		Node nextNode = initializeNodeFromDB(optionalNextNode);
 
@@ -134,28 +129,16 @@ public class OutAPICaller implements Runnable{
             	nextCoreModuleTask.setCreatedAt(LocalDateTime.now());
             	nextCoreModuleTask.setCreatedBy("TimeModule");
 
-//            	nextCoreModuleTask.getActiveAudienceId1().add(audienceMoveResult);  //set the active audience id to the one returned by JiaQi's method
-//          	nextCoreModuleTask.setSourceNodeId(coreModuleTask.getNodeId()); //set the source node id to that of the current node's id
-//            	nextCoreModuleTask.setTargetNodeId(nextNode.getNexts().get(0));  //set the target node id to that of the next node of nextNode
-            	//Long addTaskResult = restTemplate.postForObject("http://localhost:8080/ReturnTask", nextCoreModuleTask, Long.class);  //using JiaQi's method
-            	System.out.println("================================================OUTAPI successful 3=====================================================");
-				/*String type = nextCoreModuleTask.getName();
+				System.out.println("================================================OUTAPI successful 3=====================================================");
+
+				String type = nextCoreModuleTask.getName();
 				System.out.println("In outAPI the CM is:" + nextCoreModuleTask);
 				System.out.println("In outAPI the type is:" + type);
 				String url = urlDict.get(type);
-				String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
-				 */
-				//coreModuleTask = nextCoreModuleTask;
+				System.out.println("the url is " + url);
 
-	            String type = nextCoreModuleTask.getType();
-				type = nextCoreModuleTask.getName();
-				System.out.println("In outAPI the CM is:" + nextCoreModuleTask);
-				System.out.println("In outAPI the type is:" + type);
-	            String url = urlDict.get(type);
-				System.out.println("the usl is" + url);
-				//coreModuleTask.setAudienceId1(array);
-	            String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
-				//cmtExecutor.execute(nextCoreModuleTask);
+//				String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
+				cmtExecutor.execute(nextCoreModuleTask);
 
 	        }
     	}
