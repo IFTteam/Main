@@ -57,16 +57,14 @@ public class NodeJsonModel {
     @Setter
     @Data
     public class Property {
-        String Run;
-        String SelectList;
         String send;
         String frequency;
         String list;
         String sender;
         String subject;
+        String content;
         String tag;
-        String sendOn;
-        String waitFor;
+        String date;
     }
     @Data
     public class Branch {
