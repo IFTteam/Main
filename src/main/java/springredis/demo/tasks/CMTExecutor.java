@@ -60,11 +60,13 @@ public class CMTExecutor{
 
     public void execute(CoreModuleTask coreModuleTask) {
         System.out.println("The module to be execute is " + coreModuleTask);
-        //first, if this coremoduletask's type is "end", we don't do anythong and simply returns
-        if (coreModuleTask.getType().equals("end")) return;
+        //first, if this coremoduletask's type is "end", we don't do anything and simply returns
+        if (coreModuleTask.getType().equals("end")) {
+            System.out.println("End node CMT received, exiting");
+            return;
+        }
         CoreModuleTask restask = null;
         //else, we can first call the respective functional API's based on task type if the callapi attribute is 1:
-        System.out.println("The task is:" + coreModuleTask.toString());
         if (coreModuleTask.getName() != null) {
             System.out.println("The type of the task is:" + coreModuleTask.getName().toString());
             System.out.println("The taskID is:" + coreModuleTask.getId());
@@ -73,21 +75,33 @@ public class CMTExecutor{
         else {
             System.out.println("The getcallapi is:" + coreModuleTask.getCallapi());
         }
-        //System.out.println("The url is:" + urlDict.get(coreModuleTask.getType()).toString());
-        if(coreModuleTask.getCallapi()==1) {restask = restTemplate.exchange(urlDict.get(coreModuleTask.getName()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();}
-        else restask = coreModuleTask;
+
+        if(coreModuleTask.getCallapi()==1) {
+//            System.out.println("The url is:" + urlDict.get(coreModuleTask.getName()));
+            System.out.println("---------------- " + coreModuleTask.getName() + " calling API ----------------");
+            restask = restTemplate.exchange(urlDict.get(coreModuleTask.getName()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
+            System.out.println("---------------- " + coreModuleTask.getName() + " returned from calling API ----------------");
+        }
+        else
+            restask = coreModuleTask;
+
+        System.out.println("Restacked CMT: " + restask);
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
-        if (restask.getMakenext() == 0) return;
+        if (restask.getMakenext() == 0) {
+            System.out.println("Makenext is 0, exiting");
+            return;
+        }
         //else: first move audience from curnode to next node, or create new active audience in nextnode
         Long activeid;
         //change local host to server domain!!
         //moving active audience pool from current node to next node (via method in task controller)
         if (restask.getTaskType() == 0) {
+            System.out.println("Moving audience to next node");
             restask = restTemplate.exchange("http://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), CoreModuleTask.class).getBody();
         } else {
+            System.out.println("Creating audience for next node");
             restask = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), CoreModuleTask.class).getBody();
-            System.out.println("in CMT, after create user, the au is:" +
-                    restask.getActiveAudienceId1());
+            System.out.println("in CMT, after create user, the au is:" + restask.getActiveAudienceId1());
         }
         System.out.println("restask node id: " + restask.getNodeId());
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
@@ -95,7 +109,7 @@ public class CMTExecutor{
         System.out.println("current node is: " + curnode.getName());
         //finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {
-            System.out.println("++++++++++++++++get nexts is being excute");
+            System.out.println("========== (CMTExecutor) get nexts is being excuted ==========");
             System.out.println("curnode.getNexts() is" + curnode.getNexts().toString());
             Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
@@ -115,6 +129,10 @@ public class CMTExecutor{
             if(nextnode.getNexts().size()>0) {
                 newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
             }
+            else {
+                System.out.println("nextnode.getNexts().size() == " + nextnode.getNexts().size());
+                newtask.setMakenext(0);
+            }
             //now we identify the current activeNode
             ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
             Node node = nodeRepository.searchNodeByid(id);
@@ -128,8 +146,8 @@ public class CMTExecutor{
             newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
             newtask.setAudienceId1(restask.getAudienceId1());
             String url = "http://localhost:8080/ReturnTask";
-            HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
-            Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
+            System.out.println("========== (CMTExecutor) Pushing new CMT to TaskController (ReturnTask API) ==========");
+            Long taskid = restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(newtask), Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
         }
     }
 }
