@@ -40,12 +40,12 @@ public class JourneyController {
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
-        System.out.println(journeyJson);
+        System.out.println("Journey saved");
         SeDeFunction sede = new SeDeFunction();
 
         // Map JourneyJson to JourneyJsonModel
-        JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
-        System.out.println("the properties is " + journeyJsonModel.getProperties());
+        JourneyJsonModel journeyJsonModel = sede.deserializeJourney(journeyJson);
+        System.out.println("The properties is: " + journeyJsonModel.getProperties());
         // Create Journey object using JourneyJson's info then store in DB
         String journeyName = journeyJsonModel.getProperties().getJourneyName();
         String frontEndId = journeyJsonModel.getProperties().getJourneyId();
@@ -84,7 +84,7 @@ public class JourneyController {
         Journey oneJourney = saveJourney(journeyJson);
         SeDeFunction sede = new SeDeFunction();
 //         Map JourneyJson to JourneyJsonModel
-        JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
+        JourneyJsonModel journeyJsonModel = sede.deserializeJourney(journeyJson);
         Long journeyId = journeyRepository.save(oneJourney).getId();
         String journeyFrontEndId = journeyRepository.searchJourneyById(journeyId).getFrontEndId();
 
@@ -101,9 +101,11 @@ public class JourneyController {
             existingNode.add(queryResult[i].getId());
         }
         // Traverse the journeyJsonModel object and add each node into DB
-        System.out.println("The node list bfdfs is: " + nodeIdList);
+        System.out.println("The node list before dfs is: " + nodeIdList);
+        System.out.println("========================== DFS started ==========================");
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
-        System.out.println("The node list is: " + nodeIdList);
+        System.out.println("=========================== DFS ended ===========================");
+        System.out.println("The node list after dfs is: " + nodeIdList);
         for (int i = 0; i < nodeIdList.size(); i++) {
             if (existingNode.contains(nodeIdList.get(i))) {
                 existingNode.remove(nodeIdList.get(i));
@@ -113,6 +115,7 @@ public class JourneyController {
 
         nodeRepository.deleteAllById(existingNode);
         for (Long nodeId: existingNode) {
+            System.out.println("Deleting node: " + nodeId);
             activeNodeRepository.deleteByNodeId(nodeId);
         }
 //        --------------------------------------------------------------------------------------------------
@@ -136,7 +139,7 @@ public class JourneyController {
         Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
         if (headNode == null) System.out.println("The headNode is null");
         else System.out.println("The headNode is" + headNode);
-        headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
+        headNode.setHeadOrTail(1); // 1: root, 0: node, 2: leaf
 
         /**
          * Dummy head initialization
@@ -186,6 +189,7 @@ public class JourneyController {
         ArrayList<Long> n_audienceID = new ArrayList<Long>(Arrays.asList(1L, 2L, 3L));
         cmt.setAudienceId1(n_audienceID);
         System.out.println("the size of Audience Id 1 is:" + cmt.getAudienceId1().toString());
+        System.out.println("======================= Moving to CMTExecutor ========================");
         cmtExecutor.execute(cmt);
 
         return oneJourney;
@@ -307,15 +311,16 @@ public class JourneyController {
     }
     public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
         Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx], journeyFrontEndId);
+        System.out.println(nodeJsonModelList[idx].toString());
         // We need to store the node in DB first
         //nodeRepository.save(newNode);
         // so that we can get the node's id
         nodeRepository.save(newNode);
-        System.out.println("The new node is" + newNode);
+        System.out.println("The new node is: " + newNode);
 
         Long nodeId = newNode.getId();
         nodeIdList.add(nodeId);
-        System.out.println("The node List in" + idx + "is "+ nodeIdList);
+        System.out.println("The node List in [" + idx + "] is "+ nodeIdList);
         //newNode = nodeRepository.searchNodeByid(nodeId);
 
         List<Long> nexts = new ArrayList<>();
