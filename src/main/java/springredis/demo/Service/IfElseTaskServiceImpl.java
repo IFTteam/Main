@@ -53,24 +53,39 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         // Get httpEntity from Name
         // {'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]};
-        String json_text = coreModuleTask.getName();
+        Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
+        String json_text = node.getProperties();
+
         String new_text = json_text.substring(1, json_text.length() - 1);
         String httpEntityText = new_text.substring(new_text.indexOf("httpEntity") + 15, new_text.length() - 2);
-        String[] a = httpEntityText.split("},\\{");
+        String[] a = httpEntityText.split("'},\\{'");
         List<HttpEntity<String>> httpEntity = new ArrayList<>();
         for(String i : a) {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.TEXT_PLAIN);
             HttpEntity<String> entity = new HttpEntity<>(i, headers);
             httpEntity.add(entity);
+            System.out.println("httpEntity: "+ entity);
         }
+
         String without_httpEntity = new_text.substring(0, new_text.indexOf("httpEntity") -3);
         String[] items = without_httpEntity.split(", ");
 
-        String repeatInterval = items[0].substring(19, items[0].length() - 1);
-        int repeat = Integer.parseInt(items[1].substring(10, items[1].length()));
-        int triggerTime = Integer.parseInt(items[2].substring(15, items[2].length()));
-        String eventType = items[3].substring(14, items[3].length() - 1);
+        //for(String i:items){
+        //    System.out.println(i);
+        //}
+
+        String repeatInterval = items[0].substring(20, items[0].length() - 1);
+        System.out.println("repeatInterval: "+repeatInterval);
+
+        int repeat = Integer.parseInt(items[1].substring(12, items[1].length()-1));
+        System.out.println("repeat: "+repeat);
+
+        int triggerTime = Integer.parseInt(items[2].substring(17, items[2].length()-1));
+        System.out.println("triggerTime: "+triggerTime);
+
+        String eventType = items[3].substring(15, items[3].length() - 1);
+        System.out.println("eventType: "+eventType);
 
         Long userId = coreModuleTask.getUserId();
         Long nodeId = coreModuleTask.getNodeId();
@@ -80,10 +95,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         Optional<Journey> journey = journeyRepository.findById(journeyId);
         //need to fix
         List<Transmission> transmissionList = transmissionRepository.findAll();
-
-
-
-
 
         for (HttpEntity<String> item : httpEntity) {
             // handleEventWebhook method will insert audiences to table automatically
@@ -101,10 +112,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 Audience audience = transmission.get().getAudience();
                 allAudience.add(audience);
             }
-
-
         }
-
 
 //builder().b("b").a("a").build();
         BaseTaskEntity taskEntity = new BaseTaskEntity();
@@ -114,7 +122,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         taskEntity.setTargetNodeId(targetNodeId);
 
         // Start time counting
-
         TimeTask task = timeEventController.add(taskEntity);
 
         task.setRepeatInterval(repeatInterval);
@@ -152,6 +159,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
         }
+
         CoreModuleTask newTask = coreModuleTask;
         List<Long> audienceList1 = new ArrayList<>();
         newTask.setAudienceId1 (audienceList1);
@@ -160,6 +168,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             Long Id = audience.getId();
             audienceList2.add(Id);
         }
+
         newTask.setAudienceId2 (audienceList2);
         newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
         newTask.setMakenext(1);
@@ -217,8 +226,10 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
-                    int miles = 100;
-                    String destination = "Atlanta";
+                    // value = "25, New York, North Tyneside, United Kingdom";
+
+                    String miles = value.substring(0, value.indexOf(","));
+                    String destination = value.substring(value.indexOf(",")+2,value.length());
                     String units = "imperial";
 
                     String audienceAddress = audience.getAddress();
@@ -234,7 +245,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         if(googleDistance.contains(".")){
                             googleDistance = googleDistance.substring(0,googleDistance.indexOf("."));
                         }
-                        if (Integer.valueOf(googleDistance) <= miles) {
+                        if (Integer.valueOf(googleDistance) <= Integer.valueOf(miles)){
                             haveProperty.add(audience);
                         }
                     }
@@ -391,7 +402,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             if (condition.equals("Does Not Contain")) {
                 filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
-
         }
 
 // -------------------------------------- full name --------------------------------------
@@ -411,7 +421,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             if (condition.equals("Does Not Contain")) {
                 filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
-
         }
 
 // -------------------------------------- phone number --------------------------------------
@@ -431,7 +440,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             if (condition.equals("Does Not Contain")) {
                 filterWithProperty(property, condition, value, false, listOfAudiences, haveProperty);
             }
-
         }
 
 // -------------------------------------- gender --------------------------------------
@@ -489,7 +497,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
 
-
             if (condition.equals("is within")) {
                 for( Audience audience: listOfAudiences) {
                     if (audience.getDate_added() == null) {
@@ -513,9 +520,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     }
                 }
             }
-
-
         }
+
 // -------------------------------------- source --------------------------------------
         if (property.equals("signup source")) {
             if (condition.equals("was")) {
@@ -527,6 +533,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         haveProperty.add(audience);
                     }
                 }
+
+
 
             }
 
@@ -615,7 +623,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     }
                 }
             }
-
         }
 
         if (property.equals("Email Address")) {
@@ -883,7 +890,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     }
                 }
             }
-
         }
     }
 

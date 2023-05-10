@@ -20,7 +20,7 @@ public class IfElseController {
 
         // {'property': 'XXX', 'condition': 'YYY', 'value': 'ZZZ'}
         // {'property': 'XXX', 'condition': 'YYY', 'value': null}
-        // {'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]}
+        // {}'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]
 
         String json_text = task.getName();
         System.out.println("In if/else, the json text is:" + json_text);
