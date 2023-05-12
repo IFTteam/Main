@@ -15,6 +15,7 @@ import springredis.demo.error.DataBaseObjectNotFoundException;
 import springredis.demo.error.TimeTaskNotExistException;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
+import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
@@ -30,7 +31,6 @@ public class OutAPICaller implements Runnable{
     private RedisTemplate redisTemplate;
     @Autowired
     private RestTemplate restTemplate = new RestTemplate();
-
 	@Autowired
 	CMTExecutor cmtExecutor;
     
@@ -54,10 +54,11 @@ public class OutAPICaller implements Runnable{
 
 
 
-    public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository) {
+    public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository, ActiveNodeRepository activeNodeRepository) {
         this.timeDelayRepository = timeDelayRepository;
         this.redisTemplate = redisTemplate;
         this.nodeRepository = nodeRepository;
+		cmtExecutor = new CMTExecutor(nodeRepository, restTemplate, activeNodeRepository);
     }
 
     @SneakyThrows
