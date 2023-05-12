@@ -38,9 +38,22 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         JSONObject jsonObject = new JSONObject(properties);
         String name = jsonObject.getString("tag");
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
-        User user=userRepository.findById(coreModuleTask.getUserId()).get();
-        Tag tag = tagRepository.findByUserIdName(name,user).get();
+        //User user=userRepository.findById(coreModuleTask.getUserId()).get();
+        User user=userRepository.findById(1);
+
         TagDetail real_tag = new TagDetail();
+
+        Optional<Tag> tagOp = tagRepository.findByUserIdName(name,user);
+        Tag tag;
+        if (!tagOp.isPresent()){
+            tag = new Tag();
+            tag.setTag_name(name);
+            tag.setUser(user);
+            tagRepository.save(tag);
+        }
+        else {
+            tag = tagOp.get();
+        }
 
         real_tag.setJourney(journey);
         real_tag.setTagId(tag.getTagId());

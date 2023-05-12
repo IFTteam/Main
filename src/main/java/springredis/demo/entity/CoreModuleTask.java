@@ -11,7 +11,15 @@ public class CoreModuleTask extends BaseTaskEntity {
     // Return this Entity when call core module
     //  also posts this task when calling other api
     @Id
-    @GeneratedValue
+    @SequenceGenerator(
+            name = "task_sequence",
+            sequenceName = "task_sequence",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "task_sequence"
+    )
     private Long id;
     private int taskType;       //0 for move audience, 1 for create audience
     private String createModule;
@@ -19,11 +27,23 @@ public class CoreModuleTask extends BaseTaskEntity {
     private String name = "";        //this is the specific description of this task of this type; each api has its own coding
     private int makenext=1;     //If set to 1, means the task (when returned to core module) need to make the next task based on next nodes; if 0 then core module will not make a new task when this task is returned
     private int callapi=1;      //If this is 1 (by default), CMTEexecutor will call the respective API for this task. Else, it will simply transfer audience from this task's node to next node, and make next node's task
-    
+
+
 	public CoreModuleTask(BaseTaskEntity baseTaskEntity) {
 		super(baseTaskEntity);
 		// TODO Auto-generated constructor stub
 	}
+
+    public CoreModuleTask(CoreModuleTask cm) {
+        super(cm);
+        this.id = cm.id;
+        this.taskType = cm.taskType;
+        this.createModule = cm.createModule;
+        this.type = cm.type;
+        this.name = cm.name;
+        this.makenext = cm.makenext;
+        this.callapi = cm.callapi;
+    }
 	
 	public CoreModuleTask() {
 		super();
