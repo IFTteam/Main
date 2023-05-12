@@ -22,7 +22,6 @@ import java.util.*;
 @Service
 public class IfElseTaskServiceImpl implements IfElseTaskService {
 
-
     @Autowired
     private AudienceRepository audienceRepository;
     @Autowired
@@ -178,7 +177,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     }
 
     @Override
-    // public String ifElseProperty(List<Audience> listOfAudiences, String property, String condition, String value) {
     public CoreModuleTask ifElseProperty(CoreModuleTask coreModuleTask) {
 
         List<Audience> haveProperty = new ArrayList<>();
@@ -188,8 +186,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         List<Audience> listOfAudiences = new ArrayList<>();
         for (Long id : listOfAudienceId) {
-            //Audience audience = audienceRepository.findById(id).get();
-
             // active_audience := id
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
             // active_audience := audience_id
@@ -220,22 +216,20 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
 // -------------------------------------- address --------------------------------------
         if (property.equals("Location")) {
+
+            // value format example: "25, New York, North Tyneside, United Kingdom";
+            String miles = value.substring(0, value.indexOf(","));
+            String destination = value.substring(value.indexOf(",")+2,value.length());
+            String units = "imperial";
+
             if (condition.equals("Is Within")) {
                 for(Audience audience: listOfAudiences) {
                     if (audience.getAddress() == null) {
                         continue;
                     }
 
-                    // value = "25, New York, North Tyneside, United Kingdom";
-
-                    String miles = value.substring(0, value.indexOf(","));
-                    String destination = value.substring(value.indexOf(",")+2,value.length());
-                    String units = "imperial";
-
                     String audienceAddress = audience.getAddress();
                     String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
-
-                    System.out.println("google distance: "+googleDistance);
                     //System.out.println("mapquest distance: "+getDistanceMapQuest(audienceAddress,destination,units));
 
                     if(googleDistance != null) {
@@ -258,15 +252,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
-                    float miles = 100;
-                    String destination = "Atlanta";
-                    String units = "imperial";
-
                     String audienceAddress = audience.getAddress();
                     String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
-
-                    System.out.println("google distance: "+googleDistance);
-                    //System.out.println("mapquest distance: "+getDistanceMapQuest(audienceAddress,destination,units));
 
                     if(googleDistance != null) {
                         if(googleDistance.contains(",")){
@@ -275,7 +262,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         if(googleDistance.contains(".")){
                             googleDistance = googleDistance.substring(0,googleDistance.indexOf("."));
                         }
-                        if (Integer.valueOf(googleDistance) > miles) {
+                        if (Integer.valueOf(googleDistance) > Integer.valueOf(miles)){
                             haveProperty.add(audience);
                         }
                     }
@@ -327,24 +314,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             if (condition.equals("Is After Date")) {
                 filterBirthday(value, 1, listOfAudiences, haveProperty);
             }
-
-            /*
-            if (condition.equals("is (mm.dd)")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getBirthday() == null) {
-                        continue;
-                    }
-
-                    int input_month = Integer.parseInt(value.substring(0, 2));
-                    int input_day = Integer.parseInt(value.substring(3, 5));
-                    int real_month = audience.getBirthday().getMonth().getValue();
-                    int real_day = audience.getBirthday().getDayOfMonth();
-
-                    if (input_month == real_month && input_day == real_day) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }*/
         }
 
 // -------------------------------------- email address --------------------------------------
@@ -455,102 +424,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
         }
-/*
-// -------------------------------------- date added --------------------------------------
-// input format: "XXXX-XX-XX"
-
-        if (property.equals("date added")) {
-            // selected date is > value
-            if (condition.equals("is after")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate localDate = LocalDate.parse(value);
-                    if (audience.getDate_added().compareTo(localDate) > 0) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is before")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate localDate = LocalDate.parse(value);
-                    if (audience.getDate_added().compareTo(localDate) < 0) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate localDate = LocalDate.parse(value);
-                    if (audience.getDate_added().compareTo(localDate) == 0) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is within")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate now = LocalDate.now();
-                    if (audience.getDate_added().compareTo(now.minusDays(Integer.parseInt(value))) >= 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is not within")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate now = LocalDate.now();
-                    if (audience.getDate_added().compareTo(now.minusDays(Integer.parseInt(value))) < 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-        }
-
-// -------------------------------------- source --------------------------------------
-        if (property.equals("signup source")) {
-            if (condition.equals("was")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getSource() == null) {
-                        continue;
-                    }
-                    if (audience.getSource().equalsIgnoreCase(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-
-
-
-            }
-
-            if (condition.equals("was not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getSource() == null) {
-                        continue;
-                    }
-                    if (!audience.getSource().equalsIgnoreCase(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-        }
-*/
 
         List<Audience> noProperty = listOfAudiences;
         noProperty.removeAll(haveProperty);
@@ -820,7 +693,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
         }
     }
-
 
     private void filterWithProperty(String property, String condition, String value, boolean flag, List<Audience> listOfAudiences, List<Audience> haveProperty)
     {
