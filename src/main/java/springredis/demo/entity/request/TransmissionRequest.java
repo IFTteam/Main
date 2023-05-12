@@ -32,6 +32,9 @@ public class TransmissionRequest {
     @JsonProperty("journey_id")
     private Long journeyId;
 
+    @JsonProperty("options")
+    private Options options;
+
     @Override
     public String toString() {
         return "TransmissionRequest{" +
@@ -41,6 +44,7 @@ public class TransmissionRequest {
                 ", audienceId=" + audienceId +
                 ", userId=" + userId +
                 ", journeyId=" + journeyId +
+                ", options=" + options +
                 '}';
     }
 }
