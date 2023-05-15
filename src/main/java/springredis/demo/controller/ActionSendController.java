@@ -152,7 +152,7 @@ public class ActionSendController {
         System.out.println("====================================================Request Audience ID: " + transmissionRequest.getAudienceId());
         System.out.println("====================================================Request Journey ID: " + transmissionRequest.getJourneyId());
         System.out.println("====================================================Request User ID: " + transmissionRequest.getUserId());
-        System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().get(0).getAddress());
+        System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().size());
         System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                                                                  .uri("/api/v1/transmissions?num_rcpt_errors=3")
@@ -180,10 +180,13 @@ public class ActionSendController {
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
+        System.out.println(transmissionRequest.getUserId());
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
-        transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+//        transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+        transmission.setJourney(journeyRepository.searchJourneyById(transmissionRequest.getJourneyId()));
+        System.out.println("Front end ID: " + journeyRepository.searchJourneyById(transmissionRequest.getJourneyId()).getFrontEndId());
         transmissionRepository.save(transmission);
 
         Response response = new Response();
@@ -242,15 +245,21 @@ public class ActionSendController {
     @ResponseBody
     public CoreModuleTask createCMTTransmission(@RequestBody CoreModuleTask coreModuleTask) {
     	List<ActiveAudience> activeAudienceList = new ArrayList<ActiveAudience>();  //obtain active audience list from CMT
-    	for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++) 
+        System.out.println("(ActionSendController) The CMT module is " + coreModuleTask.toString());
+        System.out.println("(ActionSendController) The CMT module ActiveAudience is " + coreModuleTask.getActiveAudienceId1());
+        System.out.println("(ActionSendController) The CMT module Audience is " + coreModuleTask.getAudienceId1());
+        for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++)
     	{
     		Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(i));
-    		if(activeAudience.isPresent() == true) 
+    		if(activeAudience.isPresent())
     		{
     			activeAudienceList.add(activeAudience.get());
     		}
+            else{
+                System.out.println("no audience for" + coreModuleTask.getActiveAudienceId1().get(i));
+            }
     	}
-    	
+        System.out.println("The CMT activeAudienceList is " + activeAudienceList.size());
     	List<Audience> audienceList = new ArrayList<Audience>();  //obtain audience list from the CMT
     	for(int i = 0; i < activeAudienceList.size(); i++) 
     	{
@@ -260,11 +269,12 @@ public class ActionSendController {
     			audienceList.add(audience.get());
     		}
     	}
+        //System.out.println("The CMT audienceList is " + audienceList);
     	
     	TransmissionRequest request = new TransmissionRequest();
     	
     	request.setCampaignId("1");  //Not entirely sure how to obtain campaign ID yet
-    	
+
     	List<Address> addressList = new ArrayList<Address>();  //set address list for the request
     	for(int i = 0; i < audienceList.size(); i++) 
     	{
@@ -272,34 +282,53 @@ public class ActionSendController {
     		address.setAddress(audienceList.get(i).getEmail());
     		addressList.add(address);
     	}
+        Address address = new Address();
+        address.setAddress("jingchen.tang@altomni.com");
+        addressList.add(address);
     	request.setAddressList(addressList);
 
-        System.out.println(addressList.toString());
+        for(int i = 0; i < addressList.size(); i++)
+            System.out.println(addressList.get(i).getAddress());
 
     	Content content = new Content();  //set content for the request
     	Node node = nodeRepository.findById(coreModuleTask.getNodeId()).get();
 
         String properties = node.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-
+        System.out.println("in CMT, the properties" + jsonObject);
 
         Sender sender = new Sender();
     	//(sender, subject, email, name"sender", subject, html, text)
+        String user_name = "user1";
+        String add = user_name + "@sub.paradx.net";
     	sender.setEmail("duke.tang@sub.paradx.net");
     	sender.setName(jsonObject.getString("sender"));
     	content.setSender(sender);
     	content.setSubject(jsonObject.getString("subject"));
     	//content.setHtml();
-    	content.setText("hello,testing");
+        if(jsonObject.getString("content") != null)
+            content.setText(jsonObject.getString("content"));
+        else
+    	    content.setText("hello,testing");
     	request.setContent(content);
     	
     	request.setAudienceId(coreModuleTask.getAudienceId1().get(0));  //set audience id. Is it just the first audience id stored on CMT?
 
+        System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
+
+        // TODO: user is manually created generated here for testing purpose
+        User user = new User();
+        user.setUsername("user" + coreModuleTask.getNodeId());
+        user.setCreatedBy("Bryan");
+        userRepository.save(user);
+
+        coreModuleTask.setUserId(user.getId());
+        System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
+//        request.setUserId(1L);  //set user id
+
 
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
-
-
     	
     	//restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
         //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);

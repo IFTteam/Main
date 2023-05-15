@@ -15,7 +15,7 @@ public class SeDeFunction {
     GsonBuilder gsonBuilder = new GsonBuilder();
 
     // used to parse the journey JSON from frontend to JourneyJsonModel object
-    public JourneyJsonModel deserializeJounrey(String journeyJson){
+    public JourneyJsonModel deserializeJourney(String journeyJson){
         gsonBuilder.registerTypeAdapter(LocalDateTime.class, new springredis.demo.serializer.LocalDateTimeSerializer());
         Gson gson = gsonBuilder.setPrettyPrinting().create();
         JourneyJsonModel journeyObject = gson.fromJson(journeyJson, JourneyJsonModel.class);
@@ -44,7 +44,7 @@ public class SeDeFunction {
         for (int i = 0; i < nodeArray.size(); i++) {
             result += gson.toJson(nodeArray.get(i)) + ",,"; // use ,, as delimiter to separate serialized nodes in string
         }
-        System.out.println(result);
+        System.out.println("Serialized result: " + result);
         return result;
     }
     //传进来的一个String(json),然后分解字符串，再deserializing一个一个node加入列表，最后返回列表
@@ -69,7 +69,7 @@ public class SeDeFunction {
 
         // parse each node to string
         result = gson.toJson(property); // use ,, as delimiter to separate serialized nodes in string
-        System.out.println(result);
+        System.out.println("Serialized Node Property: " + result);
         return result;
     }
     }

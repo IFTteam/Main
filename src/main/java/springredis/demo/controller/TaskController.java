@@ -36,13 +36,13 @@ public class TaskController {
     private final String taskQueueKey = "CoretaskQueue";
     @PostMapping("/ReturnTask")
     public Long addTask(@RequestBody CoreModuleTask coreModuleTask){
-
+        System.out.println("========== (TaskController) Pushed In CMT via ReturnTask API ==========");
         return redisTemplate.opsForList().leftPush(taskQueueKey ,coreModuleTask);
     }
 
     //returns the created user's id in buffer (not main DB!!)
     @PostMapping("/create_user")
-    private Long createUser(@RequestBody CoreModuleTask coreModuleTask) {
+    private CoreModuleTask createUser(@RequestBody CoreModuleTask coreModuleTask) {
         if (coreModuleTask.getAudienceId1().size() != 0) {                  //this means we have audience to create in the first connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId1()) {
                 ActiveAudience activeAudience = new ActiveAudience(Audid);
@@ -53,9 +53,10 @@ public class TaskController {
                     //add the active-audience to core module attributes
                     List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
                     activeaudiencelist.add(activeAudience.getId());
-                    coreModuleTask.setAudienceId1(activeaudiencelist);
+                    coreModuleTask.setActiveAudienceId1(activeaudiencelist);
                 }
             }
+            System.out.println("after create user, the au is:" + coreModuleTask.getActiveAudienceId1());
         }
         if (coreModuleTask.getAudienceId2().size() != 0) {                  //this means we have audience to create in the second connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId2()) {
@@ -65,19 +66,20 @@ public class TaskController {
                     activeAudience.setActiveNode(activeNode);
                     activeAudience = activeAudienceRepository.save(activeAudience);
                     //add the active-audience to core module attributes
-                    List<Long> activeaudiencelist = coreModuleTask.getActiveAudienceId1();
-                    activeaudiencelist.add(activeAudience.getId());
-                    coreModuleTask.setAudienceId1(activeaudiencelist);
-                    System.out.println("the active audience list is:" + activeaudiencelist.toString());
+                    List<Long> activeaudiencelist2 = coreModuleTask.getActiveAudienceId2();
+                    activeaudiencelist2.add(activeAudience.getId());
+                    coreModuleTask.setActiveAudienceId2(activeaudiencelist2);
+                    System.out.println("the active audience list is:" + activeaudiencelist2.toString());
                 }
             }
         }
         System.out.println("success");
-        return 1L;
+        System.out.println("after create user, the au is:" + coreModuleTask.getActiveAudienceId1());
+        return coreModuleTask;
     }
 
     @PostMapping("/move_user")
-    private Long moveUser(@RequestBody CoreModuleTask coreModuleTask) {
+    private CoreModuleTask moveUser(@RequestBody CoreModuleTask coreModuleTask) {
         if (coreModuleTask.getAudienceId1() != null) {
             //this means we have audience to create in the first connected node of the source node
             for (Long AudId : coreModuleTask.getActiveAudienceId1()) {
@@ -111,8 +113,8 @@ public class TaskController {
                 }
             }
         }
-        System.out.println("success");
-        return 1L;
+        System.out.println("move audience successful");
+        return coreModuleTask;
     }
 
 }
