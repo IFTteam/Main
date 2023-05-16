@@ -71,9 +71,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         String without_httpEntity = new_text.substring(0, new_text.indexOf("httpEntity") -3);
         String[] items = without_httpEntity.split(", ");
 
-        //for(String i:items){
-        //    System.out.println(i);
-        //}
 
         String repeatInterval = items[0].substring(20, items[0].length() - 1);
         System.out.println("repeatInterval: "+repeatInterval);
@@ -93,8 +90,12 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         Long journeyId = coreModuleTask.getJourneyId();
 
         Optional<Journey> journey = journeyRepository.findById(journeyId);
+        //Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
+
         //need to fix
         List<Transmission> transmissionList = transmissionRepository.findAll();
+
+
 
         for (HttpEntity<String> item : httpEntity) {
             // handleEventWebhook method will insert audiences to table automatically
@@ -114,7 +115,26 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
         }
 
-//builder().b("b").a("a").build();
+
+        /*
+        for (HttpEntity<String> item : httpEntity) {
+            // handleEventWebhook method will insert audiences to table automatically
+            // respond to incoming webhook, uses transmission id to query transmission entity, get audience_id
+            // and audience_email. Then insert into audience_activity table
+            ResponseEntity<Response> justCall= eventWebhookController.handleEventWebhook(item);
+
+            // find corresponding audience
+            String json = item.getBody();
+            Event event = new ObjectMapper().readerFor(Event.class).readValue(json);
+            String transmissionId = event.getMsys().getEventDetail().getTransmissionId();
+            Optional<Transmission> transmission = transmissionRepository.findById(Long.valueOf(transmissionId));
+
+            if (transmissionList.contains(transmission)) {
+                Audience audience = transmission.get().getAudience();
+                allAudience.add(audience);
+            }
+        }*/
+
         BaseTaskEntity taskEntity = new BaseTaskEntity();
         taskEntity.setNodeId(nodeId);
         taskEntity.setJourneyId(journeyId);
