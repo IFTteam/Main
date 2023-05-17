@@ -30,6 +30,8 @@ public class AudienceActivity {
             strategy = GenerationType.SEQUENCE,
             generator = "audience_activity_sequence"
     )
+
+    //@Column(name = "audience_activity_id")
     private long AudienceActivityId;
 
     private String eventType;
@@ -37,12 +39,8 @@ public class AudienceActivity {
     @Column(name = "audience_email")
     private String audience_email;
 
-    @ManyToOne(
-            cascade = CascadeType.ALL
-    )
-    @JoinColumn(
-            name = "audience_id"
-    )
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "audience_id")
     private Audience audience;
 
     @CreatedDate
@@ -64,4 +62,7 @@ public class AudienceActivity {
     @Column(name = "updated_by", insertable = false)
     @JsonIgnore
     private String updatedBy;
+
+    @Column(name = "transmission_id")
+    private Long transmission_id;
 }
