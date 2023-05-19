@@ -123,40 +123,35 @@ public class TimeEventController {
      *
      * Still save the TimeTask to TimeDelayRepository
      */
-    @PostMapping("/add")
-    public CoreModuleTask add(@RequestBody CoreModuleTask coreModuleTask){
+    @PostMapping("/Time_Trigger")
+    public CoreModuleTask Time_Trigger(@RequestBody CoreModuleTask coreModuleTask){
         Long node_id = coreModuleTask.getNodeId();
-        System.out.println("(TimeEventController) CMT passed in: " + coreModuleTask);
-        System.out.println(node_id);
+        System.out.println("(TimeEventController) CMT passed into Time_Trigger: " + coreModuleTask);
+        System.out.println("node id: " + node_id);
         Node node = nodeRepository.findById(node_id).get();
 
-        /*
-        *   Set the dummy coreModuleTask
-         */
+        // Set the dummy coreModuleTask
         coreModuleTask.setMakenext(0);
 
-        /*
-        *   Initialize the new time task
-         */
-        TimeTask timeTask = new TimeTask(coreModuleTask);
-
-        timeTask.setTaskStatus(0);
+        // Initialize the new time task
+        TimeTask timeTask = createTimeTask(coreModuleTask, node_id);
+        timeTask.setCreatedBy("Time trigger");
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
         System.out.println("Time info: " + node);
-        JSONObject jsonObject1 = new JSONObject("{\n" +
-                "        \"send\": \"2023-05-03T10:00AM\",\n" +
-                "        \"list\": \"Any list\",\n" +
-                "        \"frequency\": \"Once\"\n" +
-                "      }");;
-//        JSONObject jsonObject2 = new JSONObject("{\n" +
+//        JSONObject example1 = new JSONObject("{\n" +
+//                "        \"send\": \"2023-05-03T10:00AM\",\n" +
+//                "        \"list\": \"Any list\",\n" +
+//                "        \"frequency\": \"Once\"\n" +
+//                "      }");;
+//        JSONObject example2 = new JSONObject("{\n" +
 //                "        \"time\": \"Tuesday11PM,End date:12/12/2023\",\n" +
 //                "        \"Select List\": \"Any list\",\n" +
 //                "        \"Runs\": \"Recurring\"\n" +
 //                "      }");;
-        String time = jsonObject1.getString("send");
-        String frequency = jsonObject1.getString("frequency");
+        String time = jsonObject.getString("send");
+        String frequency = jsonObject.getString("frequency");
         if (Objects.equals(frequency, "Once")) {
             time_parser_once(time, timeTask);
         }
@@ -164,23 +159,8 @@ public class TimeEventController {
             time_parser_recurring(time, timeTask);
         }
 
-        //auditing support
-        timeTask.setNodeId(node_id);
-        timeTask.setJourneyId(coreModuleTask.getJourneyId());
-        timeTask.setCreatedAt(LocalDateTime.now());
-        timeTask.setUserId(coreModuleTask.getUserId());
-        timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
-        timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
-        timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
-        timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
-        timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
-        timeTask.setTaskStatus(0);
-        timeTask.setCoreModuleTask(coreModuleTask);
-        timeTask.setJourneyId(coreModuleTask.getJourneyId());
-
-        System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
-        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
-        //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
+        System.out.println("journey id before time: " + timeTask.getCoreModuleTask().getJourneyId());
+        System.out.println("The ActiveAudienceId1 is: " + coreModuleTask.getActiveAudienceId1());
         System.out.println("Saved Time Trigger as TimeTask into timeDelayRepo");
         timeDelayRepository.save(timeTask);
 
@@ -191,30 +171,26 @@ public class TimeEventController {
     @PostMapping("/Time_Delay")
     public CoreModuleTask Time_Delay(@RequestBody CoreModuleTask coreModuleTask){
         Long node_id = coreModuleTask.getNodeId();
-        System.out.println("the core mode: " + coreModuleTask);
+        System.out.println("(TimeEventController) CMT passed into Time_Delay: " + coreModuleTask);
+        System.out.println("node id: " + node_id);
         Node node = nodeRepository.findById(node_id).get();
 
-        /*
-         *   Set the dummy coreModuleTask
-         */
+        // Set the dummy coreModuleTask
         coreModuleTask.setMakenext(0);
 
-        /*
-         *   Initialize the new time task
-         */
-        TimeTask timeTask = new TimeTask(coreModuleTask);
-
-        timeTask.setTaskStatus(0);
+        // Initialize the new time task
+        TimeTask timeTask = createTimeTask(coreModuleTask, node_id);
+        timeTask.setCreatedBy("Time delay");
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
-        JSONObject jsonObject1 = new JSONObject("{\n" +
+        JSONObject example1 = new JSONObject("{\n" +
                 "        \"date\": \"2023-05-10\",\n" +
                 "      }");;
-        JSONObject jsonObject2 = new JSONObject("{\n" +
+        JSONObject example2 = new JSONObject("{\n" +
                 "        \"date\": \"1 Hours\",\n" +
                 "      }");;
-        String time = jsonObject1.getString("date");
+        String time = jsonObject.getString("date");
         String[] parsed = time.split(" ");
         if (parsed.length == 1) {
             time_parser_wait_date(parsed[0], timeTask);
@@ -223,7 +199,15 @@ public class TimeEventController {
             time_parser_wait_duration(parsed, timeTask);
         }
 
-        //auditing support
+        timeDelayRepository.save(timeTask);
+        System.out.println("Saved Time Delay as TimeTask into timeDelayRepo");
+
+        System.out.println("dummy task returned: " + coreModuleTask);
+        return coreModuleTask;
+    }
+
+    private TimeTask createTimeTask(@RequestBody CoreModuleTask coreModuleTask, Long node_id) {
+        TimeTask timeTask = new TimeTask(coreModuleTask);
         timeTask.setNodeId(node_id);
         timeTask.setJourneyId(coreModuleTask.getJourneyId());
         timeTask.setCreatedAt(LocalDateTime.now());
@@ -233,14 +217,10 @@ public class TimeEventController {
         timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
         timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
         timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
-        timeTask.setTaskStatus(0);
+        timeTask.setCoreModuleTask(coreModuleTask);
         timeTask.setJourneyId(coreModuleTask.getJourneyId());
-
-        timeDelayRepository.save(timeTask);
-
-        System.out.println("dummy task returned");
-        System.out.println(coreModuleTask);
-        return coreModuleTask;
+        timeTask.setTaskStatus(0);
+        return timeTask;
     }
 
     @PostMapping("/TimetasktestRepeat")
@@ -357,7 +337,7 @@ public class TimeEventController {
         try {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             Date parse = format.parse(list[0] + " " + hour + minute);
-            System.out.println(parse);
+            System.out.println("parsed time: " + parse);
             timeTask.setTriggerTime(parse.getTime());
         } catch (ParseException e) {
             e.printStackTrace();

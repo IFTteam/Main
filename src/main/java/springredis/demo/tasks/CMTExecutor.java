@@ -35,7 +35,7 @@ public class CMTExecutor{
         {
             put("Time Delay", "http://localhost:8080/Time_Delay");
             put("API Trigger", "http://localhost:8080/API_trigger");
-            put("Time Trigger", "http://localhost:8080/add");
+            put("Time Trigger", "http://localhost:8080/Time_Trigger");
             put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
             put("If/Else", "http://localhost:8080/IfElse");
             put("Add Tag", "http://localhost:8080/AddTag");
@@ -146,7 +146,7 @@ public class CMTExecutor{
             newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
             newtask.setAudienceId1(restask.getAudienceId1());
             String url = "http://localhost:8080/ReturnTask";
-            System.out.println("========== (CMTExecutor) Pushing new CMT to TaskController (ReturnTask API) ==========");
+            System.out.println("========== (CMTExecutor) Pushing new CMT to TaskController ==========");
             Long taskid = restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(newtask), Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
         }
     }
