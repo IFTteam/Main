@@ -36,23 +36,6 @@ public class OutAPICaller implements Runnable{
     
     private boolean isRunning = true;
     private String outQueueKey = "OutQueue";
-    public String timeKey = "triggerTime";
-    public String idKey = "id";
-    final String url = "http://localhost:3000";
-    private HashMap<String, String> urlDict = new HashMap<String, String>() {{
-		put("Time Delay", "http://localhost:8080/Time_Delay");
-		put("API Trigger", "http://localhost:8080/API_trigger");
-		put("Time Trigger", "http://localhost:8080/add");
-		put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
-		put("If/Else", "http://localhost:8080/IfElse");
-		put("Add Tag", "http://localhost:8080/AddTag");
-        //put("APITrigger", "   ");
-        //put("ActionSend", "   ");
-        //put("TimeDelay", "http://localhost:8080/add");
-        //put("if/else", " ")
-    }};
-
-
 
     public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository, ActiveNodeRepository activeNodeRepository) {
         this.timeDelayRepository = timeDelayRepository;
@@ -72,23 +55,23 @@ public class OutAPICaller implements Runnable{
 				System.out.println("========== (OutAPICaller) Event detected in outQueue ========");
 	        	Event outEvent = ((Event) redisTemplate.opsForList().rightPop(outQueueKey));
 	        	Long id = ((Number)outEvent.getId()).longValue();
-				System.out.println("the id is: " + id);
+				System.out.println("Event id is: " + id);
 	            Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
 	            if (!timeTaskOp.isPresent()) {
 	            	throw new DataBaseObjectNotFoundException("No Time Task Exist");
 				}
 				TimeTask timetask = timeTaskOp.get();
 				timetask.audience_serialize();
-            	System.out.println("================================================Time Task retrieved=====================================================");
+            	System.out.println("================================================Time Task retrieved from Repo=====================================================");
 				System.out.println("cur JI id is:" + timetask.getJourneyId());
 				System.out.println("Time Task Node: " + timetask);
             	Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
 				if (!optionalNode.isPresent()) {
-					throw new DataBaseObjectNotFoundException("The corresponding Time Trigger node does not exist");
+					throw new DataBaseObjectNotFoundException("The corresponding Time Trigger/Time Delay node does not exist");
 				}
 				Node node = initializeNodeFromDB(optionalNode);
 
-           		System.out.println("================================================Time Trigger node retrieved=====================================================");
+           		System.out.println("================================================Time Trigger/Time Delay node retrieved=====================================================");
 
 				//for now, assume we only have one branch in the journey, so we only take nexts[0]
            		System.out.println("Node getNexts Index 0: " + node.getNexts().get(0));
@@ -133,12 +116,10 @@ public class OutAPICaller implements Runnable{
 				System.out.println("================================================OUTAPI successful 3=====================================================");
 
 				String type = nextCoreModuleTask.getName();
-				System.out.println("In outAPI the CM is:" + nextCoreModuleTask);
-				System.out.println("In outAPI the type is:" + type);
-				String url = urlDict.get(type);
-				System.out.println("the url is " + url);
+				System.out.println("(OutAPICaller) next CMT is: " + nextCoreModuleTask);
+				System.out.println("(OutAPICaller) CMT type is: " + type);
 
-//				String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
+				System.out.println("======================= Moving to CMTExecutor ========================");
 				cmtExecutor.execute(nextCoreModuleTask);
 
 	        }
