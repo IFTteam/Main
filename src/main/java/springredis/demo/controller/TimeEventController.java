@@ -332,7 +332,7 @@ public class TimeEventController {
         String minute = clock.substring(2, 5);
         String AMPM = clock.substring(clock.length() - 2);
 
-        if (AMPM.equals("PM")) hour += 12;
+        if (AMPM.equals("PM") && hour != 12) hour += 12;
 
         try {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
