@@ -1,13 +1,13 @@
 package springredis.demo.repository;
 
-
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import springredis.demo.entity.Audience;
 import springredis.demo.entity.AudienceActivity;
+
+import java.util.List;
 
 @Repository
 public interface AudienceActivityRepository extends JpaRepository<AudienceActivity, Long> {
@@ -35,6 +35,6 @@ public interface AudienceActivityRepository extends JpaRepository<AudienceActivi
                                            @Param("to") String to);
 
     @Query("select s from AudienceActivity s where s.audience = ?1")
-    AudienceActivity getAudienceActivityByAudience(Audience item);
+    List<AudienceActivity> getAudienceActivityByAudience(Audience item);
 
 }

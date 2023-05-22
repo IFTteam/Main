@@ -27,7 +27,7 @@ public class IfElseController {
 
         // {'property': 'XXX', 'condition': 'YYY', 'value': 'ZZZ'}
         // {'property': 'XXX', 'condition': 'YYY', 'value': null}
-        // {}'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]
+        // {"properties": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
 
         // active_node table: node_id
         Node node = NodeRepository.searchNodeByid(task.getNodeId());
@@ -36,7 +36,12 @@ public class IfElseController {
         System.out.println("In if/else, the node id is:" + task.getNodeId());
         System.out.println("In if/else, the json text is:" + json_text);
 
-        // todo: 无法进入no value的情况 -- 当condition为”is Blank“的时候，json里就没有value这一项
+        // Handled by AudienceAction filter
+        if (json_text.contains("properties") && json_text.contains("condition") && json_text.contains("value")) {
+            return ifElseTaskController.filterByAudienceAction(task);
+        }
+
+        // Handled by Property filter
         if (json_text.contains("property") && json_text.contains("condition") && json_text.contains("value")) {
 
             String find = "value";
@@ -53,9 +58,8 @@ public class IfElseController {
                 System.out.println("handled by ifElseProperty:" + json_text);
                 return ifElseTaskController.ifElseProperty(task);
             }
-        } else if (json_text.contains("httpEntity") && json_text.contains("repeatInterval") && json_text.contains("triggerTime")) {
-            return ifElseTaskController.filterByAudienceAction(task);
         }
+
         return nullTask;
     }
 }
