@@ -89,34 +89,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         System.out.println("condition: "+condition);
         System.out.println("value: "+value);
 
-        /*
-        String new_text = json_text.substring(1, json_text.length() - 1);
-        String httpEntityText = new_text.substring(new_text.indexOf("httpEntity") + 15, new_text.length() - 2);
-        String[] a = httpEntityText.split("'},\\{'");
-        List<HttpEntity<String>> httpEntity = new ArrayList<>();
-        for(String i : a) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.TEXT_PLAIN);
-            HttpEntity<String> entity = new HttpEntity<>(i, headers);
-            httpEntity.add(entity);
-            System.out.println("httpEntity: "+ entity);
-        }
-
-        String without_httpEntity = new_text.substring(0, new_text.indexOf("httpEntity") -3);
-        String[] items = without_httpEntity.split(", ");
-
-        String repeatInterval = items[0].substring(20, items[0].length() - 1);
-        System.out.println("repeatInterval: "+repeatInterval);
-
-        int repeat = Integer.parseInt(items[1].substring(12, items[1].length()-1));
-        System.out.println("repeat: "+repeat);
-
-        int triggerTime = Integer.parseInt(items[2].substring(17, items[2].length()-1));
-        System.out.println("triggerTime: "+triggerTime);
-
-        String eventType = items[3].substring(15, items[3].length() - 1);
-        System.out.println("eventType: "+eventType);*/
-
         Long userId = coreModuleTask.getUserId();
         Long nodeId = coreModuleTask.getNodeId();
         Long targetNodeId = coreModuleTask.getTargetNodeId();
