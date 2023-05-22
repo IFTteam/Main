@@ -13,6 +13,7 @@ import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.repository.*;
+import springredis.demo.repository.WorldCityRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.tasks.CMTExecutor;
 
@@ -28,6 +29,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     @Autowired
     private ActiveAudienceRepository activeAudienceRepository;
 
+    @Autowired
+    private WorldCityRepository worldCityRepository;
     @Autowired
     private JourneyRepository journeyRepository;
     @Autowired
@@ -49,13 +52,44 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
     @Override
     public CoreModuleTask filterByAudienceAction(CoreModuleTask coreModuleTask) throws JsonProcessingException {
-        Set<Audience> allAudience = new HashSet<>();
 
-        // Get httpEntity from Name
+        // Get the active audience list
+        List<Long> listOfAudienceId = coreModuleTask.getActiveAudienceId1();
+
+        List<Audience> listOfAudiences = new ArrayList<>();
+        for (Long id : listOfAudienceId) {
+            // active_audience := id
+            ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
+            // active_audience := audience_id
+            Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
+            listOfAudiences.add(audience);
+        }
+
+        // {"property": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
         // {'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]};
+
         Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
         String json_text = node.getProperties();
 
+        // todo: parsing需要对应前端的修改
+        // parse the property, condition, and value
+        // {"property": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
+        String marker1 = "properties"; String marker2 = "condition"; String marker3 = "value";
+        String property = "";
+        String condition = "";
+        String value = "";
+        int indexOfMarker1  = json_text.indexOf(marker1);
+        int indexOfMarker2  = json_text.indexOf(marker2);
+        int indexOfMarker3  = json_text.indexOf(marker3);
+        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
+        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
+        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.length() - 3);
+
+        System.out.println("property: "+property);
+        System.out.println("condition: "+condition);
+        System.out.println("value: "+value);
+
+        /*
         String new_text = json_text.substring(1, json_text.length() - 1);
         String httpEntityText = new_text.substring(new_text.indexOf("httpEntity") + 15, new_text.length() - 2);
         String[] a = httpEntityText.split("'},\\{'");
@@ -71,7 +105,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         String without_httpEntity = new_text.substring(0, new_text.indexOf("httpEntity") -3);
         String[] items = without_httpEntity.split(", ");
 
-
         String repeatInterval = items[0].substring(20, items[0].length() - 1);
         System.out.println("repeatInterval: "+repeatInterval);
 
@@ -82,7 +115,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         System.out.println("triggerTime: "+triggerTime);
 
         String eventType = items[3].substring(15, items[3].length() - 1);
-        System.out.println("eventType: "+eventType);
+        System.out.println("eventType: "+eventType);*/
 
         Long userId = coreModuleTask.getUserId();
         Long nodeId = coreModuleTask.getNodeId();
@@ -91,30 +124,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         Optional<Journey> journey = journeyRepository.findById(journeyId);
         //Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
-
-        //need to fix
-        List<Transmission> transmissionList = transmissionRepository.findAll();
-
-
-
-        for (HttpEntity<String> item : httpEntity) {
-            // handleEventWebhook method will insert audiences to table automatically
-            // respond to incoming webhook, uses transmission id to query transmission entity, get audience_id
-            // and audience_email. Then insert into audience_activity table
-            ResponseEntity<Response> justCall= eventWebhookController.handleEventWebhook(item);
-
-            // find corresponding audience
-            String json = item.getBody();
-            Event event = new ObjectMapper().readerFor(Event.class).readValue(json);
-            String transmissionId = event.getMsys().getEventDetail().getTransmissionId();
-            Optional<Transmission> transmission = transmissionRepository.findById(Long.valueOf(transmissionId));
-
-            if (transmissionList.contains(transmission)) {
-                Audience audience = transmission.get().getAudience();
-                allAudience.add(audience);
-            }
-        }
-
 
         /*
         for (HttpEntity<String> item : httpEntity) {
@@ -144,8 +153,13 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         // Start time counting
         TimeTask task = timeEventController.add(taskEntity);
 
+        String repeatInterval = "once";
+        int repeatTimes = 1;
+        int triggerTime = 1;        // todo: triggertime 需要修改
+        //timeValue: An integer representing the new timestamp — the number of milliseconds since the midnight at the beginning of January 1, 1970, UTC.
+
         task.setRepeatInterval(repeatInterval);
-        task.setRepeatTimes(repeat);
+        task.setRepeatTimes(repeatTimes);
         task.setTriggerTime((long) triggerTime);
 //        EventType{
 //        delivery,
@@ -156,26 +170,36 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 //                bounce
 //        }
 
+        Set<Audience> allAudience = new HashSet<>();
         Set<Audience> haveBehavior =new HashSet<>();
         Set<Audience> restAudience = new HashSet<>(allAudience);
 
         while (task.getTaskStatus() == 0) {
-            for (Audience audience: allAudience) {
-                AudienceActivity audienceActivity = audienceActivityRepository.getAudienceActivityByAudience(audience);
-                String currentType = audienceActivity.getEventType();
-                if (currentType.equals(eventType)) {
-                    CoreModuleTask newTask = coreModuleTask;
-                    List<Long> audienceList1 = new ArrayList<>();
-                    audienceList1.add(audience.getId());
-                    newTask.setAudienceId1(audienceList1);
-                    newTask.setAudienceId2(new ArrayList<>());
-                    newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
-                    newTask.setMakenext(1);
-                    newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
-                    cmtExecutor.execute(newTask);
-                    // TODO: TaskController (done)
-                    restAudience.remove(audience);
-                    audienceActivityRepository.delete(audienceActivity);
+
+            for (Audience audience: listOfAudiences) {
+                List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
+                if( audienceActivityList != null)
+                {
+                    for(AudienceActivity audienceActivity: audienceActivityList)
+                    {
+                        String currentType = audienceActivity.getEventType();
+                        System.out.println("currentType: "+ currentType);
+
+                        if (currentType.equals(property)) {
+                            CoreModuleTask newTask = coreModuleTask;
+                            List<Long> audienceList1 = new ArrayList<>();
+                            audienceList1.add(audience.getId());
+                            newTask.setAudienceId1(audienceList1);
+                            newTask.setAudienceId2(new ArrayList<>());
+                            newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
+                            newTask.setMakenext(1);
+                            newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
+                            cmtExecutor.execute(newTask);
+                            // TODO: TaskController (done)
+                            restAudience.remove(audience);
+                            audienceActivityRepository.delete(audienceActivity);
+                        }
+                    }
                 }
             }
         }
@@ -230,9 +254,9 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         int indexOfMarker1  = json_text.indexOf(marker1);
         int indexOfMarker2  = json_text.indexOf(marker2);
         int indexOfMarker3  = json_text.indexOf(marker3);
-        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
-        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
-        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.length() - 3);
+        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 7);
+        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 7);
+        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.length() - 4);
 
         System.out.println("property: "+property);
         System.out.println("condition: "+condition);
@@ -246,19 +270,33 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
-                    // value = "25, New York, North Tyneside, United Kingdom";
+                    // value example = "25, New York, North Tyneside, United Kingdom";
 
                     String miles = value.substring(0, value.indexOf(","));
-                    String destination = value.substring(value.indexOf(",")+2,value.length());
                     String units = "imperial";
+                    //String destination = value.substring(value.indexOf(",")+2,value.length());
 
-                    String audienceAddress = audience.getAddress();
-                    String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
+                    //parse the destination
+                    String[] destination = value.split("\\s*,\\s*");
+                    String[] audienceAddress = audience.getAddress().split("\\s*,\\s*");
 
-                    System.out.println("google distance: "+googleDistance);
-                    //System.out.println("mapquest distance: "+getDistanceMapQuest(audienceAddress,destination,units));
+                    //String audienceAddress = audience.getAddress();
+                    //String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
 
-                    if(googleDistance != null) {
+                    //System.out.println("google distance: "+googleDistance);
+                    //System.out.println(destination);
+
+                    WorldCity dest_city = worldCityRepository.findCity(destination[1], destination[2], destination[3]);
+                    WorldCity audience_city = worldCityRepository.findCity(audienceAddress[0], audienceAddress[1], audienceAddress[2]);
+
+                    double distance = calculateDistance(dest_city.getLat(),dest_city.getLng(),audience_city.getLat(),audience_city.getLng());
+
+                    if(distance <=Integer.valueOf(miles))
+                    {
+                        haveProperty.add(audience);
+                    }
+
+                    /*if(googleDistance != null) {
                         if(googleDistance.contains(",")){
                             googleDistance = googleDistance.replace(",","");
                         }
@@ -268,7 +306,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         if (Integer.valueOf(googleDistance) <= Integer.valueOf(miles)){
                             haveProperty.add(audience);
                         }
-                    }
+                    }*/
                 }
             }
 
@@ -278,27 +316,22 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                         continue;
                     }
 
-                    float miles = 100;
-                    String destination = "Atlanta";
+                    String miles = value.substring(0, value.indexOf(","));
                     String units = "imperial";
 
-                    String audienceAddress = audience.getAddress();
-                    String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
+                    String[] destination = value.split("\\s*,\\s*");
+                    String[] audienceAddress = audience.getAddress().split("\\s*,\\s*");
 
-                    System.out.println("google distance: "+googleDistance);
-                    //System.out.println("mapquest distance: "+getDistanceMapQuest(audienceAddress,destination,units));
+                    WorldCity dest_city = worldCityRepository.findCity(destination[1], destination[2], destination[3]);
+                    WorldCity audience_city = worldCityRepository.findCity(audienceAddress[0], audienceAddress[1], audienceAddress[2]);
 
-                    if(googleDistance != null) {
-                        if(googleDistance.contains(",")){
-                            googleDistance = googleDistance.replace(",","");
-                        }
-                        if(googleDistance.contains(".")){
-                            googleDistance = googleDistance.substring(0,googleDistance.indexOf("."));
-                        }
-                        if (Integer.valueOf(googleDistance) > miles) {
-                            haveProperty.add(audience);
-                        }
+                    double distance = calculateDistance(dest_city.getLat(),dest_city.getLng(),audience_city.getLat(),audience_city.getLng());
+
+                    if(distance > Integer.valueOf(miles))
+                    {
+                        haveProperty.add(audience);
                     }
+
                 }
             }
 
@@ -348,23 +381,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 filterBirthday(value, 1, listOfAudiences, haveProperty);
             }
 
-            /*
-            if (condition.equals("is (mm.dd)")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getBirthday() == null) {
-                        continue;
-                    }
-
-                    int input_month = Integer.parseInt(value.substring(0, 2));
-                    int input_day = Integer.parseInt(value.substring(3, 5));
-                    int real_month = audience.getBirthday().getMonth().getValue();
-                    int real_day = audience.getBirthday().getDayOfMonth();
-
-                    if (input_month == real_month && input_day == real_day) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }*/
         }
 
 // -------------------------------------- email address --------------------------------------
@@ -475,102 +491,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                 }
             }
         }
-/*
-// -------------------------------------- date added --------------------------------------
-// input format: "XXXX-XX-XX"
-
-        if (property.equals("date added")) {
-            // selected date is > value
-            if (condition.equals("is after")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate localDate = LocalDate.parse(value);
-                    if (audience.getDate_added().compareTo(localDate) > 0) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is before")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate localDate = LocalDate.parse(value);
-                    if (audience.getDate_added().compareTo(localDate) < 0) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate localDate = LocalDate.parse(value);
-                    if (audience.getDate_added().compareTo(localDate) == 0) {
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is within")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate now = LocalDate.now();
-                    if (audience.getDate_added().compareTo(now.minusDays(Integer.parseInt(value))) >= 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-            if (condition.equals("is not within")) {
-                for( Audience audience: listOfAudiences) {
-                    if (audience.getDate_added() == null) {
-                        continue;
-                    }
-                    LocalDate now = LocalDate.now();
-                    if (audience.getDate_added().compareTo(now.minusDays(Integer.parseInt(value))) < 0){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-        }
-
-// -------------------------------------- source --------------------------------------
-        if (property.equals("signup source")) {
-            if (condition.equals("was")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getSource() == null) {
-                        continue;
-                    }
-                    if (audience.getSource().equalsIgnoreCase(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-
-
-
-            }
-
-            if (condition.equals("was not")) {
-                for (Audience audience : listOfAudiences) {
-                    if (audience.getSource() == null) {
-                        continue;
-                    }
-                    if (!audience.getSource().equalsIgnoreCase(value)){
-                        haveProperty.add(audience);
-                    }
-                }
-            }
-
-        }
-*/
 
         List<Audience> noProperty = listOfAudiences;
         noProperty.removeAll(haveProperty);
@@ -912,6 +832,18 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
         }
     }
+
+        private static final double EARTH_RADIUS = 3958.8; // 地球半径（单位：英里 - miles）
+        public static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+            double dLat = Math.toRadians(lat2 - lat1);
+            double dLon = Math.toRadians(lon2 - lon1);
+            double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            double distance = EARTH_RADIUS * c;
+            return distance;
+        }
 
 
 }
