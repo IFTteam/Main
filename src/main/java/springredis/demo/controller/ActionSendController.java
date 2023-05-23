@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,12 +26,7 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
-import springredis.demo.entity.Audience;
-import springredis.demo.entity.CoreModuleTask;
-import springredis.demo.entity.Journey;
-import springredis.demo.entity.Node;
-import springredis.demo.entity.Transmission;
-import springredis.demo.entity.User;
+import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.entity.request.*;
@@ -61,6 +54,8 @@ public class ActionSendController {
     private final JourneyRepository journeyRepository;
     private final WebClient webClient;
     private final RestTemplate restTemplate = new RestTemplate();
+
+
 
     @Autowired
     public ActionSendController(TransmissionRepository transmissionRepository,
@@ -128,33 +123,21 @@ public class ActionSendController {
     public ResponseEntity<Response> createTransmission(TransmissionRequest transmissionRequest){
 
 
-//        HashMap<Object, Object> param = new HashMap<>();
-//        param.put("options", new HashMap<String, Object>() {{
-//            //"open_tracking": true,
-//                    //"click_tracking": true
-//            put("open_tracking", true);
-//            put("click_tracking", false);
-//        }});
+        HashMap<Object, Object> param = new HashMap<>();
+        param.put("options", new HashMap<String, Object>() {{
+            //"open_tracking": true,
+            //"click_tracking": true
+            put("open_tracking", true);
+            put("click_tracking", true);
+        }});
         // "metadata": {
         //          "user_type": "students",
         //          "education_level": "college"
         //      }
-//        param.put("metadata", new HashMap<String, Object>() {{
-//            put("user_type", "students");
-//            put("education_level", "college");
-//        }});
-
-        // TransmissionRequest{
-        // campaignId='1',
-        // addressList=[springredis.demo.entity.request.Address@3ae0ce7],
-        // content=Content{sender=Sender{email='pan.cake@sub.paradx.net', name='HXW1831'},
-        // subject='ASC01',
-        // html='null',
-        // text='r u ok'},
-        // audienceId=1,
-        // userId=1,
-        // journeyId=13
-        // }
+        param.put("metadata", new HashMap<String, Object>() {{
+            put("user_type", "students");
+            put("education_level", "college");
+        }});
 
         System.out.println("====================================================Request Campaign ID: " + transmissionRequest.getCampaignId());
         System.out.println("====================================================Request Audience ID: " + transmissionRequest.getAudienceId());
@@ -162,12 +145,6 @@ public class ActionSendController {
         System.out.println("====================================================Request User ID: " + transmissionRequest.getUserId());
         System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().get(0).getAddress());
         System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
-        System.out.println("====================================================Request OpenTracking: " + transmissionRequest.getOptions().isOpenTracking());
-        System.out.println("====================================================Request ClickTracking: " + transmissionRequest.getOptions().isClickTracking());
-        System.out.println("ASC a for apple");
-
-
-
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
                 .header("Content-Type", "application/json")
@@ -177,12 +154,9 @@ public class ActionSendController {
                 .retrieve()
                 .bodyToMono(SparkPostResponse.class)
                 .blockOptional();
-        System.out.println(sparkPostResponse); // Optional[SparkPostResponse(sparkPostResults=springredis.demo.entity.response.SparkPostResults@2c4e131c)]
 
-        if(!sparkPostResponse.isPresent())
+        if(sparkPostResponse.isEmpty())
         {
-            // 失敗才會作用
-            System.out.println("ASC b for ball"); //沒印出，因為偵測不到sparkPostResponse才會出現這段
             return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body(new Response());
         }
         System.out.println("=============================================SparkPost toString: " + sparkPostResponse.get().toString());
@@ -190,13 +164,10 @@ public class ActionSendController {
         System.out.println("=============================================SparkPost Total Accepted Recipients: " + sparkPostResponse.get().getSparkPostResults().getTotalAcceptedRecipients());
         System.out.println("=============================================SparkPost Total Rejected Recipients: " + sparkPostResponse.get().getSparkPostResults().getTotalRejectedRecipients());
         System.out.println("=============================================SparkPost Ends");
-        System.out.println("ASC c for cat");
 
         //record keeping
         Transmission transmission = new Transmission();
-        System.out.println(transmission); // BaseEntity(createdAt=null, createdBy=null, updatedAt=null, updatedBy=null)
-        System.out.println("ASC d for dog");
-        log.info("transmission id is " + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
@@ -205,16 +176,54 @@ public class ActionSendController {
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
         transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
         transmissionRepository.save(transmission);
-        System.out.println(transmission); // BaseEntity(createdAt=2023-05-05T18:47:34.683944, createdBy=1, updatedAt=null, updatedBy=null)
 
         Response response = new Response();
         response.setStatusCode(200);
         response.setMsg("Transmission successfully created");
-        System.out.println("ASC e for elephant");
 
         //return task to core module
         //BaseTaskEntity coreModuleTask = new BaseTaskEntity();
         //CoreModuleTask coreModuleTask = new CoreModuleTask();
+        //restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @RequestMapping(value={"/createScheduledTransmission"}, method = POST)
+    @ResponseBody
+    public ResponseEntity<Response> createScheduleTransmission(
+            @RequestBody ScheduledTransmissionRequest scheduledTransmissionRequest){
+        Optional<SparkPostResponse> sparkPostResponse = webClient.post()
+                .uri("/api/v1/transmissions?num_rcpt_errors=3")
+//                .header("Content-Type", "application/json")
+//                .header("Accept", "application/json")
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(scheduledTransmissionRequest), ScheduledTransmissionRequest.class)
+                .retrieve()
+                .bodyToMono(SparkPostResponse.class)
+                .blockOptional();
+
+        if(sparkPostResponse.isEmpty()) return ResponseEntity
+                .status(HttpStatus.FAILED_DEPENDENCY).body(new Response());
+
+        //record keeping
+        Transmission transmission = new Transmission();
+        log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        transmission.setAudience_email(scheduledTransmissionRequest.getAddressList().get(0).getAddress());
+        transmission.setAudience(audienceRepository.getReferenceById(scheduledTransmissionRequest.getAudienceId()));
+        transmission.setUser(userRepository.getReferenceById(scheduledTransmissionRequest.getUserId()));
+        transmission.setCreatedAt(LocalDateTime.now());
+        transmission.setCreatedBy("" + scheduledTransmissionRequest.getUserId());
+        transmission.setJourney(journeyRepository.findById(scheduledTransmissionRequest.getJourneyId()).get());
+        transmissionRepository.save(transmission);
+
+        Response response = new Response();
+        response.setStatusCode(200);
+        response.setMsg("Scheduled Transmission successfully created");
+
+        //return task to core module
+        BaseTaskEntity coreModuleTask = new BaseTaskEntity();
         //restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -264,11 +273,9 @@ public class ActionSendController {
         String properties = node.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
 
-//        System.out.println(jsonObject); // you can set your properties in node table
-
         Sender sender = new Sender();
         //(sender, subject, email, name"sender", subject, html, text)
-        sender.setEmail("firday.morning@sub.paradx.net"); // set sender's email
+        sender.setEmail("set.sender.here@sub.paradx.net"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
         content.setSender(sender);
         content.setSubject(jsonObject.getString("subject"));
@@ -277,21 +284,10 @@ public class ActionSendController {
         options.setOpenTracking(true);
         options.setClickTracking(true);
 
-        // html template
-        // content.setHtml("<a href='https://www.cnn.com/'>CNN news</a>"); // for click event
-
+        content.setHtml("https://www.cnn.com/", "https://www.bbc.com/news"); // set link url here
         // To enable event tracking, setHtml() is required
         // For click event tracking, proper html syntax is needed
         // For open event tracking, either text or hyperlink is OK
-        content.setHtml("<a href='" +
-
-                "https://www.cnn.com/" + // set your link here
-
-                "'>" +
-
-                "CNN news" + // set your link text
-
-                "</a>");
 
         content.setText("Hi, nice to see you here!"); // set text, but will be replaced by html
         // you can find text content in email source if you have setHtml
@@ -415,5 +411,6 @@ public class ActionSendController {
 //        }
 //        return typeList;
 //    }
+
 
 }
