@@ -20,6 +20,7 @@ import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class OutAPICaller implements Runnable{
 
@@ -51,80 +52,84 @@ public class OutAPICaller implements Runnable{
     	System.out.println(redisTemplate.opsForList().size(outQueueKey));
 
     	while(isRunning = true) {
-	        while (redisTemplate.opsForList().size(outQueueKey) > 0){
-				System.out.println("========== (OutAPICaller) Event detected in outQueue ========");
-	        	Event outEvent = ((Event) redisTemplate.opsForList().rightPop(outQueueKey));
-	        	Long id = ((Number)outEvent.getId()).longValue();
-				System.out.println("Event id is: " + id);
-	            Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
-	            if (!timeTaskOp.isPresent()) {
-	            	throw new DataBaseObjectNotFoundException("No Time Task Exist");
-				}
-				TimeTask timetask = timeTaskOp.get();
-				timetask.audience_serialize();
-            	System.out.println("================================================Time Task retrieved from Repo=====================================================");
-				System.out.println("cur JI id is:" + timetask.getJourneyId());
-				System.out.println("Time Task Node: " + timetask);
-            	Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
-				if (!optionalNode.isPresent()) {
-					throw new DataBaseObjectNotFoundException("The corresponding Time Trigger/Time Delay node does not exist");
-				}
-				Node node = initializeNodeFromDB(optionalNode);
+			try {
+				while (redisTemplate.opsForList().size(outQueueKey) > 0){
+					System.out.println("========== (OutAPICaller) Event detected in outQueue ========");
+					Event outEvent = ((Event) redisTemplate.opsForList().rightPop(outQueueKey));
+					Long id = ((Number)outEvent.getId()).longValue();
+					System.out.println("Event id is: " + id);
+					Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
+					if (!timeTaskOp.isPresent()) {
+						throw new DataBaseObjectNotFoundException("No Time Task Exist");
+					}
+					TimeTask timetask = timeTaskOp.get();
+					timetask.audience_serialize();
+					System.out.println("================================================Time Task retrieved from Repo=====================================================");
+					System.out.println("cur JI id is:" + timetask.getJourneyId());
+					System.out.println("Time Task Node: " + timetask);
+					Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
+					if (!optionalNode.isPresent()) {
+						throw new DataBaseObjectNotFoundException("The corresponding Time Trigger/Time Delay node does not exist");
+					}
+					Node node = initializeNodeFromDB(optionalNode);
 
-           		System.out.println("================================================Time Trigger/Time Delay node retrieved=====================================================");
+					System.out.println("================================================Time Trigger/Time Delay node retrieved=====================================================");
 
-				//for now, assume we only have one branch in the journey, so we only take nexts[0]
-           		System.out.println("Node getNexts Index 0: " + node.getNexts().get(0));
-           		Long next_node_id = node.getNexts().get(0);
-           		Optional<Node> optionalNextNode = nodeRepository.findById(next_node_id);  //find next node by id from repository
-				if (!optionalNextNode.isPresent()) {
-					throw new DataBaseObjectNotFoundException("The Next node does not exist");
-				}
-				if (node.getNexts().size() > 1) {
-					// TODO: if more than one branch in the journey exists, there could be multiple next nodes
-				}
-           		Node nextNode = initializeNodeFromDB(optionalNextNode);
+					//for now, assume we only have one branch in the journey, so we only take nexts[0]
+					System.out.println("Node getNexts Index 0: " + node.getNexts().get(0));
+					Long next_node_id = node.getNexts().get(0);
+					Optional<Node> optionalNextNode = nodeRepository.findById(next_node_id);  //find next node by id from repository
+					if (!optionalNextNode.isPresent()) {
+						throw new DataBaseObjectNotFoundException("The Next node does not exist");
+					}
+					if (node.getNexts().size() > 1) {
+						// TODO: if more than one branch in the journey exists, there could be multiple next nodes
+					}
+					Node nextNode = initializeNodeFromDB(optionalNextNode);
 
-           		//CoreModuleTask nextCoreModuleTask = new CoreModuleTask(coreModuleTask);  //create new CoreModuleTask based on current CoreModuleTask
-				CoreModuleTask nextCoreModuleTask = new CoreModuleTask();
-				//System.out.println("cur CM id is:" + coreModuleTask);
+					//CoreModuleTask nextCoreModuleTask = new CoreModuleTask(coreModuleTask);  //create new CoreModuleTask based on current CoreModuleTask
+					CoreModuleTask nextCoreModuleTask = new CoreModuleTask();
+					//System.out.println("cur CM id is:" + coreModuleTask);
 
-				nextCoreModuleTask.setType(nextNode.getType());
-           		nextCoreModuleTask.setName(nextNode.getName());
-            	//This information will be lost when saved into DB. Does CoreModuleTask need its own attributes for nodeId and audience?
-				System.out.println("next node id is:" + nextNode.getId());
-				nextCoreModuleTask.setJourneyId(timetask.getJourneyId());
-            	nextCoreModuleTask.setNodeId(nextNode.getId());  //set the node id to next node
+					nextCoreModuleTask.setType(nextNode.getType());
+					nextCoreModuleTask.setName(nextNode.getName());
+					//This information will be lost when saved into DB. Does CoreModuleTask need its own attributes for nodeId and audience?
+					System.out.println("next node id is:" + nextNode.getId());
+					nextCoreModuleTask.setJourneyId(timetask.getJourneyId());
+					nextCoreModuleTask.setNodeId(nextNode.getId());  //set the node id to next node
 //            	nextCoreModuleTask.setActiveAudienceId1(timeTaskOp.get().activeAudienceId1SSerialize());
 //            	nextCoreModuleTask.setActiveAudienceId2(timeTaskOp.get().activeAudienceId2SSerialize());
-				System.out.println("TTAA1 info" + timetask.getActiveAudienceId1());
-				System.out.println("TTAA2 info" + timetask.getActiveAudienceId2());
-				System.out.println("TTA1 info" + timetask.getAudienceId1());
-				System.out.println("TTA2 info" + timetask.getAudienceId2());
-				nextCoreModuleTask.setActiveAudienceId1(timetask.activeAudienceId1SSerialize());
-				nextCoreModuleTask.setActiveAudienceId2(timetask.audienceId2SSerialize());
-            	nextCoreModuleTask.setAudienceId1(timetask.audienceId1SSerialize());
-            	nextCoreModuleTask.setAudienceId2(timetask.audienceId2SSerialize());
-				System.out.println("NAA1 info" + nextCoreModuleTask.getActiveAudienceId1());
-				System.out.println("NAA2 info" + nextCoreModuleTask.getActiveAudienceId2());
-				System.out.println("NA1 info" + nextCoreModuleTask.getAudienceId1());
-				System.out.println("NA2 info" + nextCoreModuleTask.getAudienceId2());
-            	//auditing support
-            	nextCoreModuleTask.setCreatedAt(LocalDateTime.now());
-            	nextCoreModuleTask.setCreatedBy("TimeModule");
+					System.out.println("TTAA1 info" + timetask.getActiveAudienceId1());
+					System.out.println("TTAA2 info" + timetask.getActiveAudienceId2());
+					System.out.println("TTA1 info" + timetask.getAudienceId1());
+					System.out.println("TTA2 info" + timetask.getAudienceId2());
+					nextCoreModuleTask.setActiveAudienceId1(timetask.activeAudienceId1SSerialize());
+					nextCoreModuleTask.setActiveAudienceId2(timetask.audienceId2SSerialize());
+					nextCoreModuleTask.setAudienceId1(timetask.audienceId1SSerialize());
+					nextCoreModuleTask.setAudienceId2(timetask.audienceId2SSerialize());
+					System.out.println("NAA1 info" + nextCoreModuleTask.getActiveAudienceId1());
+					System.out.println("NAA2 info" + nextCoreModuleTask.getActiveAudienceId2());
+					System.out.println("NA1 info" + nextCoreModuleTask.getAudienceId1());
+					System.out.println("NA2 info" + nextCoreModuleTask.getAudienceId2());
+					//auditing support
+					nextCoreModuleTask.setCreatedAt(LocalDateTime.now());
+					nextCoreModuleTask.setCreatedBy("TimeModule");
 
-				System.out.println("================================================OUTAPI successful 3=====================================================");
+					System.out.println("================================================OUTAPI successful 3=====================================================");
 
-				String type = nextCoreModuleTask.getName();
-				System.out.println("(OutAPICaller) next CMT is: " + nextCoreModuleTask);
-				System.out.println("(OutAPICaller) CMT type is: " + type);
+					String type = nextCoreModuleTask.getName();
+					System.out.println("(OutAPICaller) next CMT is: " + nextCoreModuleTask);
+					System.out.println("(OutAPICaller) CMT type is: " + type);
 
-				System.out.println("======================= Moving to CMTExecutor ========================");
-				cmtExecutor.execute(nextCoreModuleTask);
+					System.out.println("======================= Moving to CMTExecutor ========================");
+					cmtExecutor.execute(nextCoreModuleTask);
 
-	        }
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				run();
+			}
     	}
-
     }
 
     public Node initializeNodeFromDB(Optional<Node> NodeOp){
