@@ -176,7 +176,6 @@ public class JourneyController {
         cmt.setCallapi(0);
         cmt.setTaskType(1);
         cmt.setJourneyId(journeyId);
-        cmt.setUserId(1L);
         System.out.println("Journey Id is " + journeyId);
 
         //get audience list from properties

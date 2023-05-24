@@ -52,7 +52,6 @@ public class API_Trigger_Controller {
     public CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
-        System.out.println("node: " + node.toString());
         Journey journey = productService.searchJourneyById(task.getJourneyId());
         Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"purchase");
         if(!opstnr.isPresent()){
@@ -81,8 +80,7 @@ public class API_Trigger_Controller {
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity(data, header);
-        System.out.println(url);
-        System.out.println("Request: " + request.getBody());
+        System.out.println(request.getBody());
         ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);      //fetches response entity from server. response is confirmation of the created webhook
         System.out.println(response.getBody());
 //        ResponseEntity<String> res = new ResponseEntity<>(data, HttpStatus.OK);
@@ -124,7 +122,6 @@ public class API_Trigger_Controller {
         header.set("X-Shopify-Access-Token",token);
         header.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> request = new HttpEntity(data,header);
-        System.out.println("Request: " + request.getBody());
         ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);       //fetches response entity from server. response is confirmation of the created webhook
         return task;
     }
