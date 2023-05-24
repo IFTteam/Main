@@ -141,9 +141,7 @@ public class JourneyController {
         else System.out.println("The headNode is" + headNode);
         headNode.setHeadOrTail(1); // 1: root, 0: node, 2: leaf
 
-        /**
-         * Dummy head initialization
-         */
+        // Dummy head initialization
         Node dummyHead = nodeRepository.searchNodeByFrontEndId("dummyHead" + journeyFrontEndId);
         if (dummyHead == null) {
             dummyHead = new Node();
@@ -178,17 +176,13 @@ public class JourneyController {
         cmt.setCallapi(0);
         cmt.setTaskType(1);
         cmt.setJourneyId(journeyId);
-        System.out.println("Ini JI is " + journeyId);
+        System.out.println("Journey Id is " + journeyId);
 
         //get audience list from properties
-        //todo: "Select list" attributes is not in property json object in table
-        //String audienceListName = GetAudienceListName(headNode.getId());
-        //List<Long> audienceList = AudienceFromAudienceList(audienceListName);
-        //cmt.setAudienceId1(audienceList);
+        List<Long> audienceList = AudienceFromAudienceList(headNode.getId());
+        cmt.setAudienceId1(audienceList);
 
-        ArrayList<Long> n_audienceID = new ArrayList<Long>(Arrays.asList(1L, 2L, 3L));
-        cmt.setAudienceId1(n_audienceID);
-        System.out.println("the size of Audience Id 1 is:" + cmt.getAudienceId1().toString());
+        System.out.println("Audience List 1 is:" + cmt.getAudienceId1().toString());
         System.out.println("======================= Moving to CMTExecutor ========================");
         cmtExecutor.execute(cmt);
 
@@ -196,26 +190,23 @@ public class JourneyController {
     }
 
 
-    private List<Long> AudienceFromAudienceList(String audienceListName){
-            AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
-            List<Audience> audiences = audienceList.getAudiences();
-            List<Long> audiencesId= new ArrayList<>();
-            for(Audience audience: audiences){
-                audiencesId.add(audience.getId());
-            }
-            return audiencesId;
-    }
-
-
-    private String GetAudienceListName(Long nodeId){
+    private List<Long> AudienceFromAudienceList(Long nodeId){
         System.out.println("current node ID is:" + nodeId.toString());
         Node currentNode = nodeRepository.findById(nodeId).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-        System.out.println("jobject is:" + jsonObject.toString());
+        System.out.println("object is:" + jsonObject);
+        
         String name = jsonObject.getString("list");
-        return name;
+        AudienceList audienceList = audienceListRepository.searchAudienceListByName(name);
+        List<Audience> audiences = audienceList.getAudiences();
+        List<Long> audiencesId= new ArrayList<>();
+        for(Audience audience: audiences){
+            audiencesId.add(audience.getId());
+        }
+        return audiencesId;
     }
+
 
     //TODO: Node和Journey级联关系没保存，要写一下
     private Journey JourneyParse(Journey journey) {
