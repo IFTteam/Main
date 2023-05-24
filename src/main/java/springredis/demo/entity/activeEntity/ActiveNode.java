@@ -21,11 +21,11 @@ public class ActiveNode implements Serializable {
     @Column(name="nodeId")
     private Long nodeId;
 
-    @ManyToOne(targetEntity = ActiveJourney.class)
+    @ManyToOne(targetEntity = ActiveJourney.class, cascade = CascadeType.REMOVE)
     @JoinColumn(name="node_journey_id",referencedColumnName = "id")
     private ActiveJourney activeJourney;
 
-    @OneToMany(mappedBy = "activeNode")
+    @OneToMany(mappedBy = "activeNode", cascade = CascadeType.REMOVE)
     private List<ActiveAudience> activeAudienceList = new ArrayList<>();
 
     public ActiveNode(Long nodeId, ActiveJourney activeJourney) {

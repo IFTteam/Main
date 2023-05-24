@@ -23,7 +23,7 @@ public class IfElseController {
         // {'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]}
 
         String json_text = task.getName();
-
+        System.out.println("In if/else, the json text is:" + json_text);
 
         if (json_text.contains("property") && json_text.contains("condition") && json_text.contains("value")) {
             String find = "value";
