@@ -322,12 +322,12 @@ public class ActionSendController {
         System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
 
         // TODO: user is manually created generated here for testing purpose
-        User user = new User();
-        user.setUsername("user" + coreModuleTask.getNodeId());
-        user.setCreatedBy("Bryan");
-        userRepository.save(user);
+//        User user = new User();
+//        user.setUsername("user" + coreModuleTask.getNodeId());
+//        user.setCreatedBy("Bryan");
+//        userRepository.save(user);
 
-        coreModuleTask.setUserId(user.getId());
+//        coreModuleTask.setUserId(user.getId());
         System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
 //        request.setUserId(1L);  //set user id
