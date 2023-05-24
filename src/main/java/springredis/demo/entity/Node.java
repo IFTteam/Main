@@ -37,6 +37,7 @@ public class Node extends BaseEntity {
     private String journeyFrontEndId;
     @ElementCollection
     @JoinColumn(name = "node_id")
+    // 需要先删除已有的表，然后build
     @OnDelete(action = OnDeleteAction.CASCADE)
     @Cascade(value = {CascadeType.ALL})
     private List<Long> nexts = new ArrayList<>();
