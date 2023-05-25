@@ -41,7 +41,7 @@ public class JourneyController {
     public Journey saveJourney(@RequestBody String journeyJson){
         nodeIdList.clear();
         System.out.println(journeyJson);
-        SeDeFunction sede = new SeDeFunction();
+        SeDeFunction sede = new SeDeFunction(); // class SeDeFunction : 传进来的是node list，把一个一个node拿出来序列化，然后加入String，返回String
 
         // Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
@@ -101,9 +101,9 @@ public class JourneyController {
             existingNode.add(queryResult[i].getId());
         }
         // Traverse the journeyJsonModel object and add each node into DB
-        System.out.println("The node list bfdfs is: " + nodeIdList);
+        System.out.println("The nodeIdList  is: " + nodeIdList);
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
-        System.out.println("The node list is: " + nodeIdList);
+        System.out.println("The nodeIdList is: " + nodeIdList);
         for (int i = 0; i < nodeIdList.size(); i++) {
             if (existingNode.contains(nodeIdList.get(i))) {
                 existingNode.remove(nodeIdList.get(i));
@@ -180,7 +180,7 @@ public class JourneyController {
         //get audience list from properties
         //todo: "Select list" attributes is not in property json object in table
         String audienceListName = GetAudienceListName(headNode.getId());
-        List<Long> audienceList = AudienceFromAudienceList(audienceListName);
+        List<Long> audienceList = AudienceFromAudienceList(audienceListName); // maybe this?
         cmt.setAudienceId1(audienceList);
         //ArrayList<Long> n_audienceID = new ArrayList<Long>(Arrays.asList(0L,1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L));
         //cmt.setAudienceId1(n_audienceID);
@@ -192,12 +192,20 @@ public class JourneyController {
 
 
     private List<Long> AudienceFromAudienceList(String audienceListName){
+        System.out.println("apple pie");
             AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
+        System.out.println("balloon");
+        System.out.println(audienceList);
             List<Audience> audiences = audienceList.getAudiences();
+        System.out.println(audiences); // null
+        System.out.println("cartoon");
             List<Long> audiencesId= new ArrayList<>();
+        System.out.println("dogge");
             for(Audience audience: audiences){
                 audiencesId.add(audience.getId());
+                System.out.println("eggggg");
             }
+        System.out.println("fishe");
             return audiencesId;
     }
 

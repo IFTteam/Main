@@ -275,7 +275,7 @@ public class ActionSendController {
 
         Sender sender = new Sender();
         //(sender, subject, email, name"sender", subject, html, text)
-        sender.setEmail("set.sender.here@sub.paradx.net"); // set sender's email
+        sender.setEmail("sender.here@sub.paradx.net"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
         content.setSender(sender);
         content.setSubject(jsonObject.getString("subject"));
