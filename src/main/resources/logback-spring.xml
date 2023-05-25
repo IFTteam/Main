@@ -2,14 +2,16 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/base.xml" />
     <property name="LOG_HOME" value="Log" />
-    <property name="LOG_BACK" value="back" />
     <property name="pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{100} - %msg%n" />
 
     <!-- INFO 日志输出-->
     <appender name="INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>DENY</onMatch>
+        </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <FileNamePattern>Log/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}-info-%i.log
+            <FileNamePattern>${LOG_HOME}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}-info-%i.log
             </FileNamePattern>
             <MaxHistory>30</MaxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
@@ -32,7 +34,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <FileNamePattern>
-                Log/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}-error-%i.log
+                ${LOG_HOME}/%d{yyyy-MM-dd}/%d{yyyy-MM-dd}-error-%i.log
             </FileNamePattern>
             <MaxHistory>30</MaxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
