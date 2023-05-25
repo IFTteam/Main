@@ -302,9 +302,20 @@ public class ActionSendController {
         String user_name = "user1";
         String add = user_name + "@sub.paradx.net";
     	sender.setEmail("duke.tang@sub.paradx.net");
-    	sender.setName(jsonObject.getString("sender"));
+        if(jsonObject.isNull("sender")) {
+            sender.setName("Unknow");
+        }else{
+            sender.setName(jsonObject.getString("sender"));
+        }
+
     	content.setSender(sender);
-    	content.setSubject(jsonObject.getString("subject"));
+        if(jsonObject.isNull("subject"))
+        {
+            content.setSubject("Unknow");
+        }else{
+            content.setSubject(jsonObject.getString("subject"));
+        }
+
     	//content.setHtml();
         if(jsonObject.getString("content") != null)
             content.setText(jsonObject.getString("content"));

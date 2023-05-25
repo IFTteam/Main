@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestTemplate;
 
+import springredis.demo.DemoApplication;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Event;
@@ -20,8 +21,8 @@ import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.logging.Logger;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 public class OutAPICaller implements Runnable{
 
 	@Autowired
@@ -126,7 +127,8 @@ public class OutAPICaller implements Runnable{
 
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
+				logger.error("error log:"+e);
 				run();
 			}
     	}
