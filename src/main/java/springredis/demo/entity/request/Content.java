@@ -25,9 +25,10 @@ public class Content {
     private String html;
 
     public void setHtml(String link1, String link2) {
-        this.link1 = link1; // Set the value of link1
-        this.link2 = link2; // Set the value of link2
-        this.html = "<a href='" + link1 + "'>CNN news</a><br><a href='" + link2 + "'>Unsubscribe</a>";
+        this.link1 = link1;
+        this.link2 = link2;
+        this.html = String.format("<a href='%s'>CNN news</a><br><a href='%s'>Unsubscribe</a>", link1, link2)
+                .replace(link1 + "'>CNN news", link1 + "'>" + content);
     }
 
     public String getLink1() {
@@ -41,6 +42,11 @@ public class Content {
     @JsonProperty("text")
     private String text;
 
+    @JsonProperty("content")
+    private String content;
+
+//    private String customContent;
+
     @Override
     public String toString() {
         return "Content{" +
@@ -48,6 +54,7 @@ public class Content {
                 ", subject='" + subject + '\'' +
                 ", html='" + html + '\'' +
                 ", text='" + text + '\'' +
+                ", content='" + content + '\'' +
                 '}';
     }
 }

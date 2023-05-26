@@ -289,7 +289,8 @@ public class ActionSendController {
         // For click event tracking, proper html syntax is needed
         // For open event tracking, either text or hyperlink is OK
 
-        content.setText("Hi, nice to see you here!"); // set text, but will be replaced by html
+        content.setContent(jsonObject.getString("content"));
+        content.setText("where are you"); // set text, but will be replaced by html
         // you can find text content in email source if you have setHtml
         request.setContent(content);
         request.setOptions(options);
