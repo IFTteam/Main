@@ -103,6 +103,9 @@ public class JourneyController {
         // Traverse the journeyJsonModel object and add each node into DB
         System.out.println("The node list before dfs is: " + nodeIdList);
         System.out.println("========================== DFS started ==========================");
+        if (journeyJsonModel.getSequence().length<=0){
+            return oneJourney;
+        }
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
         System.out.println("=========================== DFS ended ===========================");
         System.out.println("The node list after dfs is: " + nodeIdList);
