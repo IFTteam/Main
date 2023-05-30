@@ -18,6 +18,7 @@ import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -74,7 +75,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         // todo: parsing需要对应前端的修改
         // parse the property, condition, and value
         // {"property": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
-        String marker1 = "properties"; String marker2 = "condition"; String marker3 = "value";
+        String marker1 = "property"; String marker2 = "condition"; String marker3 = "value";
         String property = "";
         String condition = "";
         String value = "";
@@ -97,25 +98,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         Optional<Journey> journey = journeyRepository.findById(journeyId);
         //Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
 
-        /*
-        for (HttpEntity<String> item : httpEntity) {
-            // handleEventWebhook method will insert audiences to table automatically
-            // respond to incoming webhook, uses transmission id to query transmission entity, get audience_id
-            // and audience_email. Then insert into audience_activity table
-            ResponseEntity<Response> justCall= eventWebhookController.handleEventWebhook(item);
-
-            // find corresponding audience
-            String json = item.getBody();
-            Event event = new ObjectMapper().readerFor(Event.class).readValue(json);
-            String transmissionId = event.getMsys().getEventDetail().getTransmissionId();
-            Optional<Transmission> transmission = transmissionRepository.findById(Long.valueOf(transmissionId));
-
-            if (transmissionList.contains(transmission)) {
-                Audience audience = transmission.get().getAudience();
-                allAudience.add(audience);
-            }
-        }*/
-
         BaseTaskEntity taskEntity = new BaseTaskEntity();
         taskEntity.setNodeId(nodeId);
         taskEntity.setJourneyId(journeyId);
@@ -125,14 +107,17 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         // Start time counting
         TimeTask task = timeEventController.add(taskEntity);
 
-        String repeatInterval = "once";
-        int repeatTimes = 1;
-        int triggerTime = 1;        // todo: triggertime 需要修改
-        //timeValue: An integer representing the new timestamp — the number of milliseconds since the midnight at the beginning of January 1, 1970, UTC.
+        String[] parsedTriggerTime = condition.split(" ");
+        String unit = parsedTriggerTime[2];
 
-        task.setRepeatInterval(repeatInterval);
-        task.setRepeatTimes(repeatTimes);
-        task.setTriggerTime((long) triggerTime);
+        // timeValue: An integer representing the new timestamp — the number of milliseconds since the midnight at the beginning of January 1, 1970, UTC.
+        // 这里设置的是当前时间后的5分钟
+        // todo：不确定这个triggerTime是否是正确的，因为json中没有任何triggerTime相关的信息，唯一和时间有关的变量指的是用户是否在一定时间内打开/点击了对应的邮件
+        long triggerTime = System.currentTimeMillis() + 5 *  60 * 1000;
+
+        task.setRepeatInterval("once");
+        task.setRepeatTimes(1);
+        task.setTriggerTime(triggerTime);
 //        EventType{
 //        delivery,
 //                click,
@@ -149,27 +134,59 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         while (task.getTaskStatus() == 0) {
 
             for (Audience audience: listOfAudiences) {
+                // Firstly, check every audience, and get the audienceActivity List for this specific audience
+
                 List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
+
                 if( audienceActivityList != null)
                 {
                     for(AudienceActivity audienceActivity: audienceActivityList)
                     {
+                        // Check every activity to see if this activity matches what we expect
+                        // 1. check the activity type
+                        // 2. check whether the activity happened in specific time interval
                         String currentType = audienceActivity.getEventType();
-                        System.out.println("currentType: "+ currentType);
+
+                        LocalDateTime audienceActivityCreateTime = audienceActivity.getCreatedAt();
+                        LocalDateTime filterTime = null;
+
+                        if(unit.contains("hour"))
+                        {
+                            filterTime = audienceActivityCreateTime.minusHours( Integer.valueOf(parsedTriggerTime[1]) );
+                        }
+                        else if(unit.contains("day"))
+                        {
+                            filterTime = audienceActivityCreateTime.minusDays( Integer.valueOf(parsedTriggerTime[1]) );
+                        }
+                        else if(unit.contains("month"))
+                        {
+                            filterTime = audienceActivityCreateTime.minusMonths( Integer.valueOf(parsedTriggerTime[1]) );
+                        }
+                        else if(unit.contains("year"))
+                        {
+                            filterTime = audienceActivityCreateTime.minusYears( Integer.valueOf(parsedTriggerTime[1]) );
+                        }
 
                         if (currentType.equals(property)) {
-                            CoreModuleTask newTask = coreModuleTask;
-                            List<Long> audienceList1 = new ArrayList<>();
-                            audienceList1.add(audience.getId());
-                            newTask.setAudienceId1(audienceList1);
-                            newTask.setAudienceId2(new ArrayList<>());
-                            newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
-                            newTask.setMakenext(1);
-                            newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
-                            cmtExecutor.execute(newTask);
-                            // TODO: TaskController (done)
-                            restAudience.remove(audience);
-                            audienceActivityRepository.delete(audienceActivity);
+                            List<Transmission> transmissionList = transmissionRepository.getTransmissionByEmail(audience.getEmail());
+                            for (Transmission t: transmissionList)
+                            {
+                                LocalDateTime transmissionTime = t.getCreatedAt();
+                                if(transmissionTime.isBefore(audienceActivityCreateTime) && transmissionTime.isAfter(filterTime))
+                                {
+                                    CoreModuleTask newTask = coreModuleTask;
+                                    List<Long> audienceList1 = new ArrayList<>();
+                                    audienceList1.add(audience.getId());
+                                    newTask.setAudienceId1(audienceList1);
+                                    newTask.setAudienceId2(new ArrayList<>());
+                                    newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
+                                    newTask.setMakenext(1);
+                                    newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
+                                    cmtExecutor.execute(newTask);
+                                    restAudience.remove(audience);
+                                    audienceActivityRepository.delete(audienceActivity);
+                                }
+                            }
                         }
                     }
                 }

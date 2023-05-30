@@ -178,7 +178,7 @@ public class ActionSendController {
         Transmission transmission = new Transmission();
         log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
-        transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
+        transmission.setEmail(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
         System.out.println(transmissionRequest.getUserId());
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
@@ -222,7 +222,7 @@ public class ActionSendController {
         Transmission transmission = new Transmission();
         log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
-        transmission.setAudience_email(scheduledTransmissionRequest.getAddressList().get(0).getAddress());
+        transmission.setEmail(scheduledTransmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(scheduledTransmissionRequest.getAudienceId()));
         transmission.setUser(userRepository.getReferenceById(scheduledTransmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
