@@ -74,26 +74,23 @@ public class EventWebhookController {
                     if (eventType.equals("open") || eventType.equals("click")) {
                         System.out.println(eventType);
                         Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
-                        System.out.println("a check point");
+//                        System.out.println("a check point");
 
-                        if (transmission.isPresent()) {
-                            System.out.println(transmissionId); // 7236383903592918383
-                            System.out.println(eventType); // click
-                            System.out.println(targetLinkUrl); // https://www.cnn.com/
-                            System.out.println(transmission.get()); // BaseEntity(createdAt=2023-05-23T14:14:50.407479, createdBy=1, updatedAt=null, updatedBy=null)
-                            System.out.println(audienceEmail); // hhuang60@hawk.iit.edu
-
-                            saveAudienceActivity(transmissionId, eventType, targetLinkUrl, transmission.get(), audienceEmail);
-                            // query did not return a unique result: 2
-                            System.out.println("d check point");
-//                            response.setStatusCode("200");
-//                            response.setStatusMsg("Data added to database!");
-//                            return ResponseEntity.status(HttpStatus.OK).body(response);
-                        }
+                        //                            System.out.println(transmissionId); // 7236383903592918383
+                        //                            System.out.println(eventType); // click
+                        //                            System.out.println(targetLinkUrl); // https://www.cnn.com/
+                        //                            System.out.println(transmission.get()); // BaseEntity(createdAt=2023-05-23T14:14:50.407479, createdBy=1, updatedAt=null, updatedBy=null)
+                        //                            System.out.println(audienceEmail); // hhuang60@hawk.iit.edu
+                        // error: query did not return a unique result: 2 (solved)
+                        //                            System.out.println("d check point");
+                        //                            response.setStatusCode("200");
+                        //                            response.setStatusMsg("Data added to database!");
+                        //                            return ResponseEntity.status(HttpStatus.OK).body(response);
+                        transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
                     }
                 }
             }
-            System.out.println("e check point");
+//            System.out.println("e check point");
             response.setStatusCode("200");
             response.setStatusMsg("Event data received!");
             return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -108,24 +105,24 @@ public class EventWebhookController {
     }
 
 
-    //query did not return a unique result: 2
+    //error: query did not return a unique result: 2 (solved)
     private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
         // Check if the event type already exists for the given transmission ID and audience email
-        System.out.println("b check point: " + transmissionId + " and this: " + audienceEmail + " also this: " + targetLinkUrl);
+//        System.out.println("b check point: " + transmissionId + " and this: " + audienceEmail + " also this: " + targetLinkUrl);
         int numberOfExistingEvenType = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-        System.out.println("b1 for one apple: " + numberOfExistingEvenType); // 2
+//        System.out.println("b1 for one apple: " + numberOfExistingEvenType); // 2
         List<String> existingEvenType = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-        System.out.println("b2 for two apple: " + existingEvenType); // [click, open]
+//        System.out.println("b2 for two apple: " + existingEvenType); // [click, open]
         List<String> existingUrl = audienceActivityRepository.getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(eventType, transmissionId, audienceEmail);
-        // query did not return a unique result: 2
-        System.out.println("b3 for three apple: " + existingUrl); // https://www.bbc.com/news
+        // error: query did not return a unique result: 2 (solved)
+//        System.out.println("b3 for three apple: " + existingUrl); // https://www.bbc.com/news
 
         if ((numberOfExistingEvenType == 2 && eventType.equals("open")) || // 數據庫裡有2種事件，open和click都有；payload為open，不存
                 (numberOfExistingEvenType == 2 && existingUrl.contains(targetLinkUrl)) || // 數據庫裡有2種事件，open和click都有；payload為click，但已有相同的URL存在數據庫裡，不存
                 (existingEvenType.contains("open") && eventType.equals("open"))) { // 數據庫裡只有1種事件 為open；payload為open，不存
             return;
         }
-        System.out.println("c check point");
+//        System.out.println("c check point");
         Audience audience = transmission.getAudience();
 
         AudienceActivity audienceActivity = new AudienceActivity();
@@ -139,7 +136,6 @@ public class EventWebhookController {
         } else {
             audienceActivity.setAudience(audience); // audience_id //
         }
-
         audienceActivity.setCreatedAt(LocalDateTime.now());
         audienceActivity.setCreatedBy("SparkPost");
         audienceActivity.setTransmission_id(transmissionId);
@@ -148,7 +144,7 @@ public class EventWebhookController {
         audienceActivityRepository.save(audienceActivity);
     }
 
-    private final String targetUrl = "https://9cdf-104-244-243-145.ngrok-free.app/analytics/webhook/eventWebhook"; // set your target URL here
+    private final String targetUrl = "https://15ba-104-244-243-145.ngrok-free.app/analytics/webhook/eventWebhook"; // set your target URL here
     // https://9cdf-104-244-243-145.ngrok-free.app/analytics/webhook/sparkpost_create_webhook <- this is the url for POST request: create a webhook
 
     private JSONObject generateWebhookPayload() { // name, target URL, and event type are required for creating a webhook
@@ -166,7 +162,7 @@ public class EventWebhookController {
         return payload;
     }
 
-    @RequestMapping(value = "/sparkpost_create_webhook", method = POST) // set payload and target URL above
+    @RequestMapping(value = "/sparkpost_create_webhook", method = POST)
     public ResponseEntity<Response> createSparkpostWebhook() {
         try {
             JSONObject payload = generateWebhookPayload();
@@ -242,89 +238,32 @@ public class EventWebhookController {
         }
     }
 
+//     create the webhook here
+    public static void main(String[] args) {  // Execute after running backend: DemoApplication
+        try {
+            // Specify the URL for the POST request
+            URL url = new URL("https://15ba-104-244-243-145.ngrok-free.app/analytics/webhook/sparkpost_create_webhook");
 
-    // create the webhook here
-//    public static void main(String[] args) {  // Execute after running backend: DemoApplication
-//        try {
-//            // Specify the URL for the POST request
-//            URL url = new URL("https://9cdf-104-244-243-145.ngrok-free.app" + // Set ngrok url here
-//                    "/analytics/webhook/sparkpost_create_webhook");
-//
-//            // Open a connection to the URL
-//            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//
-//            // Set the request method to POST
-//            connection.setRequestMethod("POST");
-//
-//            // Read the response
-//            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//            String line;
-//            StringBuilder response = new StringBuilder();
-//            while ((line = reader.readLine()) != null) {
-//                response.append(line);
-//            }
-//            reader.close();
-//
-//            connection.disconnect();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+            // Open a connection to the URL
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-//    public static void main(String[] args) {
-//        try {
-//            // Create a URL object with the API endpoint
-//            URL url = new URL("https://api.sparkpost.com/api/v1/webhooks");
-//
-//            // Create an HttpURLConnection object
-//            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//
-//            // Set the request method to GET
-//            connection.setRequestMethod("GET");
-//
-//            // Set any required headers
-//            connection.setRequestProperty("Content-Type", "application/json");
-//            connection.setRequestProperty("Authorization", "358294aeb167a63aa0ade3a287ef013559e3d964");
-//
-//            // Get the response code
-//            int responseCode = connection.getResponseCode();
-//
-//            // If the response code indicates success
-//            if (responseCode == HttpURLConnection.HTTP_OK) {
-//                // Read the response
-//                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//                StringBuilder response = new StringBuilder();
-//                String line;
-//
-//                while ((line = reader.readLine()) != null) {
-//                    response.append(line);
-//                }
-//                reader.close();
-//
-//                // Parse the JSON response
-//                JSONObject responseJson = new JSONObject(response.toString());
-//                JSONArray resultsArray = responseJson.getJSONArray("results");
-//
-//                for (int i = 0; i < resultsArray.length(); i++) {
-//                    JSONObject webhookObject = resultsArray.getJSONObject(i);
-//
-//                    // Extract the webhook ID
-//                    String webhookId = webhookObject.getString("id");
-//
-//                    // Print the webhook ID
-//                    System.out.println("Webhook ID: " + webhookId);
-//                }
-//            } else {
-//                System.out.println("GET request failed. Response Code: " + responseCode);
-//            }
-//
-//            // Disconnect the connection
-//            connection.disconnect();
-//
-//        } catch (IOException | JSONException e) {
-//            e.printStackTrace();
-//        }
-//    }
+            // Set the request method to POST
+            connection.setRequestMethod("POST");
+
+            // Read the response
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+
+            connection.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @RequestMapping(value = "/sparkpost_get_webhookID", method = GET)
     public ResponseEntity<Response> getSparkpostWebhookID() {
