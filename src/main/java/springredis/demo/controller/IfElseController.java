@@ -37,11 +37,12 @@ public class IfElseController {
         System.out.println("In if/else, the json text is:" + json_text);
 
         // Handled by AudienceAction filter
-        if (json_text.contains("properties") && json_text.contains("condition") && json_text.contains("value")) {
+        if (json_text.contains("Actions")) {
             return ifElseTaskController.filterByAudienceAction(task);
         }
 
         // Handled by Property filter
+        // todo: 需要根据前端修改
         if (json_text.contains("property") && json_text.contains("condition") && json_text.contains("value")) {
 
             String find = "value";
