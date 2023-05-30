@@ -123,21 +123,21 @@ public class ActionSendController {
     public ResponseEntity<Response> createTransmission(TransmissionRequest transmissionRequest){
 
 
-        HashMap<Object, Object> param = new HashMap<>();
-        param.put("options", new HashMap<String, Object>() {{
-            //"open_tracking": true,
-            //"click_tracking": true
-            put("open_tracking", true);
-            put("click_tracking", true);
-        }});
-        // "metadata": {
-        //          "user_type": "students",
-        //          "education_level": "college"
-        //      }
-        param.put("metadata", new HashMap<String, Object>() {{
-            put("user_type", "students");
-            put("education_level", "college");
-        }});
+//        HashMap<Object, Object> param = new HashMap<>();
+//        param.put("options", new HashMap<String, Object>() {{
+//            //"open_tracking": true,
+//            //"click_tracking": true
+//            put("open_tracking", true);
+//            put("click_tracking", true);
+//        }});
+//        // "metadata": {
+//        //          "user_type": "students",
+//        //          "education_level": "college"
+//        //      }
+//        param.put("metadata", new HashMap<String, Object>() {{
+//            put("user_type", "students");
+//            put("education_level", "college");
+//        }});
 
         System.out.println("====================================================Request Campaign ID: " + transmissionRequest.getCampaignId());
         System.out.println("====================================================Request Audience ID: " + transmissionRequest.getAudienceId());
@@ -145,6 +145,10 @@ public class ActionSendController {
         System.out.println("====================================================Request User ID: " + transmissionRequest.getUserId());
         System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().get(0).getAddress());
         System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
+        // ====================================================Request Content: Content{sender=Sender{email='sender.here@sub.paradx.net'
+        // , name='shoes2'}, subject='thursday2'
+        // , html='<a href='https://www.cnn.com/'>null</a><br><a href='https://www.bbc.com/news'>Unsubscribe</a>', text='where are you'
+        // , content='you like shoes?2'}
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
                 .header("Content-Type", "application/json")
@@ -167,7 +171,7 @@ public class ActionSendController {
 
         //record keeping
         Transmission transmission = new Transmission();
-        log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        log.info("transmission id is " + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
@@ -208,7 +212,7 @@ public class ActionSendController {
 
         //record keeping
         Transmission transmission = new Transmission();
-        log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
+        log.info("transmission id is " + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setAudience_email(scheduledTransmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(scheduledTransmissionRequest.getAudienceId()));
@@ -275,22 +279,30 @@ public class ActionSendController {
 
         Sender sender = new Sender();
         //(sender, subject, email, name"sender", subject, html, text)
-        sender.setEmail("sender.here@sub.paradx.net"); // set sender's email
+        sender.setEmail("set.sender.here@sub.paradx.net"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
+//        System.out.println("the sender is: " + jsonObject.getString("sender")); // the sender is: shoes2
         content.setSender(sender);
+//        System.out.println("another sender? " + sender); // another sender? Sender{email='sender.here@sub.paradx.net', name='shoes2'}
         content.setSubject(jsonObject.getString("subject"));
+//        System.out.println("what is subject: " + jsonObject.getString("subject")); // what is subject: thursday2
 
         Options options = new Options();
         options.setOpenTracking(true);
         options.setClickTracking(true);
 
-        content.setHtml("https://www.cnn.com/", "https://www.bbc.com/news"); // set link url here
+        content.setContent(jsonObject.getString("content"));
+        content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
+        // https://www.cnn.com/
+
+//        System.out.println("Hey look at here: " + content.getHtml()); // Hey look at here: one two three
         // To enable event tracking, setHtml() is required
         // For click event tracking, proper html syntax is needed
         // For open event tracking, either text or hyperlink is OK
 
-        content.setContent(jsonObject.getString("content"));
-        content.setText("where are you"); // set text, but will be replaced by html
+//        content.setContent(jsonObject.getString("content"));
+//        System.out.println("now let's see the content: " + jsonObject.getString("content")); // now let's see the content: you like shoes?2
+        content.setText("FOUND YOU");
         // you can find text content in email source if you have setHtml
         request.setContent(content);
         request.setOptions(options);
@@ -305,6 +317,7 @@ public class ActionSendController {
         //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
         //Ask JiaQi what needs to be done before returning the CMT
         ResponseEntity<Response> response = createTransmission(request);
+//        System.out.println("here it is: " + response); // <200 OK OK,Response(statusCode=200, msg=Transmission successfully created),[]>
         System.out.println(response);
         return coreModuleTask;
     }

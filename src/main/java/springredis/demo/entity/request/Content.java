@@ -17,26 +17,13 @@ public class Content {
 
     @JsonProperty("subject")
     private String subject;
-
-    private String link1; // Added variable for link1
-    private String link2; // Added variable for link2
+    private String link;
 
     @JsonProperty("html")
     private String html;
 
-    public void setHtml(String link1, String link2) {
-        this.link1 = link1;
-        this.link2 = link2;
-        this.html = String.format("<a href='%s'>CNN news</a><br><a href='%s'>Unsubscribe</a>", link1, link2)
-                .replace(link1 + "'>CNN news", link1 + "'>" + content);
-    }
-
-    public String getLink1() {
-        return link1;
-    }
-
-    public String getLink2() {
-        return link2;
+    public void setHtml(String content, String link) {
+        this.html = String.format(content + " <br><br><a href='%s'>Unsubscribe</a>", link);
     }
 
     @JsonProperty("text")
@@ -44,8 +31,6 @@ public class Content {
 
     @JsonProperty("content")
     private String content;
-
-//    private String customContent;
 
     @Override
     public String toString() {
