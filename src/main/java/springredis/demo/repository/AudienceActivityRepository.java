@@ -54,4 +54,7 @@ public interface AudienceActivityRepository extends JpaRepository<AudienceActivi
     @Query("SELECT COUNT(DISTINCT g.eventType) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId AND g.audience_email = :audienceEmail")
     int countDistinctEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
 
+    //@Query("select * from AudienceActivity where audience_id = ?1")
+    List<AudienceActivity> findAllAudienceActivityByAudienceId(Long audienceID);
+
 }
