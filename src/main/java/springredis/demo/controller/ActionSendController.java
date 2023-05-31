@@ -240,20 +240,13 @@ public class ActionSendController {
         for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++)
         {
             Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(i));
-            if(activeAudience.isPresent() == true)
-            {
-                activeAudienceList.add(activeAudience.get());
-            }
+            activeAudience.ifPresent(activeAudienceList::add);
         }
 
         List<Audience> audienceList = new ArrayList<Audience>();  //obtain audience list from the CMT
-        for(int i = 0; i < activeAudienceList.size(); i++)
-        {
-            Optional<Audience> audience = audienceRepository.findById(activeAudienceList.get(i).getAudienceId());
-            if(audience.isPresent() == true)
-            {
-                audienceList.add(audience.get());
-            }
+        for (ActiveAudience activeAudience : activeAudienceList) {
+            Optional<Audience> audience = audienceRepository.findById(activeAudience.getAudienceId());
+            audience.ifPresent(audienceList::add);
         }
 
         TransmissionRequest request = new TransmissionRequest();
@@ -261,10 +254,9 @@ public class ActionSendController {
         request.setCampaignId("1");  //Not entirely sure how to obtain campaign ID yet
 
         List<Address> addressList = new ArrayList<Address>();  //set address list for the request
-        for(int i = 0; i < audienceList.size(); i++)
-        {
+        for (Audience audience : audienceList) {
             Address address = new Address();
-            address.setAddress(audienceList.get(i).getEmail());
+            address.setAddress(audience.getEmail());
             addressList.add(address);
         }
         request.setAddressList(addressList);
@@ -281,11 +273,8 @@ public class ActionSendController {
         //(sender, subject, email, name"sender", subject, html, text)
         sender.setEmail("set.sender.here@sub.paradx.net"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
-//        System.out.println("the sender is: " + jsonObject.getString("sender")); // the sender is: shoes2
         content.setSender(sender);
-//        System.out.println("another sender? " + sender); // another sender? Sender{email='sender.here@sub.paradx.net', name='shoes2'}
         content.setSubject(jsonObject.getString("subject"));
-//        System.out.println("what is subject: " + jsonObject.getString("subject")); // what is subject: thursday2
 
         Options options = new Options();
         options.setOpenTracking(true);
@@ -293,17 +282,8 @@ public class ActionSendController {
 
         content.setContent(jsonObject.getString("content"));
         content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
-        // https://www.cnn.com/
 
-//        System.out.println("Hey look at here: " + content.getHtml()); // Hey look at here: one two three
-        // To enable event tracking, setHtml() is required
-        // For click event tracking, proper html syntax is needed
-        // For open event tracking, either text or hyperlink is OK
-
-//        content.setContent(jsonObject.getString("content"));
-//        System.out.println("now let's see the content: " + jsonObject.getString("content")); // now let's see the content: you like shoes?2
-        content.setText("FOUND YOU");
-        // you can find text content in email source if you have setHtml
+        content.setText("text here"); // for now, it's not necessary
         request.setContent(content);
         request.setOptions(options);
 
