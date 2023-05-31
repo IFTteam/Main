@@ -74,29 +74,15 @@ public class EventWebhookController {
                     if (eventType.equals("open") || eventType.equals("click")) {
                         System.out.println(eventType);
                         Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
-//                        System.out.println("a check point");
-
-                        //                            System.out.println(transmissionId); // 7236383903592918383
-                        //                            System.out.println(eventType); // click
-                        //                            System.out.println(targetLinkUrl); // https://www.cnn.com/
-                        //                            System.out.println(transmission.get()); // BaseEntity(createdAt=2023-05-23T14:14:50.407479, createdBy=1, updatedAt=null, updatedBy=null)
-                        //                            System.out.println(audienceEmail); // hhuang60@hawk.iit.edu
-                        // error: query did not return a unique result: 2 (solved)
-                        //                            System.out.println("d check point");
-                        //                            response.setStatusCode("200");
-                        //                            response.setStatusMsg("Data added to database!");
-                        //                            return ResponseEntity.status(HttpStatus.OK).body(response);
                         transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
                     }
                 }
             }
-//            System.out.println("e check point");
             response.setStatusCode("200");
             response.setStatusMsg("Event data received!");
             return ResponseEntity.status(HttpStatus.OK).body(response);
 
         } catch (JSONException | NoSuchElementException | IllegalArgumentException e) {
-            System.out.println("f check point");
             Response response = new Response();
             response.setStatusCode("500");
             response.setStatusMsg(e.getMessage());
@@ -104,29 +90,19 @@ public class EventWebhookController {
         }
     }
 
-
-    //error: query did not return a unique result: 2 (solved)
     private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
         // Check if the event type already exists for the given transmission ID and audience email
-//        System.out.println("b check point: " + transmissionId + " and this: " + audienceEmail + " also this: " + targetLinkUrl);
         int numberOfExistingEvenType = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-//        System.out.println("b1 for one apple: " + numberOfExistingEvenType); // 2
         List<String> existingEvenType = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-//        System.out.println("b2 for two apple: " + existingEvenType); // [click, open]
         List<String> existingUrl = audienceActivityRepository.getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(eventType, transmissionId, audienceEmail);
-        // error: query did not return a unique result: 2 (solved)
-//        System.out.println("b3 for three apple: " + existingUrl); // https://www.bbc.com/news
 
         if ((numberOfExistingEvenType == 2 && eventType.equals("open")) || // 數據庫裡有2種事件，open和click都有；payload為open，不存
                 (numberOfExistingEvenType == 2 && existingUrl.contains(targetLinkUrl)) || // 數據庫裡有2種事件，open和click都有；payload為click，但已有相同的URL存在數據庫裡，不存
                 (existingEvenType.contains("open") && eventType.equals("open"))) { // 數據庫裡只有1種事件 為open；payload為open，不存
             return;
         }
-//        System.out.println("c check point");
         Audience audience = transmission.getAudience();
-
         AudienceActivity audienceActivity = new AudienceActivity();
-
         audienceActivity.setEventType(eventType);
         audienceActivity.setAudience_email(audienceEmail); // audienceEmail: payload裡的email
 
@@ -265,51 +241,51 @@ public class EventWebhookController {
         }
     }
 
-    @RequestMapping(value = "/sparkpost_get_webhookID", method = GET)
-    public ResponseEntity<Response> getSparkpostWebhookID() {
-        try {
-            WebClient client = WebClient.create("https://api.sparkpost.com/api/v1/webhooks");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.setBearerAuth("358294aeb167a63aa0ade3a287ef013559e3d964");
-
-            ResponseEntity<String> responseEntity = client.get()
-                    .headers(httpHeaders -> httpHeaders.addAll(headers))
-                    .retrieve()
-                    .toEntity(String.class)
-                    .block();
-
-            assert responseEntity != null;
-            HttpStatus statusCode = responseEntity.getStatusCode();
-            String responseBody = responseEntity.getBody();
-
-            if (statusCode == HttpStatus.OK) {
-                // Process the response body to extract webhook IDs
-                JSONObject json = new JSONObject(responseBody);
-                JSONArray results = json.getJSONArray("results");
-
-                List<String> webhookIds = new ArrayList<>();
-                for (int i = 0; i < results.length(); i++) {
-                    JSONObject webhook = results.getJSONObject(i);
-                    String webhookId = webhook.getString("id");
-                    webhookIds.add(webhookId);
-                }
-
-                // Return the webhook IDs in the response
-                Response successResponse = new Response("Webhook IDs: " + webhookIds.toString(), "200");
-                return ResponseEntity.status(HttpStatus.OK).body(successResponse);
-            }
-            else {
-                Response errorResponse = new Response("Failed to retrieve webhook: " + responseBody, statusCode.toString());
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-            }
-        } catch (Exception e) {
-            Response errorResponse = new Response("Failed to retrieve webhook: " + e.getMessage(), "500");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
+//    @RequestMapping(value = "/sparkpost_get_webhookID", method = GET)
+//    public ResponseEntity<Response> getSparkpostWebhookID() {
+//        try {
+//            WebClient client = WebClient.create("https://api.sparkpost.com/api/v1/webhooks");
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+//            headers.setBearerAuth("358294aeb167a63aa0ade3a287ef013559e3d964");
+//
+//            ResponseEntity<String> responseEntity = client.get()
+//                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+//                    .retrieve()
+//                    .toEntity(String.class)
+//                    .block();
+//
+//            assert responseEntity != null;
+//            HttpStatus statusCode = responseEntity.getStatusCode();
+//            String responseBody = responseEntity.getBody();
+//
+//            if (statusCode == HttpStatus.OK) {
+//                // Process the response body to extract webhook IDs
+//                JSONObject json = new JSONObject(responseBody);
+//                JSONArray results = json.getJSONArray("results");
+//
+//                List<String> webhookIds = new ArrayList<>();
+//                for (int i = 0; i < results.length(); i++) {
+//                    JSONObject webhook = results.getJSONObject(i);
+//                    String webhookId = webhook.getString("id");
+//                    webhookIds.add(webhookId);
+//                }
+//
+//                // Return the webhook IDs in the response
+//                Response successResponse = new Response("Webhook IDs: " + webhookIds.toString(), "200");
+//                return ResponseEntity.status(HttpStatus.OK).body(successResponse);
+//            }
+//            else {
+//                Response errorResponse = new Response("Failed to retrieve webhook: " + responseBody, statusCode.toString());
+//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//            }
+//        } catch (Exception e) {
+//            Response errorResponse = new Response("Failed to retrieve webhook: " + e.getMessage(), "500");
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+//        }
+//    }
 
 
 }
