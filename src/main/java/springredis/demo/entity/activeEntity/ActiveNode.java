@@ -1,9 +1,7 @@
 package springredis.demo.entity.activeEntity;
 
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -13,8 +11,7 @@ import java.util.List;
 @Entity
 @Table(name="active_node")
 @NoArgsConstructor
-@Setter
-@Getter
+@Data
 public class ActiveNode implements Serializable {
     @Id
     @GeneratedValue
