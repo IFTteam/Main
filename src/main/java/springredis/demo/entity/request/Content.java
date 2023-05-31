@@ -23,7 +23,15 @@ public class Content {
     private String html;
 
     public void setHtml(String content, String link) {
-        this.html = String.format(content + " <br><br><a href='%s'>Unsubscribe</a>", link);
+        if (content.contains("http")) {
+            int index = content.indexOf("http");
+            String plainText = content.substring(0, index);
+            String hyperlink = content.substring(index);
+
+            this.html = String.format("%s<a href='%s'>%s</a><br><br><a href='%s'>Unsubscribe</a>", plainText, hyperlink, hyperlink, link);
+        } else {
+            this.html = String.format("<a href='%s'>Hi</a><br><br><a href='%s'>Unsubscribe</a>", content, link);
+        }
     }
 
     @JsonProperty("text")
