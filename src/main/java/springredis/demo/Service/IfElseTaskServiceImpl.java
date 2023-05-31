@@ -55,15 +55,18 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     public CoreModuleTask filterByAudienceAction(CoreModuleTask coreModuleTask) throws JsonProcessingException {
 
         // Get the active audience list
-        List<Long> listOfAudienceId = coreModuleTask.getActiveAudienceId1();
-
+        List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
+        List<Long> listOfAudienceId = new ArrayList<>();
         List<Audience> listOfAudiences = new ArrayList<>();
-        for (Long id : listOfAudienceId) {
+        for (Long id : listOfActiveAudienceId) {
             // active_audience := id
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
+
             // active_audience := audience_id
             Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
             listOfAudiences.add(audience);
+
+            listOfAudienceId.add(audience.getId());
         }
 
         // {"property": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
@@ -83,12 +86,15 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         int indexOfMarker2  = json_text.indexOf(marker2);
         int indexOfMarker3  = json_text.indexOf(marker3);
         property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
-        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
+        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 7);
         value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.length() - 3);
 
         System.out.println("property: "+property);
         System.out.println("condition: "+condition);
         System.out.println("value: "+value);
+
+        String[] parsedTriggerTime = condition.split(" ");
+        String unit = parsedTriggerTime[2];
 
         Long userId = coreModuleTask.getUserId();
         Long nodeId = coreModuleTask.getNodeId();
@@ -98,6 +104,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         Optional<Journey> journey = journeyRepository.findById(journeyId);
         //Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
 
+        /*
+        // todo: time task 备份
         BaseTaskEntity taskEntity = new BaseTaskEntity();
         taskEntity.setNodeId(nodeId);
         taskEntity.setJourneyId(journeyId);
@@ -107,17 +115,14 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         // Start time counting
         TimeTask task = timeEventController.add(taskEntity);
 
-        String[] parsedTriggerTime = condition.split(" ");
-        String unit = parsedTriggerTime[2];
-
         // timeValue: An integer representing the new timestamp — the number of milliseconds since the midnight at the beginning of January 1, 1970, UTC.
         // 这里设置的是当前时间后的5分钟
-        // todo：不确定这个triggerTime是否是正确的，因为json中没有任何triggerTime相关的信息，唯一和时间有关的变量指的是用户是否在一定时间内打开/点击了对应的邮件
         long triggerTime = System.currentTimeMillis() + 5 *  60 * 1000;
-
         task.setRepeatInterval("once");
         task.setRepeatTimes(1);
         task.setTriggerTime(triggerTime);
+        */
+
 //        EventType{
 //        delivery,
 //                click,
@@ -129,16 +134,19 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         Set<Audience> allAudience = new HashSet<>();
         Set<Audience> haveBehavior =new HashSet<>();
-        Set<Audience> restAudience = new HashSet<>(allAudience);
+        Set<Audience> restAudience = new HashSet<>(listOfAudiences);
 
-        while (task.getTaskStatus() == 0) {
+        List<Long> audienceList1 = new ArrayList<>();
 
             for (Audience audience: listOfAudiences) {
                 // Firstly, check every audience, and get the audienceActivity List for this specific audience
 
-                List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
+                //List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
+                List <AudienceActivity> audienceActivityList = audienceActivityRepository.findAllAudienceActivityByAudienceId(audience.getId());
 
-                if( audienceActivityList != null)
+                System.out.println("audience activity list size: "+audienceActivityList.size());
+
+                if( audienceActivityList != null || audienceActivityList.size() != 0)
                 {
                     for(AudienceActivity audienceActivity: audienceActivityList)
                     {
@@ -174,16 +182,20 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                                 LocalDateTime transmissionTime = t.getCreatedAt();
                                 if(transmissionTime.isBefore(audienceActivityCreateTime) && transmissionTime.isAfter(filterTime))
                                 {
-                                    CoreModuleTask newTask = coreModuleTask;
-                                    List<Long> audienceList1 = new ArrayList<>();
-                                    audienceList1.add(audience.getId());
-                                    newTask.setAudienceId1(audienceList1);
-                                    newTask.setAudienceId2(new ArrayList<>());
-                                    newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
-                                    newTask.setMakenext(1);
-                                    newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
-                                    cmtExecutor.execute(newTask);
-                                    restAudience.remove(audience);
+                                    if(! audienceList1.contains(audience.getId()))
+                                    {
+                                        audienceList1.add(audience.getId());
+                                    }
+
+                                    //CoreModuleTask newTask = coreModuleTask;
+                                    //newTask.setAudienceId1(audienceList1);
+                                    //newTask.setAudienceId2(new ArrayList<>());
+                                    //newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
+                                    //newTask.setMakenext(1);
+                                    //newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
+                                    //cmtExecutor.execute(newTask);
+
+                                    //restAudience.remove(audience);
                                     audienceActivityRepository.delete(audienceActivity);
                                 }
                             }
@@ -191,17 +203,23 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     }
                 }
             }
+
+        System.out.println("________________audiencelist1: ");
+        for (long audienceID: audienceList1) {
+            System.out.print(" "+audienceID);
         }
+        System.out.println();
+
+        System.out.println("________________audiencelist2: ");
+        List<Long> audienceList2 = listOfAudienceId;
+        audienceList2.removeAll(audienceList1);
+        for (long audienceID: audienceList2) {
+            System.out.print(" "+audienceID);
+        }
+        System.out.println();
 
         CoreModuleTask newTask = coreModuleTask;
-        List<Long> audienceList1 = new ArrayList<>();
         newTask.setAudienceId1 (audienceList1);
-        List<Long> audienceList2 = new ArrayList<>();
-        for (Audience audience : restAudience) {
-            Long Id = audience.getId();
-            audienceList2.add(Id);
-        }
-
         newTask.setAudienceId2 (audienceList2);
         newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
         newTask.setMakenext(1);
