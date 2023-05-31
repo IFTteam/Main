@@ -17,12 +17,20 @@ public class Content {
 
     @JsonProperty("subject")
     private String subject;
+    private String link;
 
     @JsonProperty("html")
     private String html;
 
+    public void setHtml(String content, String link) {
+        this.html = String.format(content + " <br><br><a href='%s'>Unsubscribe</a>", link);
+    }
+
     @JsonProperty("text")
     private String text;
+
+    @JsonProperty("content")
+    private String content;
 
     @Override
     public String toString() {
@@ -31,6 +39,7 @@ public class Content {
                 ", subject='" + subject + '\'' +
                 ", html='" + html + '\'' +
                 ", text='" + text + '\'' +
+                ", content='" + content + '\'' +
                 '}';
     }
 }

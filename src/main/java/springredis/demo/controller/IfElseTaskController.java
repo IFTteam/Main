@@ -13,7 +13,6 @@ public class IfElseTaskController {
     @Autowired
     private IfElseTaskService ifElseTaskService;
 
-
     @GetMapping("/audienceAction/{node}/{user}/{target}/{interval}/{repeat}/{trigger}/{event}/{journey}")
     public CoreModuleTask filterByAudienceAction (CoreModuleTask coreModuleTask) throws JsonProcessingException {
         return ifElseTaskService.filterByAudienceAction(coreModuleTask);

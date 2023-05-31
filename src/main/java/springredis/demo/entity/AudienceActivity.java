@@ -37,12 +37,8 @@ public class AudienceActivity {
     @Column(name = "audience_email")
     private String audience_email;
 
-    @ManyToOne(
-            cascade = CascadeType.ALL
-    )
-    @JoinColumn(
-            name = "audience_id"
-    )
+    @ManyToOne
+    @JoinColumn(name = "audience_id")
     private Audience audience;
 
     @CreatedDate
@@ -64,4 +60,10 @@ public class AudienceActivity {
     @Column(name = "updated_by", insertable = false)
     @JsonIgnore
     private String updatedBy;
+
+    @Column(name = "transmission_id")
+    private Long transmission_id;
+
+    @Column(name = "link_url")
+    private String link_url;
 }
