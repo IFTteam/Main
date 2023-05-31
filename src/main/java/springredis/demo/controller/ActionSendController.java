@@ -145,10 +145,7 @@ public class ActionSendController {
         System.out.println("====================================================Request User ID: " + transmissionRequest.getUserId());
         System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().get(0).getAddress());
         System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
-        // ====================================================Request Content: Content{sender=Sender{email='sender.here@sub.paradx.net'
-        // , name='shoes2'}, subject='thursday2'
-        // , html='<a href='https://www.cnn.com/'>null</a><br><a href='https://www.bbc.com/news'>Unsubscribe</a>', text='where are you'
-        // , content='you like shoes?2'}
+
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
                 .header("Content-Type", "application/json")
@@ -283,7 +280,7 @@ public class ActionSendController {
         content.setContent(jsonObject.getString("content"));
         content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
 
-        content.setText("text here"); // for now, it's not necessary
+        content.setText("text here");
         request.setContent(content);
         request.setOptions(options);
 
@@ -297,7 +294,6 @@ public class ActionSendController {
         //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
         //Ask JiaQi what needs to be done before returning the CMT
         ResponseEntity<Response> response = createTransmission(request);
-//        System.out.println("here it is: " + response); // <200 OK OK,Response(statusCode=200, msg=Transmission successfully created),[]>
         System.out.println(response);
         return coreModuleTask;
     }
