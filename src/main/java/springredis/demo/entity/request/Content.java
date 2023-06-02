@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.regex.*;
 
 @Getter
 @Setter
@@ -23,15 +24,36 @@ public class Content {
     private String html;
 
     public void setHtml(String content, String link) {
-        if (content.contains("http")) {
-            int index = content.indexOf("http");
-            String plainText = content.substring(0, index);
-            String hyperlink = content.substring(index);
+        String regex = "(http|https)://[^\\s]+";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(content);
 
-            this.html = String.format("%s<a href='%s'>%s</a><br><br><a href='%s'>Unsubscribe</a>", plainText, hyperlink, hyperlink, link);
-        } else {
-            this.html = String.format("<a href='%s'>Hi</a><br><br><a href='%s'>Unsubscribe</a>", content, link);
+        StringBuilder htmlBuilder = new StringBuilder();
+
+        int lastIndex = 0;
+        while (matcher.find()) {
+            int startIndex = matcher.start();
+            int endIndex = matcher.end();
+
+            String plainText = content.substring(lastIndex, startIndex);
+            String hyperlink = content.substring(startIndex, endIndex);
+
+            htmlBuilder.append(plainText);
+            htmlBuilder.append("<a href='");
+            htmlBuilder.append(hyperlink);
+            htmlBuilder.append("'>");
+            htmlBuilder.append(hyperlink);
+            htmlBuilder.append("</a><br><br>");
+
+            lastIndex = endIndex;
         }
+
+        htmlBuilder.append(content.substring(lastIndex));
+        htmlBuilder.append("<br><br><a href='");
+        htmlBuilder.append(link);
+        htmlBuilder.append("'>Unsubscribe</a>");
+
+        this.html = htmlBuilder.toString();
     }
 
     @JsonProperty("text")
