@@ -19,4 +19,6 @@ public interface AudienceListRepository extends JpaRepository<AudienceList,Long>
     @Query(value="SELECT n from AudienceList n WHERE n.user=:user")
     List<AudienceList> findByUser(User user);
 
+    List<AudienceList> findAll();
+
 }
