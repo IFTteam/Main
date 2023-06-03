@@ -1,18 +1,15 @@
 package springredis.demo.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.entity.base.BaseEntity;
 
 import javax.persistence.*;
-import java.sql.Date;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Data
