@@ -17,7 +17,9 @@ import org.springframework.web.util.UriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
+import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.repository.*;
+import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 
 
 import java.io.BufferedReader;
@@ -37,6 +39,12 @@ public class EventWebhookController {
 
     @Autowired
     AudienceRepository audienceRepository;
+
+    @Autowired
+    ActiveAudienceRepository activeAudienceRepository;
+
+    @Autowired
+    AudienceListRepository audienceListRepository;
 
     @Autowired
     AudienceActivityRepository audienceActivityRepository;
@@ -70,6 +78,33 @@ public class EventWebhookController {
                     String eventType = category.getString("type");
                     String audienceEmail = category.getString("rcpt_to");
                     String targetLinkUrl = category.optString("target_link_url");
+
+
+
+                    if(targetLinkUrl.equals("unsubscribe"))
+                    {
+                        Audience audience = audienceRepository.findByEmail(audienceEmail);
+                        Long audienceId = audience.getId();
+
+                        // delete all in active_audience by audience_id
+                        List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
+                        if(activeAudienceList != null)
+                        {
+                            for(ActiveAudience activeAudience : activeAudienceList)
+                            {
+                                activeAudienceRepository.delete(activeAudience);
+                            }
+                        }
+
+                        // delete all in audience_audiencelist by audience_id
+                        List <AudienceList> AudienceListList = audienceListRepository.findAll();
+                        for (AudienceList audiencelist : AudienceListList)
+                        {
+                            audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
+                            audienceListRepository.save(audiencelist);
+                        }
+
+                    }
 
                     if (eventType.equals("open") || eventType.equals("click")) {
                         System.out.println(eventType);
