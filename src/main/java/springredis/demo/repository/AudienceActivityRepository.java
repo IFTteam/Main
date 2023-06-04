@@ -40,46 +40,28 @@ public interface AudienceActivityRepository extends JpaRepository<AudienceActivi
 
     @Query("select s from AudienceActivity s where s.audience = ?1")
     AudienceActivity getAudienceActivityByAudience(Audience item);
-//
-//    @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId AND f.audience_email = :audienceEmail")
-//    String getEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
-
-//    @Query("SELECT COUNT(DISTINCT g.eventType) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId AND g.audience_email = :audienceEmail")
-//    int countDistinctEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
-
-//    @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId" +
-//            " AND f.audience_email = :audienceEmail AND f.link_url = :linkUrl")
-//    String getEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(@Param("transmissionId") Long transmissionId
-//            , @Param("audienceEmail") String audienceEmail, @Param("linkUrl") String linkUrl); // 先保留
-
-//    @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId AND f.audience_email = :audienceEmail")
-//    List<String> getEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
 
     @Query("SELECT DISTINCT f.link_url FROM AudienceActivity f WHERE f.eventType = :eventType AND  f.transmission_id = :transmissionId AND f.audience_email = :audienceEmail")
     List<String> getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(@Param("eventType") String eventType, @Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
-
-//    @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId" +
-//            " AND f.audience_email = :audienceEmail AND (f.link_url IS NULL OR f.link_url = :linkUrl)")
-//    String getEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(@Param("transmissionId") Long transmissionId
-//            , @Param("audienceEmail") String audienceEmail, @Param("linkUrl") String linkUrl);// 先保留
 
     @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId AND f.audience_email = :audienceEmail")
     List<String> getEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
     // String getEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
 
-
+//    @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId AND f.audience_email = :audienceEmail")
+//    List<String> getLinkUrlByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
 
     @Query("SELECT COUNT(DISTINCT g.link_url) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId AND g.audience_email = :audienceEmail")
     int countDistinctLinkUrlByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
 
-
-//    @Query("SELECT COUNT(DISTINCT g.eventType) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId " +
-//            "AND g.audience_email = :audienceEmail AND (g.link_url IS NULL OR g.link_url = :linkUrl)")
-//    int countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(@Param("transmissionId") Long transmissionId
-//            , @Param("audienceEmail") String audienceEmail, @Param("linkUrl") String linkUrl);
-
     @Query("SELECT COUNT(DISTINCT g.eventType) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId AND g.audience_email = :audienceEmail")
     int countDistinctEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
+
+    @Query("SELECT COUNT(DISTINCT g.eventType) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId AND g.audience_email = :audienceEmail AND g.link_url = :linkUrl")
+    int countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail, @Param("linkUrl") String linkUrl);
+
+    @Query("SELECT aa FROM AudienceActivity aa WHERE aa.transmission_id = :transmissionId AND aa.link_url = :linkUrl AND aa.audience_email = :audienceEmail")
+    List<AudienceActivity> findByTransmissionIdAndLinkUrlAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("linkUrl") String linkUrl, @Param("audienceEmail") String audienceEmail);
 
 
 }
