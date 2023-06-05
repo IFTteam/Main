@@ -120,24 +120,22 @@ public class EventWebhookController {
             transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
 
             Audience audience = audienceRepository.findByEmail(audienceEmail);
-            Long audienceId = audience.getId();
+            if (audience != null) {
+                Long audienceId = audience.getId();
 
-            // delete all in active_audience by audience_id
-            List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
-            if(activeAudienceList != null)
-            {
-                for(ActiveAudience activeAudience : activeAudienceList)
+                // delete all in active_audience by audience_id
+                List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
+                if(activeAudienceList != null)
                 {
-                    activeAudienceRepository.delete(activeAudience);
+                    activeAudienceRepository.deleteAll(activeAudienceList);
                 }
-            }
-
-            // delete all in audience_audiencelist by audience_id
-            List <AudienceList> AudienceListList = audienceListRepository.findAll();
-            for (AudienceList audiencelist : AudienceListList)
-            {
-                audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
-                audienceListRepository.save(audiencelist);
+                // delete all in audience_audiencelist by audience_id
+                List <AudienceList> AudienceListList = audienceListRepository.findAll();
+                for (AudienceList audiencelist : AudienceListList)
+                {
+                    audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
+                    audienceListRepository.save(audiencelist);
+                }
             }
         }
     }
