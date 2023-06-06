@@ -177,7 +177,6 @@ public class ActionSendController {
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
         transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
-        transmission.setUnsubscribe_url(unsubscribe_url);
         transmissionRepository.save(transmission);
 
         Response response = new Response();
