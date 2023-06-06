@@ -55,6 +55,7 @@ public class ActionSendController {
     private final WebClient webClient;
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for unsubscribe link
 
 
     @Autowired
@@ -278,7 +279,7 @@ public class ActionSendController {
         options.setClickTracking(true);
 
         content.setContent(jsonObject.getString("content"));
-        content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
+        content.setHtml(content.getContent(), unsubscribe_url);
 
         content.setText("text here");
         request.setContent(content);

@@ -140,6 +140,8 @@ public class EventWebhookController {
         }
     }
 
+    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for  unsubscribe link
+
     private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
 
         int numberOfExistingEventTypes = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
@@ -148,7 +150,7 @@ public class EventWebhookController {
 
         if ((existingEventTypes.contains(eventType) && !eventType.equals("click")) ||
                 (eventType.equals("click") && numberOfExistingEventTypes == 1) ||
-                (eventType.equals("click") && targetLinkUrl.equals("https://www.yelp.com/"))) {
+                (eventType.equals("click") && targetLinkUrl.equals(unsubscribe_url))) {
             return;
         }
 
