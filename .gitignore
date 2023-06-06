@@ -33,3 +33,4 @@ build/
 .vscode/
 dump.rdb
 src/main/resources/application.yml
+*.log
