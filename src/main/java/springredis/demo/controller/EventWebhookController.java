@@ -121,7 +121,7 @@ public class EventWebhookController {
 
             Audience audience = audienceRepository.findByEmail(audienceEmail);
             if (audience != null) {
-                Long audienceId = audience.getId();
+                long audienceId = audience.getId();
 
                 // delete all in active_audience by audience_id
                 List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
@@ -148,7 +148,7 @@ public class EventWebhookController {
 
         if ((existingEventTypes.contains(eventType) && !eventType.equals("click")) ||
                 (eventType.equals("click") && numberOfExistingEventTypes == 1) ||
-                (eventType.equals("click") && targetLinkUrl.equals("https://www.yelp.com/"))) {
+                (eventType.equals("click") && targetLinkUrl.equals(transmission.getUnsubscribe_url()))) {
             return;
         }
 
@@ -193,7 +193,7 @@ public class EventWebhookController {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.setBearerAuth("358294aeb167a63aa0ade3a287ef013559e3d964");
+            headers.setBearerAuth("49a41624a0dc4e3064a26392fceb0d8118838c9e");
 
             // Retrieve existing webhooks
             ResponseEntity<String> existingWebhooksResponse = client.get()
