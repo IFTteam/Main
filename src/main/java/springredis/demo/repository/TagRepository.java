@@ -20,8 +20,9 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     List<Tag> findByUserId(Long id);
 
-    @Query("select t from Tag t where t.tag_name=:tagName and t.user=:user")
-    Optional<Tag> findByUserIdName(String tagName, User user);
-
+//    @Query("select t from Tag t where t.tag_name=:tagName and t.user=:user")
+//    Optional<Tag> findByUserIdName(String tagName, User user);
+    @Query("select t from Tag t where t.tag_name=:tagName")
+    List<Tag> findByUserIdName(String tagName);
 
 }
