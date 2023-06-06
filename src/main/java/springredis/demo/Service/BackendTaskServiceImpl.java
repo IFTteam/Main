@@ -43,16 +43,19 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
         TagDetail real_tag = new TagDetail();
 
-        Optional<Tag> tagOp = tagRepository.findByUserIdName(name,user);
+//        Optional<Tag> tagOp = tagRepository.findByUserIdName(name,user);
+        List<Tag> tags = tagRepository.findByUserIdName(name);
+
         Tag tag;
-        if (!tagOp.isPresent()){
+        if (tags.isEmpty()){
             tag = new Tag();
             tag.setTag_name(name);
             tag.setUser(user);
             tagRepository.save(tag);
         }
         else {
-            tag = tagOp.get();
+            System.out.println("Tag already exists, not creating a new one.");
+            tag = tags.get(0);
         }
 
         real_tag.setJourney(journey);
@@ -67,7 +70,7 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
         List<Long> newlist = new ArrayList<>();
         for (Long audienceId : audienceIds) {
-            Long l = audienceId;
+            Long l = 1l;
             Optional<Audience> audience = audienceRepository.findById(l);
 
 
@@ -118,7 +121,8 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         String name = jsonObject.getString("tag");
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
         User user=userRepository.findById(coreModuleTask.getUserId()).get();
-        Tag tag = tagRepository.findByUserIdName(name,user).get();
+//        Tag tag = tagRepository.findByUserIdName(name,user).get();
+        Tag tag = tagRepository.findByUserIdName(name).get(0);
 
         Long tagId = tag.getTagId();
 
