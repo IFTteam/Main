@@ -23,10 +23,20 @@ public class Content {
     @JsonProperty("html")
     private String html;
 
+//    public void setHtml(String content, String link) {
+//        int lastIndex = 0;
+//        this.html = content.substring(lastIndex) +
+//                "<br><br><a data-msys-unsubscribe=\"1\" href=\"" +
+//                link +
+//                "\">Unsubscribe</a>";
+//    }
+
+
 
     public void setHtml(String content, String link) {
 //        String regex = "(http|https)://[^\\s<>]+";
         String regex = "(http|https)://[^\s<>\"']+";
+
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(content);
 
@@ -41,11 +51,14 @@ public class Content {
             String hyperlink = content.substring(startIndex, endIndex);
 
             htmlBuilder.append(plainText);
-            htmlBuilder.append("<a href='");
             htmlBuilder.append(hyperlink);
-            htmlBuilder.append("'>");
-            htmlBuilder.append(hyperlink);
-            htmlBuilder.append("</a><br><br>");
+            htmlBuilder.append("<br><br>");
+//            htmlBuilder.append(plainText);
+//            htmlBuilder.append("<a href='");
+//            htmlBuilder.append(hyperlink);
+//            htmlBuilder.append("'>");
+//            htmlBuilder.append(hyperlink);
+//            htmlBuilder.append("</a><br><br>");
 
             lastIndex = endIndex;
         }
@@ -56,9 +69,7 @@ public class Content {
         htmlBuilder.append("\">Unsubscribe</a>");
 
         this.html = htmlBuilder.toString();
-
     }
-
 
     @JsonProperty("text")
     private String text;
