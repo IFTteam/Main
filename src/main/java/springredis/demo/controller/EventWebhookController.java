@@ -17,7 +17,9 @@ import org.springframework.web.util.UriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
+import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.repository.*;
+import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 
 
 import java.io.BufferedReader;
@@ -37,6 +39,12 @@ public class EventWebhookController {
 
     @Autowired
     AudienceRepository audienceRepository;
+
+    @Autowired
+    ActiveAudienceRepository activeAudienceRepository;
+
+    @Autowired
+    AudienceListRepository audienceListRepository;
 
     @Autowired
     AudienceActivityRepository audienceActivityRepository;
@@ -110,19 +118,39 @@ public class EventWebhookController {
         if (eventType.equals("link_unsubscribe")) {
             Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
             transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
+
+            Audience audience = audienceRepository.findByEmail(audienceEmail);
+            if (audience != null) {
+                Long audienceId = audience.getId();
+
+                // delete all in active_audience by audience_id
+                List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
+                if(activeAudienceList != null)
+                {
+                    activeAudienceRepository.deleteAll(activeAudienceList);
+                }
+                // delete all in audience_audiencelist by audience_id
+                List <AudienceList> AudienceListList = audienceListRepository.findAll();
+                for (AudienceList audiencelist : AudienceListList)
+                {
+                    audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
+                    audienceListRepository.save(audiencelist);
+                }
+            }
         }
     }
 
     private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
 
-//        int numberOfExistingEventType = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-        List<String> existingEventTypes = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
+        int numberOfExistingEventTypes = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
+        List<String> existingEventTypes = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
 //        List<String> existingUrl = audienceActivityRepository.getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(eventType, transmissionId, audienceEmail);
 
-        if (existingEventTypes.contains(eventType) && !eventType.equals("click")) { // we can may have multiple click events
-            return; // If event type already exists for the transmission ID and audience email, do not save again
+        if ((existingEventTypes.contains(eventType) && !eventType.equals("click")) ||
+                (eventType.equals("click") && numberOfExistingEventTypes == 1) ||
+                (eventType.equals("click") && targetLinkUrl.equals("https://www.yelp.com/"))) {
+            return;
         }
-
 
         Audience audience = transmission.getAudience();
         AudienceActivity audienceActivity = new AudienceActivity();
