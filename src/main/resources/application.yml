@@ -6,8 +6,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/customer_journey?sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false
-    username: lishuangyang
-    password: password
+    username: root
+    password: h53423323SWH
 
   jpa:
     show-sql: true
@@ -17,6 +17,6 @@ spring:
     serialization:
       wrap-root-value: false # env variables
 
-SPARKPOST_API_KEY: 358294aeb167a63aa0ade3a287ef013559e3d964
+SPARKPOST_API_KEY: 49a41624a0dc4e3064a26392fceb0d8118838c9e
 SP_BASE_URI: https://api.sparkpost.com
-TESTING_DOMAIN: sub.paradx.net
+TESTING_DOMAIN: iftbdcom.com

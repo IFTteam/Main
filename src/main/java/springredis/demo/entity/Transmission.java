@@ -34,4 +34,9 @@ public class Transmission extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "journey_id", referencedColumnName = "id", nullable = false)
     private Journey journey;
+
+    @Column(name = "unsubscribe_url")
+    private String unsubscribe_url;
+
+
 }

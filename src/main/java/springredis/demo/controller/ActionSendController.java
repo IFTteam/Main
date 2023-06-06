@@ -55,6 +55,7 @@ public class ActionSendController {
     private final WebClient webClient;
     private final RestTemplate restTemplate = new RestTemplate();
 
+    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for  unsubscribe link
 
 
     @Autowired
@@ -176,6 +177,7 @@ public class ActionSendController {
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
         transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
+        transmission.setUnsubscribe_url(unsubscribe_url);
         transmissionRepository.save(transmission);
 
         Response response = new Response();
@@ -268,7 +270,7 @@ public class ActionSendController {
 
         Sender sender = new Sender();
         //(sender, subject, email, name"sender", subject, html, text)
-        sender.setEmail("set.sender.here@sub.paradx.net"); // set sender's email
+        sender.setEmail("set.sender.here@iftbdcom.com"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
         content.setSender(sender);
         content.setSubject(jsonObject.getString("subject"));
@@ -278,7 +280,7 @@ public class ActionSendController {
         options.setClickTracking(true);
 
         content.setContent(jsonObject.getString("content"));
-        content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
+        content.setHtml(content.getContent(), unsubscribe_url);
 
         content.setText("text here");
         request.setContent(content);
