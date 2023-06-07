@@ -41,11 +41,8 @@ public class Content {
             String hyperlink = content.substring(startIndex, endIndex);
 
             htmlBuilder.append(plainText);
-            htmlBuilder.append("<a href='");
             htmlBuilder.append(hyperlink);
-            htmlBuilder.append("'>");
-            htmlBuilder.append(hyperlink);
-            htmlBuilder.append("</a><br><br>");
+            htmlBuilder.append("<br><br>");
 
             lastIndex = endIndex;
         }
@@ -58,7 +55,6 @@ public class Content {
         this.html = htmlBuilder.toString();
 
     }
-
 
     @JsonProperty("text")
     private String text;
