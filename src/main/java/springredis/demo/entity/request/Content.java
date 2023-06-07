@@ -34,8 +34,8 @@ public class Content {
 
 
     public void setHtml(String content, String link) {
-//        String regex = "(http|https)://[^\\s<>]+";
-        String regex = "(http|https)://[^\s<>\"']+";
+        String regex = "(http|https)://[^\\s<>]+";
+//        String regex = "(http|https)://[^\s<>\"']+";
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(content);
@@ -49,16 +49,17 @@ public class Content {
 
             String plainText = content.substring(lastIndex, startIndex);
             String hyperlink = content.substring(startIndex, endIndex);
-
-            htmlBuilder.append(plainText);
-            htmlBuilder.append(hyperlink);
-            htmlBuilder.append("<br><br>");
+//
 //            htmlBuilder.append(plainText);
-//            htmlBuilder.append("<a href='");
 //            htmlBuilder.append(hyperlink);
-//            htmlBuilder.append("'>");
-//            htmlBuilder.append(hyperlink);
-//            htmlBuilder.append("</a><br><br>");
+//            htmlBuilder.append("<br><br>");
+//
+            htmlBuilder.append(plainText);
+            htmlBuilder.append("<a href='");
+            htmlBuilder.append(hyperlink);
+            htmlBuilder.append("'>");
+            htmlBuilder.append(hyperlink);
+            htmlBuilder.append("</a><br><br>");
 
             lastIndex = endIndex;
         }
