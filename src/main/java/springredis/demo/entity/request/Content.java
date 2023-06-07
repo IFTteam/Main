@@ -40,9 +40,16 @@ public class Content {
             String plainText = content.substring(lastIndex, startIndex);
             String hyperlink = content.substring(startIndex, endIndex);
 
+//            htmlBuilder.append(plainText);
+//            htmlBuilder.append(hyperlink);
+//            htmlBuilder.append("<br><br>");
+//
             htmlBuilder.append(plainText);
+            htmlBuilder.append("<a href='");
             htmlBuilder.append(hyperlink);
-            htmlBuilder.append("<br><br>");
+            htmlBuilder.append("'>");
+            htmlBuilder.append(hyperlink);
+            htmlBuilder.append("</a><br><br>");
 
             lastIndex = endIndex;
         }
