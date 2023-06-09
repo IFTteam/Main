@@ -72,46 +72,18 @@ public class EventWebhookController {
                 JSONObject msysObject = event.getJSONObject("msys");
                 msysObjects.add(msysObject);
 
-                if (msysObject != null && msysObject.has("track_event")) {
-                    JSONObject category = msysObject.optJSONObject("track_event");
-                    Long transmissionId = category.optLong("transmission_id");
-                    String eventType = category.getString("type");
-                    String audienceEmail = category.getString("rcpt_to");
-                    String targetLinkUrl = category.optString("target_link_url");
-
-
-
-                    if(targetLinkUrl.equals("unsubscribe"))
-                    {
-                        Audience audience = audienceRepository.findByEmail(audienceEmail);
-                        Long audienceId = audience.getId();
-
-                        // delete all in active_audience by audience_id
-                        List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
-                        if(activeAudienceList != null)
-                        {
-                            for(ActiveAudience activeAudience : activeAudienceList)
-                            {
-                                activeAudienceRepository.delete(activeAudience);
-                            }
-                        }
-
-                        // delete all in audience_audiencelist by audience_id
-                        List <AudienceList> AudienceListList = audienceListRepository.findAll();
-                        for (AudienceList audiencelist : AudienceListList)
-                        {
-                            audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
-                            audienceListRepository.save(audiencelist);
-                        }
-
+                if (msysObject != null && (msysObject.has("track_event") || msysObject.has("unsubscribe_event"))) {
+                    if (msysObject.has("track_event")) {
+                        JSONObject category = msysObject.optJSONObject("track_event");
+                        handleTrackEvent(category);
                     }
 
-                    if (eventType.equals("open") || eventType.equals("click")) {
-                        System.out.println(eventType);
-                        Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
-                        transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
+                    if (msysObject.has("unsubscribe_event")) {
+                        JSONObject category = msysObject.optJSONObject("unsubscribe_event");
+                        handleUnsubscribeEvent(category);
                     }
                 }
+
             }
             response.setStatusCode("200");
             response.setStatusMsg("Event data received!");
@@ -125,28 +97,68 @@ public class EventWebhookController {
         }
     }
 
-    private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
-        // Check if the event type already exists for the given transmission ID and audience email
-        int numberOfExistingEvenType = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-        List<String> existingEvenType = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmail(transmissionId, audienceEmail);
-        List<String> existingUrl = audienceActivityRepository.getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(eventType, transmissionId, audienceEmail);
+    private void handleTrackEvent(JSONObject category) {
+        Long transmissionId = category.optLong("transmission_id");
+        String eventType = category.getString("type");
+        String audienceEmail = category.getString("rcpt_to");
+        String targetLinkUrl = category.optString("target_link_url");
 
-        if ((numberOfExistingEvenType == 2 && eventType.equals("open")) || // 數據庫裡有2種事件，open和click都有；payload為open，不存
-                (numberOfExistingEvenType == 2 && existingUrl.contains(targetLinkUrl)) || // 數據庫裡有2種事件，open和click都有；payload為click，但已有相同的URL存在數據庫裡，不存
-                (existingEvenType.contains("open") && eventType.equals("open"))) { // 數據庫裡只有1種事件 為open；payload為open，不存
+        if (eventType.equals("open") || eventType.equals("click")) {
+            Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
+            transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
+        }
+    }
+
+    private void handleUnsubscribeEvent(JSONObject category) {
+        Long transmissionId = category.optLong("transmission_id");
+        String eventType = category.getString("type");
+        String audienceEmail = category.getString("rcpt_to");
+        String targetLinkUrl = category.optString("target_link_url");
+
+        if (eventType.equals("link_unsubscribe")) {
+            Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
+            transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
+
+            Audience audience = audienceRepository.findByEmail(audienceEmail);
+            if (audience != null) {
+                Long audienceId = audience.getId();
+
+                // delete all in active_audience by audience_id
+                List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
+                if(activeAudienceList != null)
+                {
+                    activeAudienceRepository.deleteAll(activeAudienceList);
+                }
+                // delete all in audience_audiencelist by audience_id
+                List <AudienceList> AudienceListList = audienceListRepository.findAll();
+                for (AudienceList audiencelist : AudienceListList)
+                {
+                    audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
+                    audienceListRepository.save(audiencelist);
+                }
+            }
+        }
+    }
+
+    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for  unsubscribe link
+
+    private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
+
+        int numberOfExistingEventTypes = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
+        List<String> existingEventTypes = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
+//        List<String> existingUrl = audienceActivityRepository.getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(eventType, transmissionId, audienceEmail);
+
+        if ((existingEventTypes.contains(eventType) && !eventType.equals("click")) ||
+                (eventType.equals("click") && numberOfExistingEventTypes == 1) ||
+                (eventType.equals("click") && targetLinkUrl.equals(unsubscribe_url))) {
             return;
         }
+
         Audience audience = transmission.getAudience();
         AudienceActivity audienceActivity = new AudienceActivity();
         audienceActivity.setEventType(eventType);
-        audienceActivity.setAudience_email(audienceEmail); // audienceEmail: payload裡的email
-
-        String audienceEmailFromAudienceActivityTable = audienceActivity.getAudience_email();
-        if (audienceEmailFromAudienceActivityTable.equals(audienceEmail)) {
-            audienceActivity.setAudience(audienceRepository.findByEmail(audienceEmail));
-        } else {
-            audienceActivity.setAudience(audience); // audience_id //
-        }
+        audienceActivity.setAudience_email(audienceEmail);
+        audienceActivity.setAudience(audience);
         audienceActivity.setCreatedAt(LocalDateTime.now());
         audienceActivity.setCreatedBy("SparkPost");
         audienceActivity.setTransmission_id(transmissionId);
@@ -154,6 +166,7 @@ public class EventWebhookController {
 
         audienceActivityRepository.save(audienceActivity);
     }
+
 
     private final String targetUrl = "https://15ba-104-244-243-145.ngrok-free.app/analytics/webhook/eventWebhook"; // set your target URL here
     // https://9cdf-104-244-243-145.ngrok-free.app/analytics/webhook/sparkpost_create_webhook <- this is the url for POST request: create a webhook
@@ -249,7 +262,7 @@ public class EventWebhookController {
         }
     }
 
-//     create the webhook here
+    //     create the webhook here
     public static void main(String[] args) {  // Execute after running backend: DemoApplication
         try {
             // Specify the URL for the POST request

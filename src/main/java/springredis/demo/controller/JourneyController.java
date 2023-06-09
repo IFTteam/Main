@@ -195,9 +195,9 @@ public class JourneyController {
         System.out.println("apple pie");
             AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
         System.out.println("balloon");
-        System.out.println(audienceList);
+        //System.out.println(audienceList);
             List<Audience> audiences = audienceList.getAudiences();
-        System.out.println(audiences); // null
+        //System.out.println(audiences); // null
         System.out.println("cartoon");
             List<Long> audiencesId= new ArrayList<>();
         System.out.println("dogge");
