@@ -56,8 +56,6 @@ public class Node extends BaseEntity {
     private String sNexts;
     private String sLasts;
 
-
-
     //Make Sure that sNexts is not empty when call this. sNexts->nexts
     public void nextsDeserialize(){
         nexts = new ArrayList<>();
