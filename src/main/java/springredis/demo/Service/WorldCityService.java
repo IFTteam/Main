@@ -15,78 +15,70 @@ import java.util.List;
 public class WorldCityService {
 
     private WorldCityRepository worldCityRepository;
+    private List<WorldCity> worldCityList = new ArrayList<WorldCity>();
 
     @Autowired
     public WorldCityService(WorldCityRepository worldCityRepository) {
         this.worldCityRepository = worldCityRepository;
     }
 
-    public List<WorldCity> findCityByName(String targetCity, String accuracyRate) throws WorldCityNotExistException {
+    public List<String> searchForSimilarCity(String targetCity, String accuracyRate) throws WorldCityNotExistException {
 
+        // Check to see if the input is null
         if (targetCity == null) {
             throw new WorldCityNotExistException("City doesn't exist");
         }
 
-        List<WorldCity> worldCityList = worldCityRepository.findAll();
+        // Initialize the worldCityList
+        if(worldCityList.isEmpty())
+        {
+            worldCityList = worldCityRepository.findAll();
+        }
+
         List<WorldCity> matchedCity = new ArrayList<>();
         int size = worldCityList.size();
+        int count = 0;
         for(int i=0; i<size;i++)
         {
+            // For each city in worldcitylist, set up its string address in the format:
+            // city, Admin, Country
             WorldCity city = worldCityList.get(i);
             String matchPattern = city.getCityAscii()+", "
                     + city.getAdminName()+", "
                     + city.getCountry();
-            double score = partialRatio(matchPattern,targetCity)/100;
+
+            // Calculate the partialRatio score (0~100) and cast it into 0~1
+            double score = partialRatio(matchPattern.toLowerCase(),targetCity.toLowerCase())/100;
 
             if(score > Double.valueOf(accuracyRate))
             {
                 matchedCity.add(city);
+                count++;
+                if(count >= 200)
+                {
+                    break;
+                }
             }
         }
 
+        // Sort the mactchedCity list by decreasing population
         Collections.sort(matchedCity, new WorldCityComparator());
 
-        return matchedCity;
-    }
-
-    /*
-    public static int getLevenshteinDistance(String X, String Y)
-    {
-        int m = X.length();
-        int n = Y.length();
-
-        int[][] T = new int[m + 1][n + 1];
-        for (int i = 1; i <= m; i++) {
-            T[i][0] = i;
-        }
-        for (int j = 1; j <= n; j++) {
-            T[0][j] = j;
-        }
-
-        int cost;
-        for (int i = 1; i <= m; i++) {
-            for (int j = 1; j <= n; j++) {
-                cost = X.charAt(i - 1) == Y.charAt(j - 1) ? 0: 1;
-                T[i][j] = Integer.min(Integer.min(T[i - 1][j] + 1, T[i][j - 1] + 1),
-                        T[i - 1][j - 1] + cost);
+        // Cast the matchedCity
+        int matchedCitySize = matchedCity.size();
+        List<String> matchedCityStringList = new ArrayList<String>(matchedCitySize);
+        for(int i = 0; i< matchedCitySize; i++)
+        {
+            WorldCity city = matchedCity.get(i);
+            String cityString =  city.getCityAscii()+", "+ city.getAdminName()+", " + city.getCountry();
+            if(!matchedCityStringList.contains(cityString))
+            {
+                matchedCityStringList.add(cityString);
             }
         }
 
-        return T[m][n];
+        return matchedCityStringList;
     }
-
-    public static double findSimilarity(String x, String y) {
-        if (x == null || y == null) {
-            throw new IllegalArgumentException("Strings must not be null");
-        }
-
-        double maxLength = Double.max(x.length(), y.length());
-        if (maxLength > 0) {
-            // optionally ignore case if needed
-            return (maxLength - getLevenshteinDistance(x, y)) / maxLength;
-        }
-        return 1.0;
-    }*/
 
     public static double partialRatio(String x, String y) {
         PartialRatio partialRatio = new PartialRatio();
@@ -94,10 +86,9 @@ public class WorldCityService {
     }
 }
 
-
 class WorldCityComparator implements java.util.Comparator<WorldCity> {
     @Override
     public int compare(WorldCity a, WorldCity b) {
-        return (int) (a.getPopulation() - b.getPopulation());
+        return (int) (b.getPopulation() - a.getPopulation());
     }
 }
