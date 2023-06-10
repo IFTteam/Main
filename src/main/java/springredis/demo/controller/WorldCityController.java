@@ -18,7 +18,9 @@ public class WorldCityController {
     }
 
     @GetMapping(value = "/worldcity/{name}/{accuracyRate}")
-    public List<WorldCity> getWorldCity(@PathVariable String name, @PathVariable String accuracyRate) {
-        return worldCityService.findCityByName(name, accuracyRate);
+    public List<String> getWorldCity(@PathVariable String name, @PathVariable String accuracyRate) {
+        // accuracy Rate指的是匹配精度，越高，则对相似的标准越严格
+        // 我自己测试时，0.85左右即可正常工作
+        return worldCityService.searchForSimilarCity(name, accuracyRate);
     }
 }
