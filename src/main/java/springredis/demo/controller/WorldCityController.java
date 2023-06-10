@@ -17,8 +17,8 @@ public class WorldCityController {
         this.worldCityService = worldCityService;
     }
 
-    @GetMapping(value = "/worldcity/{name}")
-    public List<WorldCity> getWorldCity(@PathVariable String name) {
-        return worldCityService.findCityByName(name);
+    @GetMapping(value = "/worldcity/{name}/{accuracyRate}")
+    public List<WorldCity> getWorldCity(@PathVariable String name, @PathVariable String accuracyRate) {
+        return worldCityService.findCityByName(name, accuracyRate);
     }
 }
