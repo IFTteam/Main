@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+
 @Service
 public class IfElseTaskServiceImpl implements IfElseTaskService {
 
@@ -782,7 +783,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
     }
 
-
     private void filterWithProperty(String property, String condition, String value, boolean flag, List<Audience> listOfAudiences, List<Audience> haveProperty)
     {
         String audienceValue = null;
@@ -865,6 +865,5 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             double distance = EARTH_RADIUS * c;
             return distance;
         }
-
 
 }
