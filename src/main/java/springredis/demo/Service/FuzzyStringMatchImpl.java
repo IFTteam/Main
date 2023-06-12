@@ -8,7 +8,7 @@ import springredis.demo.structures.FuzzyStringMatch.OpCode;
 
 /**
  * 这部分代码来源于https://github.com/xdrop/fuzzywuzzy
- * 将java fuzzywuzzy数据包转为java，我将源代码迁移过来，有微调
+ * 将python fuzzywuzzy数据包转为java，我将源代码迁移过来，有微调
  */
 
 
