@@ -119,15 +119,16 @@ public class EventWebhookController {
             Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
             transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
 
-            Audience audience = audienceRepository.findByEmail(audienceEmail);
+            Audience audience = audienceRepository.findByEmail(audienceEmail); // audienceEmail為收件人 hhuang60
             if (audience != null) {
-                long audienceId = audience.getId();
+                long audienceId = audience.getId(); // audienceId = 1
 
                 // delete all in active_audience by audience_id
                 List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
+                // activeAudience_id = 1, 23
                 if(activeAudienceList != null)
                 {
-                    activeAudienceRepository.deleteAll(activeAudienceList);
+                    activeAudienceRepository.deleteAll(activeAudienceList); // delete 1, 23
                 }
                 // delete all in audience_audiencelist by audience_id
                 List <AudienceList> AudienceListList = audienceListRepository.findAll();
@@ -140,14 +141,14 @@ public class EventWebhookController {
         }
     }
 
-    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for  unsubscribe link
-
     private void saveAudienceActivity(Long transmissionId, String eventType, String targetLinkUrl, Transmission transmission, String audienceEmail) {
 
         int numberOfExistingEventTypes = audienceActivityRepository.countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
         List<String> existingEventTypes = audienceActivityRepository.getEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(transmissionId, audienceEmail, targetLinkUrl);
 //        List<String> existingUrl = audienceActivityRepository.getLinkUrlByEventTypeAndTransmissionIdAndAudienceEmail(eventType, transmissionId, audienceEmail);
 
+        // set url for  unsubscribe link
+        String unsubscribe_url = "https://www.yelp.com/";
         if ((existingEventTypes.contains(eventType) && !eventType.equals("click")) ||
                 (eventType.equals("click") && numberOfExistingEventTypes == 1) ||
                 (eventType.equals("click") && targetLinkUrl.equals(unsubscribe_url))) {
@@ -195,7 +196,7 @@ public class EventWebhookController {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.setBearerAuth("49a41624a0dc4e3064a26392fceb0d8118838c9e");
+            headers.setBearerAuth("358294aeb167a63aa0ade3a287ef013559e3d964");
 
             // Retrieve existing webhooks
             ResponseEntity<String> existingWebhooksResponse = client.get()

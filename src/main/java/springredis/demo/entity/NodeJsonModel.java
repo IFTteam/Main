@@ -70,7 +70,11 @@ public class NodeJsonModel {
         String property;
         String condition;
         String value;
+//        String address;
+        String type;
         String content;
+
+
     }
     @Data
     public class Branch {

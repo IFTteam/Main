@@ -55,8 +55,7 @@ public class ActionSendController {
     private final WebClient webClient;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for  unsubscribe link
-
+    private final String unsubscribe_url = "https://www.yelp.com/"; // set url for unsubscribe link
 
     @Autowired
     public ActionSendController(TransmissionRepository transmissionRepository,
@@ -234,7 +233,7 @@ public class ActionSendController {
     @RequestMapping(value={"/createCMTTransmission"}, method = POST)
     @ResponseBody
     public CoreModuleTask createCMTTransmission(@RequestBody CoreModuleTask coreModuleTask) {
-        List<ActiveAudience> activeAudienceList = new ArrayList<ActiveAudience>();  //obtain active audience list from CMT
+        List<ActiveAudience> activeAudienceList = new ArrayList<>();  //obtain active audience list from CMT
         for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++)
         {
             Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(i));
@@ -269,7 +268,8 @@ public class ActionSendController {
 
         Sender sender = new Sender();
         //(sender, subject, email, name"sender", subject, html, text)
-        sender.setEmail("set.sender.here@iftbdcom.com"); // set sender's email
+        //(address, type, content)
+        sender.setEmail("set.sender.here@paradx.dev"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
         content.setSender(sender);
         content.setSubject(jsonObject.getString("subject"));
@@ -278,10 +278,20 @@ public class ActionSendController {
         options.setOpenTracking(true);
         options.setClickTracking(true);
 
+//        content.setContent(jsonObject.getString("content"));
+        content.setType(jsonObject.getString("type"));
         content.setContent(jsonObject.getString("content"));
-        content.setHtml(content.getContent(), unsubscribe_url);
 
-        content.setText("text here");
+        if (content.getType().equalsIgnoreCase("html")) {
+            content.setHtml(content.getContent(), unsubscribe_url);
+            content.setText("text here");
+        }
+        if (content.getType().equalsIgnoreCase("text")) {
+            content.setText(content.getContent(), unsubscribe_url);
+        }
+
+//        content.setHtml(content.getContent(), unsubscribe_url);
+//        content.setText("text here");
         request.setContent(content);
         request.setOptions(options);
 
