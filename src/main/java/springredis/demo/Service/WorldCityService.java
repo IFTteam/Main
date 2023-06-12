@@ -9,8 +9,8 @@ import springredis.demo.entity.PartialRatio;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+
 @Service
 public class WorldCityService {
 
@@ -23,6 +23,8 @@ public class WorldCityService {
     }
 
     public List<String> searchForSimilarCity(String targetCity, String accuracyRate) throws WorldCityNotExistException {
+        // accuracy Rate指的是匹配精度，越高，则对相似的标准越严格
+        // 我自己测试时，0.85左右即可正常工作
 
         // Check to see if the input is null
         if (targetCity == null) {
@@ -38,7 +40,7 @@ public class WorldCityService {
         List<WorldCity> matchedCity = new ArrayList<>();
         int size = worldCityList.size();
         int count = 0;
-        for(int i=0; i<size;i++)
+        for(int i=0; i<size; i++)
         {
             // For each city in worldcitylist, set up its string address in the format:
             // city, Admin, Country
@@ -48,7 +50,7 @@ public class WorldCityService {
                     + city.getCountry();
 
             // Calculate the partialRatio score (0~100) and cast it into 0~1
-            double score = partialRatio(matchPattern.toLowerCase(),targetCity.toLowerCase())/100;
+            double score = partialRatio(matchPattern.toLowerCase(), targetCity.toLowerCase())/100;
 
             if(score > Double.valueOf(accuracyRate))
             {
@@ -64,7 +66,7 @@ public class WorldCityService {
         // Sort the mactchedCity list by decreasing population
         Collections.sort(matchedCity, new WorldCityComparator());
 
-        // Cast the matchedCity
+        // Cast the sorted matchedCity into String for output
         int matchedCitySize = matchedCity.size();
         List<String> matchedCityStringList = new ArrayList<String>(matchedCitySize);
         for(int i = 0; i< matchedCitySize; i++)
