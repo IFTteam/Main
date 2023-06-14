@@ -10,6 +10,7 @@ import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.UserRepository;
+import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.serializer.SeDeFunction;
@@ -30,6 +31,8 @@ public class JourneyController {
     private UserRepository userRepository;
     @Autowired
     private ActiveJourneyRepository activeJourneyRepository;
+    @Autowired
+    private ActiveAudienceRepository activeAudienceRepository;
 
     @Autowired
     private ActiveNodeRepository activeNodeRepository;
@@ -120,7 +123,9 @@ public class JourneyController {
 
         nodeRepository.deleteAllById(existingNode);
         for (Long nodeId: existingNode) {
+            System.out.println("active node id: "+ activeNodeRepository.findByDBNodeId(nodeId).getId());
             System.out.println("Deleting node: " + nodeId);
+            activeAudienceRepository.deleteByActiveNodeId(activeNodeRepository.findByDBNodeId(nodeId).getId());
             activeNodeRepository.deleteByNodeId(nodeId);
         }
 //        --------------------------------------------------------------------------------------------------

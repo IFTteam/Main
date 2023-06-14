@@ -282,9 +282,10 @@ public class ActionSendController {
     		address.setAddress(audienceList.get(i).getEmail());
     		addressList.add(address);
     	}
-        Address address = new Address();
-        address.setAddress("jingchen.tang@altomni.com");
-        addressList.add(address);
+        //Address address = new Address();
+        //address.setAddress("jingchen.tang@altomni.com");
+        //addressList.add(address);
+
     	request.setAddressList(addressList);
 
         for(int i = 0; i < addressList.size(); i++)
