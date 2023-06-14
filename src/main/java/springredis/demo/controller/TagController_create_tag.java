@@ -13,8 +13,14 @@ public class TagController_create_tag {
     @Autowired
     private BackendTaskService backendTaskService;
 
-    @PostMapping("/coreTask")
+    @PostMapping("/createCoreTask")
     public CoreModuleTask createRelationBetweenAudienceAndTag(@RequestBody CoreModuleTask coreModuleTask) {
         return backendTaskService.createRelationBetweenAudienceAndTag(coreModuleTask);
     }
+
+    @PostMapping("/removeCoreTask")
+    public CoreModuleTask removeRelationBetweenAudienceAndTag(@RequestBody CoreModuleTask coreModuleTask) {
+        return backendTaskService.removeRelationBetweenAudienceAndTag(coreModuleTask);
+    }
 }
+

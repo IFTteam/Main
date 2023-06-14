@@ -39,6 +39,7 @@ public class CMTExecutor{
             put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
             put("If/Else", "http://localhost:8080/IfElse");
             put("Add Tag", "http://localhost:8080/AddTag");
+            put("Remove Tag", "http://localhost:8080/RemoveTag");
             put("Subscribe", "http://localhost:8080/Subscribe"); //unknown
         }
 
