@@ -64,6 +64,7 @@ public class NodeJsonModel {
         String subject;
         String content;
         String tag;
+        String newTag;
         String date;
     }
     @Data
