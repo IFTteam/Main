@@ -9,6 +9,8 @@ import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
+import springredis.demo.repository.UserRepository;
+import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.serializer.SeDeFunction;
@@ -25,9 +27,12 @@ public class JourneyController {
     private JourneyRepository journeyRepository;
     @Autowired
     private NodeRepository nodeRepository;
-
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private ActiveJourneyRepository activeJourneyRepository;
+    @Autowired
+    private ActiveAudienceRepository activeAudienceRepository;
 
     @Autowired
     private ActiveNodeRepository activeNodeRepository;
@@ -103,6 +108,9 @@ public class JourneyController {
         // Traverse the journeyJsonModel object and add each node into DB
         System.out.println("The node list before dfs is: " + nodeIdList);
         System.out.println("========================== DFS started ==========================");
+        if (journeyJsonModel.getSequence().length<=0){
+            return oneJourney;
+        }
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
         System.out.println("=========================== DFS ended ===========================");
         System.out.println("The node list after dfs is: " + nodeIdList);
@@ -178,8 +186,12 @@ public class JourneyController {
         cmt.setJourneyId(journeyId);
         System.out.println("Journey Id is " + journeyId);
 
+        // set userId from journey
+        long userId = Long.parseLong(oneJourney.getCreatedBy());
+        cmt.setUserId(userId);
+        System.out.println("UserId is " + userId);
         //get audience list from properties
-        List<Long> audienceList = AudienceFromAudienceList(headNode.getId());
+        List<Long> audienceList = AudienceFromAudienceList(headNode.getId(), userId);
         cmt.setAudienceId1(audienceList);
 
         System.out.println("Audience List 1 is:" + cmt.getAudienceId1().toString());
@@ -190,17 +202,29 @@ public class JourneyController {
     }
 
 
-    private List<Long> AudienceFromAudienceList(Long nodeId){
+    private List<Long> AudienceFromAudienceList(Long nodeId, long userId){
         System.out.println("current node ID is:" + nodeId.toString());
         Node currentNode = nodeRepository.findById(nodeId).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
         System.out.println("object is:" + jsonObject);
-        
+
         String name = jsonObject.getString("list");
-        AudienceList audienceList = audienceListRepository.searchAudienceListByName(name);
-        List<Audience> audiences = audienceList.getAudiences();
+        // if any list, return all list of that user
         List<Long> audiencesId= new ArrayList<>();
+        List<Audience> audiences = new ArrayList<>();
+        if(name.equals("Any list")) {
+            User user=userRepository.findById(userId);
+            List<AudienceList> listList = audienceListRepository.findByUser(user);
+            for (AudienceList audiencelist : listList) {
+                audiences.addAll(audiencelist.getAudiences());
+            }
+        }
+        else {
+            // user input specific list name. e.g. List A
+            AudienceList audienceList = audienceListRepository.searchAudienceListByName(name);
+            audiences = audienceList.getAudiences();
+        }
         for(Audience audience: audiences){
             audiencesId.add(audience.getId());
         }

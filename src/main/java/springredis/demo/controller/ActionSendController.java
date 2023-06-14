@@ -147,12 +147,7 @@ public class ActionSendController {
             put("user_type", "students");
             put("education_level", "college");
         }});
-        List<Address> list = new ArrayList<>();
-        Address address1 = new Address("address1");
-        Address address2 = new Address("address2");
-        list.add(address1);
-        list.add(address2);
-        transmissionRequest.setAddressList(list);
+
         System.out.println("====================================================Request Campaign ID: " + transmissionRequest.getCampaignId());
         System.out.println("====================================================Request Audience ID: " + transmissionRequest.getAudienceId());
         System.out.println("====================================================Request Journey ID: " + transmissionRequest.getJourneyId());
@@ -250,9 +245,9 @@ public class ActionSendController {
     @ResponseBody
     public CoreModuleTask createCMTTransmission(@RequestBody CoreModuleTask coreModuleTask) {
     	List<ActiveAudience> activeAudienceList = new ArrayList<ActiveAudience>();  //obtain active audience list from CMT
-        System.out.println("(ActionSendController) The CMT module is " + coreModuleTask.toString());
-        System.out.println("(ActionSendController) The CMT module ActiveAudience is " + coreModuleTask.getActiveAudienceId1());
-        System.out.println("(ActionSendController) The CMT module Audience is " + coreModuleTask.getAudienceId1());
+//        System.out.println("(ActionSendController) The CMT module is " + coreModuleTask.toString());
+//        System.out.println("(ActionSendController) The CMT module ActiveAudience is " + coreModuleTask.getActiveAudienceId1());
+//        System.out.println("(ActionSendController) The CMT module Audience is " + coreModuleTask.getAudienceId1());
         for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++)
     	{
     		Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(i));
@@ -261,39 +256,35 @@ public class ActionSendController {
     			activeAudienceList.add(activeAudience.get());
     		}
             else{
-                System.out.println("no audience for" + coreModuleTask.getActiveAudienceId1().get(i));
+                System.out.println("no audience for " + coreModuleTask.getActiveAudienceId1().get(i));
             }
     	}
-        System.out.println("The CMT activeAudienceList is " + activeAudienceList.size());
-    	List<Audience> audienceList = new ArrayList<Audience>();  //obtain audience list from the CMT
-    	for(int i = 0; i < activeAudienceList.size(); i++) 
-    	{
-    		Optional<Audience> audience = audienceRepository.findById(activeAudienceList.get(i).getAudienceId());
-    		if(audience.isPresent() == true) 
-    		{
-    			audienceList.add(audience.get());
-    		}
-    	}
-        //System.out.println("The CMT audienceList is " + audienceList);
+//        System.out.println("(ActionSendController) The CMT activeAudienceList is " + activeAudienceList.size());
+    	List<Audience> audienceList = new ArrayList<>();  //obtain audience list from the CMT
+        for (ActiveAudience activeAudience : activeAudienceList) {
+            Optional<Audience> audience = audienceRepository.findById(activeAudience.getAudienceId());
+            if (audience.isPresent()) {
+                audienceList.add(audience.get());
+            }
+        }
+//        System.out.println("(ActionSendController) The CMT audienceList is " + audienceList);
     	
     	TransmissionRequest request = new TransmissionRequest();
     	
     	request.setCampaignId("1");  //Not entirely sure how to obtain campaign ID yet
 
     	List<Address> addressList = new ArrayList<Address>();  //set address list for the request
-    	for(int i = 0; i < audienceList.size(); i++) 
-    	{
-    		Address address = new Address();
-    		address.setAddress(audienceList.get(i).getEmail());
-    		addressList.add(address);
-    	}
-        Address address = new Address();
-        address.setAddress("jingchen.tang@altomni.com");
-        addressList.add(address);
+        for (Audience audience : audienceList) {
+            Address address = new Address();
+            address.setAddress(audience.getEmail());
+            addressList.add(address);
+        }
+//        Address address = new Address();
+//        address.setAddress("jingchen.tang@altomni.com");
+//        addressList.add(address);
     	request.setAddressList(addressList);
 
-        for(int i = 0; i < addressList.size(); i++)
-            System.out.println(addressList.get(i).getAddress());
+        for (Address address : addressList) System.out.println(address.getAddress());
 
     	Content content = new Content();  //set content for the request
     	Node node = nodeRepository.findById(coreModuleTask.getNodeId()).get();
@@ -316,32 +307,15 @@ public class ActionSendController {
         else
     	    content.setText("hello,testing");
     	request.setContent(content);
-
     	request.setAudienceId(coreModuleTask.getAudienceId1().get(0));  //set audience id. Is it just the first audience id stored on CMT?
-
         System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
-
-        // TODO: user is manually created generated here for testing purpose
-        User user = new User();
-        user.setUsername("user" + coreModuleTask.getNodeId());
-        user.setCreatedBy("Bryan");
-        userRepository.save(user);
-
-        coreModuleTask.setUserId(user.getId());
         System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
-//        request.setUserId(1L);  //set user id
-
-
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
-    	
-    	//restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
-        //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
-    	//Ask JiaQi what needs to be done before returning the CMT
+
         ResponseEntity<Response> response = createTransmission(request);
         System.out.println(response);
     	return coreModuleTask;
-    	
     }
     
     //Testing

@@ -9,11 +9,10 @@ import org.springframework.web.client.RestTemplate;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
-import springredis.demo.repository.AudienceRepository;
+import springredis.demo.repository.JourneyRepository;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,27 +23,48 @@ public class API_Trigger_Controller {
     RestTemplate restTemplate;
     @Autowired
     DAO productService;
-
+    @Autowired
+    private JourneyRepository journeyRepository;
 
     //any call to any api trigger shall be posted to this url;
     //after processing the api call, return the coremoduletask that was sent in POST (in this case, don't change anything)
     @RequestMapping( value="/API_trigger",method= RequestMethod.POST)
     @ResponseBody
     public CoreModuleTask redirect(@RequestBody CoreModuleTask task){
-        CoreModuleTask nulltask = new CoreModuleTask();
-        nulltask.setName("nulltask");
-        if(task.getName().equals("shopify_create_trigger")){
-            return create_purchase_webhook(task);
+        switch (task.getName()) {
+            case "Place a Purchase":
+                return create_purchase_webhook(task);
+            case "Abandon Checkout":
+                return create_abandon_checkout_webhook(task);
+            default:
+                task.setMakenext(0);
+                return task;
         }
-        else if (task.getName().equals("shopify_abandon_checkout_trigger")){
-            return create_abandon_checkout_webhook(task);
+    }
+
+    private boolean checkIfWebhookExists(CoreModuleTask task, String type) {
+        User user = productService.searchUserById(task.getUserId());
+        String devstore = user.getShopifydevstore();
+        String token = user.getShopifyApiAccessToken();
+        String api_key = user.getShopifyApiKey();
+        String url = "https://" + api_key + ":" + token + "@" + devstore + ".myshopify.com/admin/api/2023-01/webhooks.json";
+        System.out.println(url);
+        HttpHeaders header = new HttpHeaders();
+        header.set("X-Shopify-Access-Token",token);
+        header.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity("{}", header);
+        ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+        JSONObject responseJson = new JSONObject(response.getBody());
+        JSONArray webhooksArray = responseJson.getJSONArray("webhooks");
+
+        for (int i = 0; i < webhooksArray.length(); i++) {
+            JSONObject webhookJson = webhooksArray.getJSONObject(i);
+            String topic = webhookJson.getString("topic");
+            if (type.equals(topic)) {
+                return true;
+            }
         }
-        //for testing purpose
-        else if (task.getName().equals("Test")) {
-            task.setType("finish");
-            return task;
-        }
-        return nulltask;
+        return false;
     }
 
     @RequestMapping(value="/shopify_create_purchase_webhook",method=RequestMethod.POST)
@@ -52,11 +72,11 @@ public class API_Trigger_Controller {
     public CoreModuleTask create_purchase_webhook(@RequestBody CoreModuleTask task) {
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
-        Journey journey = productService.searchJourneyById(task.getJourneyId());
+        System.out.println("node: " + node.toString());
         Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"purchase");
         if(!opstnr.isPresent()){
             triggerType_node_relation tnr = new triggerType_node_relation("purchase",user.getId());
-            productService.addNewTNR(tnr);
+            productService.setNewTNR(tnr);
         }
         triggerType_node_relation restnr = productService.searchTNR(user.getId(),"purchase").get();
         List<Node> nodes = restnr.getNodes();
@@ -68,22 +88,32 @@ public class API_Trigger_Controller {
         }
         if(!found) {
             node.setTriggertype_node_relation(restnr);
-            restnr = productService.addNewTNR(restnr);                   //at this point since restnr was created before, it is an update operation to update the node field
+            restnr = productService.setNewTNR(restnr);                   //at this point since restnr was created before, it is an update operation to update the node field
             node = productService.addNewNode(node);
         }
-        String devstore = user.getShopifydevstore();
-        String token = user.getShopifyApiAccessToken();
-        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-//String url = "http://localhost:8080/show"; //for testing
-        String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://e9f2-75-151-73-57.ngrok.io/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
-        HttpHeaders header = new HttpHeaders();
-        header.set("X-Shopify-Access-Token",token);
-        header.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity(data, header);
-        System.out.println(request.getBody());
-        ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);      //fetches response entity from server. response is confirmation of the created webhook
-        System.out.println(response.getBody());
-//        ResponseEntity<String> res = new ResponseEntity<>(data, HttpStatus.OK);
+        // webhook exist already
+        if(checkIfWebhookExists(task, "orders/create")) {
+            System.out.println("========= Webhook already exists, returning...");
+        }
+        // webhook doesn't exist
+        else {
+            System.out.println("========= Webhook does not exists, creating...");
+            String devstore = user.getShopifydevstore();
+            String token = user.getShopifyApiAccessToken();
+            String url = "https://" + devstore + ".myshopify.com/admin/api/2022-04/webhooks.json";
+            //String url = "http://localhost:8080/show"; //for testing
+            String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://cd88-74-213-227-187.ngrok-free.app/shopify_purchase_update/" + user.getId() + "\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
+            HttpHeaders header = new HttpHeaders();
+            header.set("X-Shopify-Access-Token", token);
+            header.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> request = new HttpEntity(data, header);
+            System.out.println(url);
+            System.out.println("Request: " + request.getBody());
+            ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST, request, String.class);      //fetches response entity from server. response is confirmation of the created webhook
+            System.out.println("Response: " + response.getBody());
+        }
+        // don't let the next node get executed
+        task.setMakenext(0);
         return task;
     }
 
@@ -93,36 +123,55 @@ public class API_Trigger_Controller {
     public CoreModuleTask create_abandon_checkout_webhook(@RequestBody CoreModuleTask task) {
         User user = productService.searchUserById(task.getUserId());
         Node node = productService.searchNodeById(task.getNodeId());
-        Journey journey = productService.searchJourneyById(task.getJourneyId());
+
+        // retrieve or create TNR from database for given userId and type: "abandon_cart"
         Optional<triggerType_node_relation> opstnr = productService.searchTNR(user.getId(),"abandon_cart");
         if(!opstnr.isPresent()){
+            System.out.println("========= TNR not exists for user" + user.getId() + "'s abandon_cart");
             triggerType_node_relation tnr = new triggerType_node_relation("abandon_cart",user.getId());
-            productService.addNewTNR(tnr);
+            productService.setNewTNR(tnr);
         }
         triggerType_node_relation restnr = productService.searchTNR(user.getId(),"abandon_cart").get();
-        System.out.println(restnr);
+        System.out.println("========= TNR is :" + restnr);
+
+        // removing all the old trigger nodes
         List<Node> nodes = restnr.getNodes();
-        boolean found = false;
-        for(Node n:nodes){
-            if(n.getId()==node.getId()){
-                found = true;
-            }
+        for(Node n : nodes) {
+            System.out.println("Old node: " + n.getId());
+            n.setTriggertype_node_relation(null);
         }
-        if(!found) {
-            node.setTriggertype_node_relation(restnr);
-            restnr = productService.addNewTNR(restnr);                   //at this point since restnr was created before, it is an update operation to update the node field
-            node = productService.addNewNode(node);
+        // setting the new trigger node to relate to TNR
+        System.out.println("========= Node " + node.getId() + " is NOT found in TNR, adding it into TNR");
+        node.setTriggertype_node_relation(restnr);          //setting node's tnr node id
+        restnr.setNode(node);                               //setting node to tnr's nodes list
+        productService.setNewTNR(restnr);                   //update restnr
+
+        restnr = productService.searchTNR(user.getId(),"abandon_cart").get();
+        System.out.println("========= TNR after update is :" + restnr);
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // webhook exist already
+        if(checkIfWebhookExists(task, "checkouts/update")) {
+            System.out.println("========= Webhook already exists, returning...");
         }
-        String devstore = user.getShopifydevstore();
-        String token = user.getShopifyApiAccessToken();
-        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-        System.out.println(url);
-        String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://e9f2-75-151-73-57.ngrok.io/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
-        HttpHeaders header = new HttpHeaders();
-        header.set("X-Shopify-Access-Token",token);
-        header.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity(data,header);
-        ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);       //fetches response entity from server. response is confirmation of the created webhook
+        // webhook doesn't exist
+        else {
+            System.out.println("========= Webhook does not exists, creating...");
+            String devstore = user.getShopifydevstore();
+            String token = user.getShopifyApiAccessToken();
+            String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+            System.out.println(url);
+            String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://cd88-74-213-227-187.ngrok-free.app/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+            HttpHeaders header = new HttpHeaders();
+            header.set("X-Shopify-Access-Token",token);
+            header.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> request = new HttpEntity(data,header);
+            System.out.println("Request: " + request.getBody());
+            ResponseEntity<String> response = this.restTemplate.exchange(url, HttpMethod.POST,request,String.class);       //fetches response entity from server. response is confirmation of the created webhook
+            System.out.println("Response: " + response.getBody());
+        }
+        // don't let the next node get executed yet
+        task.setMakenext(0);
         return task;
     }
 
@@ -131,6 +180,7 @@ public class API_Trigger_Controller {
     @ResponseBody
     public List<CoreModuleTask> shopifyPurchaseTriggerHit(@PathVariable("user") String username, @RequestBody String jsonstr)
     {
+        System.out.println("Purchase Trigger Hit JSON: " + jsonstr);
         User user = productService.searchUserById(Long.parseLong(username));
         Audience audience = null;
         JSONObject order = new JSONObject(jsonstr);
@@ -213,6 +263,9 @@ public class API_Trigger_Controller {
     @RequestMapping(value = "/shopify_abandon_checkout_update/{user}", method = RequestMethod.POST)
     @ResponseBody
     public List<CoreModuleTask> shopifyAbandonCartTriggerHit(@PathVariable("user") String username, String nodeid, @RequestBody String jsonstr) {
+        System.out.println("Abandon Trigger Hit JSON: " + jsonstr);
+        System.out.println("User: " + username);
+        System.out.println("NodeId: " + nodeid);
         User user = productService.searchUserById(Long.parseLong(username));
         Long audienceId = null;
         Audience audience;
@@ -222,18 +275,27 @@ public class API_Trigger_Controller {
         OffsetDateTime offsetDateTime = OffsetDateTime.parse(updateAt);
         LocalDateTime updateTime = offsetDateTime.toLocalDateTime();
 
-        // The customer's contact will either be an email or a phone number
+        // only search for audience if customer has email
         if (!email.isEmpty()) {
             audience = productService.searchAudienceByEmail(email);
-        } else {
-            // 如果response裡沒有email也沒有phone就直接return null。(有時候會出現這種狀況)
+        } // if not, simply returns
+        else {
+            System.out.println("================ No email or phone information provided");
             return null;
         }
-        // 如果這個contact不在我們的DB裡，建一個新的audience
+        // get the audienceId if found audience in the repo
         if (audience != null) {
             audienceId = audience.getId();
-        } else {
+            System.out.println("================ Customer exists in audience table with audienceId: " + audienceId);
+        } // create a new audience if no matching audience is found with that email
+        else {
+            System.out.println("================ Customer does not exist in audience table");
             audience = new Audience();
+            audience.setEmail(email);
+            audience.setCreatedAt(updateTime);
+            audience.setCreatedBy("System");
+            audience.setDate_added(updateTime.toLocalDate());
+            System.out.println(updateTime.toLocalDate());
         }
 
         if (order.has("billing_address")) {
@@ -242,10 +304,10 @@ public class API_Trigger_Controller {
             String lastName = billingAddress.getString("last_name");
             String address1 = billingAddress.getString("address1");
             String address2 = billingAddress.optString("address2");
-            audience.setEmail(email);
             audience.setFirstName(firstName);
             audience.setLastName(lastName);
             audience.setUpdatedAt(updateTime);
+            audience.setUpdatedBy("System");
             audience.setUser(user);
 
             if (address2.isEmpty()) {
@@ -256,25 +318,37 @@ public class API_Trigger_Controller {
             audience.setSource("shopify");
         }
 
-        if (audienceId == null) {
-            audience.setCreatedAt(updateTime);
-            audience = productService.addNewAudience(audience);
-            audienceId = audience.getId();
-        }
+        // create/update audience for customer
         productService.updateAudience(audience);
+        audienceId = audience.getId();
+        // create active audience for customer
+        ActiveAudience activeAudience = new ActiveAudience(audienceId);
+        productService.addNewActiveAudience(activeAudience);
+        Long activeAudienceId = activeAudience.getId();
 
+        // get nodes to be executed through TNR
         triggerType_node_relation tnr = productService.searchTNR(user.getId(), "abandon_cart").get();
         List<Node> nodes = tnr.getNodes();
         List<CoreModuleTask> tasks = new ArrayList<>();
 
         for (Node node : nodes) {
+            System.out.println("++++++++ Node id in tnr: " + node.getId() + " +++++++++");
             for (Long nextId : node.getNexts()) {
+                System.out.println("Next node id: " + nextId);
                 Node nextNode = productService.searchNodeById(nextId);
                 String url = "http://localhost:8080" + "/ReturnTask"; // Replace with server domain name
                 CoreModuleTask task = new CoreModuleTask();
+                Journey journey = journeyRepository.searchJourneyByFrontEndId(node.getJourneyFrontEndId());
+                task.setJourneyId(journey.getId());
+
+                // set audienceIds and activeAudienceIds
                 List<Long> audienceIds = new ArrayList<>();
+                List<Long> activeAudienceIds = new ArrayList<>();
                 audienceIds.add(audienceId);
+                activeAudienceIds.add(activeAudienceId);
+                task.setActiveAudienceId1(activeAudienceIds);
                 task.setAudienceId1(audienceIds);
+
                 task.setNodeId(nextId);
                 task.setUserId(user.getId());
                 task.setTaskType(1);
