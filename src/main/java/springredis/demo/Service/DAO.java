@@ -90,7 +90,7 @@ public class DAO {
         return journeyRepository.save(journey);
     }
 
-    public triggerType_node_relation addNewTNR(triggerType_node_relation tnr){
+    public triggerType_node_relation setNewTNR(triggerType_node_relation tnr){
         return tnr_repository.save(tnr);
     }
 

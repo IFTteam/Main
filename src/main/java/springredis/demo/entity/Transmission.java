@@ -22,7 +22,6 @@ public class Transmission extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "audience_id", referencedColumnName = "id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-
     private Audience audience;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -32,7 +31,6 @@ public class Transmission extends BaseEntity{
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @OnDelete(action = OnDeleteAction.CASCADE)
-
     @JoinColumn(name = "journey_id", referencedColumnName = "id", nullable = false)
     private Journey journey;
 }
