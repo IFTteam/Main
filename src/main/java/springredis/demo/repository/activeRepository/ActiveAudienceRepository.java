@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,4 +18,7 @@ public interface ActiveAudienceRepository extends JpaRepository<ActiveAudience, 
     ActiveAudience searchActiveAudienceByid(Long ID);
 //    @Query(value="SELECT a FROM ActiveAudience a WHERE a.AudienceId=:audienceID")
 //    Optional<ActiveAudience> searchActiveAudienceByAudienceId(long audienceID);
+
+    @Query(value = "select t from ActiveAudience t where t.AudienceId = :audienceId")
+    List<ActiveAudience> findByAudienceId(Long audienceId);
 }

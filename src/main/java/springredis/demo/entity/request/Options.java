@@ -17,13 +17,22 @@ import lombok.Setter;
 public class Options {
     @JsonProperty("start_time")
     @JsonFormat
-            (shape = JsonFormat.Shape.STRING, pattern = "YYYY-MM-DDTHH:MM:SS+-HH:MM")
+            (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private LocalDateTime startTime;
 
     @JsonProperty("open_tracking")
-    private String openTracking;
+    private boolean openTracking;
 
     @JsonProperty("click_tracking")
-    private String clickTracking;
+    private boolean clickTracking;
+
+    @Override
+    public String toString() {
+        return "Options{" +
+                "startTime='" + startTime + '\'' +
+                ", open_tracking='" + openTracking + '\'' +
+                ", click_tracking='" + clickTracking + '\'' +
+                '}';
+    }
 
 }
