@@ -45,9 +45,16 @@ public class BackendTaskServiceImpl implements BackendTaskService {
             name = jsonObject.getString("newTag");
         };
 
+        //Get frontEndId, then find current journey
+        String frontEndId = currentNode.getJourneyFrontEndId();
+        Journey currentJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
+
+        //Find user ID by get createBy
+        String userId = currentJourney.getCreatedBy();
+        Long userIdLong = Long.parseLong(userId);
+
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
-        //User user=userRepository.findById(coreModuleTask.getUserId()).get();
-        User user=userRepository.findById(123);
+        User user=userRepository.findById(userIdLong).get();
 
         TagDetail real_tag = new TagDetail();
 
@@ -129,10 +136,17 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         //Extract the tag name
         String name = jsonObject.getString("tag");
 
+        //Get frontEndId, then find current journey
+        String frontEndId = currentNode.getJourneyFrontEndId();
+        Journey currentJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
+
+        //Find user ID by get createBy
+        String userId = currentJourney.getCreatedBy();
+        Long userIdLong = Long.parseLong(userId);
+
         //Find the journey and user
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
-//        User user=userRepository.findById(coreModuleTask.getUserId()).get();
-        User user=userRepository.findById(123);
+        User user=userRepository.findById(userIdLong).get();
 //        Tag tag = tagRepository.findByUserIdName(name,user).get();
 //        Tag tag = tagRepository.findByUserIdName(name).get(0);
 
