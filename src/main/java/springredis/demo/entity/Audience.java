@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.entity.base.BaseEntity;
 
@@ -42,7 +45,7 @@ public class Audience extends BaseEntity {
 
     private String gender;
 
-    @ManyToOne(targetEntity = Node.class)
+    @ManyToOne(targetEntity = Node.class, cascade = CascadeType.ALL)
     @JoinColumn(name="audience_node_id",referencedColumnName = "id")
     private Node node;
 

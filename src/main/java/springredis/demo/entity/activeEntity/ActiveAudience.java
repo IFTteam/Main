@@ -3,6 +3,8 @@ package springredis.demo.entity.activeEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -15,6 +17,7 @@ public class ActiveAudience implements Serializable {
     @Id
     @GeneratedValue
     @JoinColumn(name="ID",referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Long id;
 
     @Column(name="AudienceId")
@@ -22,6 +25,7 @@ public class ActiveAudience implements Serializable {
 
     @ManyToOne
     @JoinColumn(name="audience_node_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private ActiveNode activeNode;
 

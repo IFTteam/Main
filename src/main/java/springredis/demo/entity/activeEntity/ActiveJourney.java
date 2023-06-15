@@ -17,7 +17,7 @@ public class ActiveJourney {
     private Long id;
     private Long journeyId;
 
-    @OneToMany(mappedBy = "activeJourney")
+    @OneToMany(mappedBy = "activeJourney", cascade = CascadeType.REMOVE)
     private List<ActiveNode> activeNodeList = new ArrayList<>();
 
 

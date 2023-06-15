@@ -37,8 +37,12 @@ public class AudienceActivity {
     @Column(name = "audience_email")
     private String audience_email;
 
-    @ManyToOne
-    @JoinColumn(name = "audience_id")
+    @ManyToOne(
+            cascade = CascadeType.ALL
+    )
+    @JoinColumn(
+            name = "audience_id"
+    )
     private Audience audience;
 
     @CreatedDate
