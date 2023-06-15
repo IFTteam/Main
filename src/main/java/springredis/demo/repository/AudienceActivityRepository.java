@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import springredis.demo.entity.Audience;
 import springredis.demo.entity.AudienceActivity;
-
+import java.util.List;
 @Repository
 public interface AudienceActivityRepository extends JpaRepository<AudienceActivity, Long> {
     @Query(value =
@@ -36,5 +36,15 @@ public interface AudienceActivityRepository extends JpaRepository<AudienceActivi
 
     @Query("select s from AudienceActivity s where s.audience = ?1")
     AudienceActivity getAudienceActivityByAudience(Audience item);
+
+    @Query("SELECT DISTINCT f.eventType FROM AudienceActivity f WHERE f.transmission_id = :transmissionId AND f.audience_email = :audienceEmail AND f.link_url = :linkUrl")
+    List<String> getEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail, @Param("linkUrl") String linkUrl);
+    // String getEventTypeByTransmissionIdAndAudienceEmail(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail);
+
+    @Query("SELECT COUNT(DISTINCT g.eventType) FROM AudienceActivity g WHERE g.transmission_id = :transmissionId AND g.audience_email = :audienceEmail AND g.link_url = :linkUrl")
+    int countDistinctEventTypeByTransmissionIdAndAudienceEmailAndLinkUrl(@Param("transmissionId") Long transmissionId, @Param("audienceEmail") String audienceEmail, @Param("linkUrl") String linkUrl);
+
+    //@Query("select * from AudienceActivity where audience_id = ?1")
+    List<AudienceActivity> findAllAudienceActivityByAudienceId(Long audienceID);
 
 }
