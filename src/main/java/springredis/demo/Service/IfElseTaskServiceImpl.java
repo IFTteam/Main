@@ -60,15 +60,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     @Override
     public CoreModuleTask filterByAudienceAction(CoreModuleTask coreModuleTask) throws JsonProcessingException {
 
-        /*
-        List <AudienceList> AudienceListList = audienceListRepository.findAll();
-        for (AudienceList audiencelist : AudienceListList)
-        {
-            audiencelist.removeAudience(audienceRepository.searchAudienceByid(19));
-            audienceListRepository.save(audiencelist);
-        }
-         */
-
         // Get the active audience list
         List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
         List<Long> listOfAudienceId = new ArrayList<>();

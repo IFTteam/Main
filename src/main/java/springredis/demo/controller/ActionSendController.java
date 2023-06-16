@@ -300,8 +300,8 @@ public class ActionSendController {
         Sender sender = new Sender();
     	//(sender, subject, email, name"sender", subject, html, text)
         String user_name = "user1";
-        String add = user_name + "@sub.paradx.net";
-    	sender.setEmail("duke.tang@sub.paradx.net");
+        String add = user_name + "@paradx.dev";
+    	sender.setEmail("duke.tang@paradx.dev");
         if(jsonObject.isNull("sender")) {
             sender.setName("Unknow");
         }else{
@@ -327,13 +327,22 @@ public class ActionSendController {
 
         System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
 
+        /*
         // TODO: user is manually created generated here for testing purpose
         User user = new User();
         user.setUsername("user" + coreModuleTask.getNodeId());
         user.setCreatedBy("Bryan");
         userRepository.save(user);
+        */
 
-        coreModuleTask.setUserId(user.getId());
+        // Find its user from journey
+        Journey journey = journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
+        System.out.println("(ActionSendController) The CMT module journey is createdBy " + journey.getCreatedBy());
+        Long userId = Long.valueOf(journey.getCreatedBy());
+        System.out.println("(ActionSendController) The CMT module userId is " + userId);
+        //User user = userRepository.searchUserById(userId);
+
+        coreModuleTask.setUserId(userId);
         System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
 //        request.setUserId(1L);  //set user id
