@@ -269,7 +269,7 @@ public class ActionSendController {
 
         Sender sender = new Sender();
         //(sender, subject, email, name"sender", subject, html, text)
-        sender.setEmail("set.sender.here@sub.paradx.net"); // set sender's email
+        sender.setEmail("zeqing.wang@altomni.com"); // set sender's email
         sender.setName(jsonObject.getString("sender"));
         content.setSender(sender);
         content.setSubject(jsonObject.getString("subject"));
@@ -312,7 +312,7 @@ public class ActionSendController {
         request.setAddressList(list);
         Content content = new Content();
         Sender sender = new Sender();
-        sender.setEmail("testing@sub.paradx.net");
+        sender.setEmail("testing@paradx.dev");
         sender.setName("Luke Leon");
         content.setSender(sender);
         content.setSubject("News1");
@@ -382,8 +382,8 @@ public class ActionSendController {
         activeAudience.setAudienceId(audience.getId());
         activeAudienceRepository.save(activeAudience);
         Node node = new Node();
-        node.setType("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
-        node.setProperties("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun");
+        node.setType("Luke Leon,News1,testing@paradx.dev,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
+        node.setProperties("Luke Leon,News1,testing@paradx.dev,Luke Leon,News1, ,Piggy Zhu Mi Bun");
         nodeRepository.save(node);
         Journey journey = new Journey();
         journeyRepository.save(journey);

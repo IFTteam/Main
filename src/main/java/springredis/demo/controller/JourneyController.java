@@ -1,11 +1,14 @@
 package springredis.demo.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveJourney;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.error.JourneyNotFoundException;
 import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
@@ -18,8 +21,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
+@Slf4j
 public class JourneyController {
     @Autowired
     private JourneyRepository journeyRepository;
@@ -37,9 +42,35 @@ public class JourneyController {
 
     @Autowired
     CMTExecutor cmtExecutor;
+
+    /**
+     * journey current status is not activate yet
+     */
+    private final int NOT_ACTIVATE = 0;
+
+    /**
+     * journey current status is activating
+     */
+    private final int ACTIVATING = 1;
+
+    /**
+     * journey current status already activated but paused
+     */
+    private final int ACTIVATED_PAUSED = 2;
+
+    /**
+     * journey current status already activated and is running
+     */
+    private final int ACTIVATED_RUNNING = 3;
+
+    /**
+     * journey current status already activated and finished
+     */
+    private final int ACTIVATED_FINISHED = 4;
+
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
-        nodeIdList.clear();
+        System.out.println("=======save journey=================");
         System.out.println(journeyJson);
         SeDeFunction sede = new SeDeFunction(); // class SeDeFunction : 传进来的是node list，把一个一个node拿出来序列化，然后加入String，返回String
 
@@ -49,7 +80,7 @@ public class JourneyController {
         String journeyName = journeyJsonModel.getProperties().getJourneyName();
         String frontEndId = journeyJsonModel.getProperties().getJourneyId();
         String thumbNailURL = journeyJsonModel.getProperties().getThumbNailURL();
-        int status = journeyJsonModel.getProperties().getStatus();
+//        int status = journeyJsonModel.getProperties().getStatus();
         String stage = journeyJsonModel.getProperties().getStage();
         String createdBy = journeyJsonModel.getProperties().getCreatedBy();
         String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
@@ -58,16 +89,61 @@ public class JourneyController {
         // If this journey already in DB, we want to modify the existing one instead of storing a new journey.
         Journey existingJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
 
+        // check existing journey status code
+        // if existing journey is not null and its status indicate activating, then stop saving
+        if (existingJourney != null && existingJourney.getStatus() == ACTIVATING) {
+            return null;
+        }
+        nodeIdList.clear();
         // Search and store all nodes with JourneyFrontEndId.
-
-        Journey oneJourney = new Journey(journeyName, thumbNailURL, journeyJson, status, stage, frontEndId, createdAt, createdBy, updatedAt, updatedBy);
-
+        Journey oneJourney = new Journey(journeyName, thumbNailURL, journeyJson, NOT_ACTIVATE, stage, frontEndId, createdAt, createdBy, updatedAt, updatedBy);
         if (existingJourney != null) {
             oneJourney.setCreatedAt(existingJourney.getCreatedAt());
             oneJourney.setId(existingJourney.getId());
+            // if existing journey is not null, then follow the old status
+            oneJourney.setStatus(existingJourney.getStatus());
         }
 
         return journeyRepository.save(oneJourney);
+    }
+
+    /**
+     * helper method to set journey status to the given status
+     * @param journeyJsonModel given journey json model
+     * @param status the status need to be set
+     */
+    private Journey setJourneyStatus(JourneyJsonModel journeyJsonModel, int status) throws JourneyNotFoundException {
+        String journeyFrontEndId = journeyJsonModel.getProperties().getJourneyId();
+        Journey existingJourney = journeyRepository.searchJourneyByFrontEndId(journeyFrontEndId);
+        if (existingJourney == null) {
+            throw new JourneyNotFoundException("Journey not found by given journey front-end id!");
+        }
+
+        String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
+        LocalDateTime updatedAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
+        existingJourney.setStatus(status);
+        existingJourney.setUpdatedAt(updatedAt);
+        existingJourney.setUpdatedBy(updatedBy);
+        return journeyRepository.save(existingJourney);
+    }
+
+    /**
+     * a put mapping to update the current journey status to the newest status code
+     * @param journeyJsonModel given parameter
+     * @return a Journey object follow the previous functions mode
+     * @throws JourneyNotFoundException if not found by the given journey front-end-id,
+     * then throw this exception
+     */
+    @PutMapping("/journey/status")
+    public Journey changeJourneyStatus(@RequestBody JourneyJsonModel journeyJsonModel) throws JourneyNotFoundException {
+        log.info("begin to change journey status...");
+        log.info(journeyJsonModel.toString());
+
+        // get status code and front end id from given journey json model
+        int status = journeyJsonModel.getProperties().getStatus();
+
+        // call set journey status helper method
+        return setJourneyStatus(journeyJsonModel, status);
     }
 
     @GetMapping("/journey/get-saved-journey/{journeyFrontEndId}")//激活Journey,查取数据库，反序列化
@@ -77,7 +153,7 @@ public class JourneyController {
         return journeyJson;
     }
     @PostMapping("/journey/activateJourney")//激活Journey,查取数据库，反序列化
-    public Journey activateJourney(@RequestBody String journeyJson){
+    public Journey activateJourney(@RequestBody String journeyJson) throws JourneyNotFoundException {
         nodeIdList.clear();
         System.out.println("journeyJson is :"+journeyJson);
         System.out.println("The node List1 is "+ nodeIdList);
@@ -85,9 +161,11 @@ public class JourneyController {
         SeDeFunction sede = new SeDeFunction();
 //         Map JourneyJson to JourneyJsonModel
         JourneyJsonModel journeyJsonModel = sede.deserializeJounrey(journeyJson);
+        // set journey status to ACTIVATING(1), meaning the journey is activating
+        setJourneyStatus(journeyJsonModel, ACTIVATING);
+
         Long journeyId = journeyRepository.save(oneJourney).getId();
         String journeyFrontEndId = journeyRepository.searchJourneyById(journeyId).getFrontEndId();
-
     /**
     *   a set to store the result of "findNodesByJourneyFrontEndId".
     *   Call DFS to modify/add nodes from the given journeyJson. After each (modify/add) operation, remove the nodeId from the set.
@@ -133,7 +211,7 @@ public class JourneyController {
 
         // set first node as head
         System.out.println("The node List is "+ nodeIdList);
-        Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
+        Node headNode = nodeRepository.searchNodeByid(nodeIdList. get(0));
         if (headNode == null) System.out.println("The headNode is null");
         else System.out.println("The headNode is" + headNode);
         headNode.setHeadOrTail(1); // 1: root, 0: node, -1: leaf
@@ -187,6 +265,9 @@ public class JourneyController {
         System.out.println("the size of Audience Id 1 is:" + cmt.getAudienceId1().toString());
         cmtExecutor.execute(cmt);
 
+        // after being executed, the journey status should label as ACTIVATED_FINISHED(4),
+        // meaning the journey already activated and is running
+        setJourneyStatus(journeyJsonModel, ACTIVATED_RUNNING);
         return oneJourney;
     }
 
@@ -195,9 +276,9 @@ public class JourneyController {
         System.out.println("apple pie");
             AudienceList audienceList = audienceListRepository.searchAudienceListByName(audienceListName);
         System.out.println("balloon");
-        //System.out.println(audienceList);
+//        System.out.println(audienceList);
             List<Audience> audiences = audienceList.getAudiences();
-        //System.out.println(audiences); // null
+//        System.out.println(audiences); // null
         System.out.println("cartoon");
             List<Long> audiencesId= new ArrayList<>();
         System.out.println("dogge");
@@ -380,6 +461,7 @@ public class JourneyController {
         System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:"+journeyFrontEndId);
         return nodeId;
     }
+
 
     ArrayList<Long> nodeIdList = new ArrayList<>();
     private void createActiveNodesAndMapToNodes(ActiveJourney activeJourney) {
