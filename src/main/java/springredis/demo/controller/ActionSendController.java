@@ -431,8 +431,8 @@ public class ActionSendController {
         activeAudience.setAudienceId(audience.getId());
         activeAudienceRepository.save(activeAudience);
         Node node = new Node();
-        node.setType("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
-        node.setProperties("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun");
+        node.setType("Luke Leon,News1,testing@paradx.dev,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
+        node.setProperties("Luke Leon,News1,testing@paradx.dev,Luke Leon,News1, ,Piggy Zhu Mi Bun");
         nodeRepository.save(node);
         Journey journey = new Journey();
         journeyRepository.save(journey);
