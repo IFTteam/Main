@@ -490,7 +490,6 @@ public class FuzzyStringMatchImpl {
 
             }
 
-            // TODO: Is this right?
             noOfBlocks++;
             type = ops[o].type;
 
