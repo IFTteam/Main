@@ -5,9 +5,11 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/customer_journey?sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false
-    username: root
-    password: 222222
+
+    url: jdbc:mysql://localhost:2001/customer_journey?sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false
+    #url: jdbc:mysql://18-118-28-214:3306/customer_journey?sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false
+    username: user
+    password: password
 
   jpa:
     show-sql: true
@@ -20,4 +22,3 @@ spring:
 SPARKPOST_API_KEY: 0cce3a0b7ea7d58f4ca86f19425774b37d79cf6c
 SP_BASE_URI: https://api.sparkpost.com
 TESTING_DOMAIN: paradx.dev
-

@@ -17,9 +17,11 @@ import springredis.demo.repository.WorldCityRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.tasks.CMTExecutor;
 
+import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+
 
 @Service
 public class IfElseTaskServiceImpl implements IfElseTaskService {
@@ -43,6 +45,9 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     private AudienceActivityRepository audienceActivityRepository;
 
     @Autowired
+    AudienceListRepository audienceListRepository;
+
+    @Autowired
     private EventWebhookController eventWebhookController;
 
     @Autowired
@@ -51,8 +56,18 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     @Autowired
     private TimeEventController timeEventController;
 
+
     @Override
     public CoreModuleTask filterByAudienceAction(CoreModuleTask coreModuleTask) throws JsonProcessingException {
+
+        /*
+        List <AudienceList> AudienceListList = audienceListRepository.findAll();
+        for (AudienceList audiencelist : AudienceListList)
+        {
+            audiencelist.removeAudience(audienceRepository.searchAudienceByid(19));
+            audienceListRepository.save(audiencelist);
+        }
+         */
 
         // Get the active audience list
         List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
@@ -768,7 +783,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
     }
 
-
     private void filterWithProperty(String property, String condition, String value, boolean flag, List<Audience> listOfAudiences, List<Audience> haveProperty)
     {
         String audienceValue = null;
@@ -851,6 +865,5 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             double distance = EARTH_RADIUS * c;
             return distance;
         }
-
 
 }
