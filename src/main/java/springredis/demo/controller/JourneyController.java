@@ -201,30 +201,6 @@ public class JourneyController {
         return oneJourney;
     }
 
-    @Autowired
-    TransmissionRepository transmissionRepository;
-    @GetMapping("/journey/getTransmission/{userId}")
-    public List<String> getTransmission(@PathVariable("userId") long userId){
-        // 返还和当前user对应的所有transmission
-        User user = userRepository.searchUserById(userId);
-        if(user != null)
-        {
-            System.out.println(user.getId() +" "+user.getUsername());
-
-            List<Transmission> transmissionList = transmissionRepository.getTransmissionByUserId(userId);
-            List<String> transmissionListString = new ArrayList<>(transmissionList.size());
-            for(Transmission t: transmissionList)
-            {
-                transmissionListString.add(t.getId()+" "+t.getCreatedAt()+" "+t.getCreatedBy()+" "+t.getEmail()+" "+t.getAudience().getId()+t.getJourney().getId()+" "+t.getUser().getId());
-            }
-            return transmissionListString;
-        }
-        else
-        {
-            System.out.println("User not found");
-            return null;
-        }
-    }
 
     private List<Long> AudienceFromAudienceList(Long nodeId, long userId){
         System.out.println("current node ID is:" + nodeId.toString());

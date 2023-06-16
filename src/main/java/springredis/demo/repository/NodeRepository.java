@@ -7,6 +7,8 @@ import springredis.demo.entity.Audience;
 import springredis.demo.entity.Journey;
 import springredis.demo.entity.Node;
 
+import java.util.List;
+
 @Repository
 public interface NodeRepository extends JpaRepository<Node, Long> {
 
@@ -19,5 +21,7 @@ public interface NodeRepository extends JpaRepository<Node, Long> {
     @Query(value="SELECT n from Node n WHERE n.journeyFrontEndId=:journeyFrontEndId")
     Node[] searchNodesByJourneyFrontEndId(String journeyFrontEndId);
 
+    @Query(value="SELECT n from Node n WHERE n.createdBy=:createdBy AND n.name=:nodeType")
+    List<Node> searchNodesByCreatedByAndName(String createdBy, String nodeType);
 
 }
