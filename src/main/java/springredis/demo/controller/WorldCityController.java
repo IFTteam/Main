@@ -9,6 +9,7 @@ import springredis.demo.entity.WorldCity;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class WorldCityController {
     private WorldCityService worldCityService;
 

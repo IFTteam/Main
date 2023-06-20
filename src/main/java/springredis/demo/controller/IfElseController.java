@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 public class IfElseController {
     @Autowired
@@ -70,7 +71,6 @@ public class IfElseController {
 
         return nullTask;
     }
-
 
     @GetMapping("/getTransmission/{userId}")
     public List<String> getTransmission(@PathVariable("userId") long userId){
