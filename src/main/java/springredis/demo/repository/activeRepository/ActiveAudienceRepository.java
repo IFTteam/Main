@@ -1,6 +1,7 @@
 package springredis.demo.repository.activeRepository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import springredis.demo.entity.activeEntity.ActiveAudience;
@@ -21,4 +22,10 @@ public interface ActiveAudienceRepository extends JpaRepository<ActiveAudience, 
 
     @Query(value = "select t from ActiveAudience t where t.AudienceId = :audienceId")
     List<ActiveAudience> findByAudienceId(Long audienceId);
+
+    @Modifying
+    @Query(nativeQuery = true, value = "delete from ActiveAudience where  audience_id = ?1  and audience_node_id = ?2")
+    void deleteWhenEndNode(Long audienceId, Long audienceNodeId);
+
+
 }
