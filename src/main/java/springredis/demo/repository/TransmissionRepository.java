@@ -16,9 +16,6 @@ public interface TransmissionRepository extends JpaRepository<Transmission, Long
 
     @Query
     List<Transmission> getTransmissionByEmail(String email);
-    @Query("select t from Transmission t where t.user = user")
-    List<Transmission> getTransmissionByUser(User user);
-
-    @Query(value="SELECT * from Transmission where user_id = ?1", nativeQuery = true )
+    @Query(value="SELECT * from transmission where user_id = ?1", nativeQuery = true )
     List<Transmission> getTransmissionByUserId(long userid);
 }
