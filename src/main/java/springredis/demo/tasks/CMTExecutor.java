@@ -1,15 +1,20 @@
 package springredis.demo.tasks;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import springredis.demo.Service.DAO;
+import springredis.demo.controller.JourneyController;
 import springredis.demo.entity.CoreModuleTask;
+import springredis.demo.entity.Journey;
 import springredis.demo.entity.Node;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.error.JourneyNotFoundException;
+import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
@@ -20,7 +25,11 @@ import java.util.*;
 //takes a Core module task as parameter
 
 @Component
+@Slf4j
 public class CMTExecutor{
+    @Autowired
+    private JourneyRepository journeyRepository;
+
     private ActiveAudienceRepository activeAudienceRepository;
 
     private ActiveNodeRepository activeNodeRepository;
@@ -28,6 +37,7 @@ public class CMTExecutor{
     private ActiveJourneyRepository activeJourneyRepository;
 
     private NodeRepository nodeRepository;
+
 
     RestTemplate restTemplate;
     //Chanage the below to actual API endpoints of functional urls
@@ -60,8 +70,29 @@ public class CMTExecutor{
 
     public void execute(CoreModuleTask coreModuleTask) {
         System.out.println("The module to be execute is " + coreModuleTask);
-        //first, if this coremoduletask's type is "end", we don't do anythong and simply returns
-        if (coreModuleTask.getType().equals("end")) return;
+        // first, if this coremoduletask's type is "end", we change the journey status to ACTIVATED_FINISHED and return
+        if ("end".equals(coreModuleTask.getType())) {
+            log.info("Prepare to end journey...");
+            // set journey status to end
+
+            // get journey id and find in DB
+            Long journeyId = coreModuleTask.getJourneyId();
+            Optional<Journey> optionalJourney = journeyRepository.findById(journeyId);
+
+            // if journey not found by given journey id, throw JourneyNotFoundException
+            if (optionalJourney.isEmpty()) {
+                throw new JourneyNotFoundException("Journey not found by given journey id!");
+            }
+
+            // set journey status
+            Journey journey = optionalJourney.get();
+            log.info("set journey status from {} to {}", journey.getStatus(), JourneyController.ACTIVATED_FINISHED);
+            journey.setStatus(JourneyController.ACTIVATED_FINISHED);
+            journeyRepository.save(journey);
+
+            // end execute
+            return;
+        }
         CoreModuleTask restask = null;
         //else, we can first call the respective functional API's based on task type if the callapi attribute is 1:
         System.out.println("The task is:" + coreModuleTask.toString());
@@ -74,10 +105,16 @@ public class CMTExecutor{
             System.out.println("The getcallapi is:" + coreModuleTask.getCallapi());
         }
         //System.out.println("The url is:" + urlDict.get(coreModuleTask.getType()).toString());
-        if(coreModuleTask.getCallapi()==1) {restask = restTemplate.exchange(urlDict.get(coreModuleTask.getName()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();}
-        else restask = coreModuleTask;
+        if (coreModuleTask.getCallapi() == 1) {
+            restask = restTemplate.exchange(urlDict.get(coreModuleTask.getName()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
+        }
+        else {
+            restask = coreModuleTask;
+        }
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
-        if (restask.getMakenext() == 0) return;
+        if (restask.getMakenext() == 0) {
+            return;
+        }
         //else: first move audience from curnode to next node, or create new active audience in nextnode
         Long activeid;
         //change local host to server domain!!

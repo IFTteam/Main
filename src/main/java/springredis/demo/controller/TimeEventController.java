@@ -130,15 +130,20 @@ public class TimeEventController {
         System.out.println("the core mode: " + coreModuleTask);
         Optional<Node> node = nodeRepository.findById(node_id);
 
-        /*
-        *   Set the dummy coreModuleTask
-         */
-        coreModuleTask.setMakenext(0);
+
 
         /*
         *   Initialize the new time task
          */
         TimeTask timeTask = new TimeTask(coreModuleTask);
+
+        // set make next
+        timeTask.setMakenext(coreModuleTask.getMakenext());
+
+        /*
+         *   Set the dummy coreModuleTask
+         */
+        coreModuleTask.setMakenext(0);
 
         timeTask.setTaskStatus(0);
 
