@@ -22,4 +22,10 @@ public interface ActiveNodeRepository extends JpaRepository<ActiveNode, Long> {
     @Modifying
     @Query(value="DELETE FROM ActiveNode t WHERE t.nodeId=:nodeId")
     void deleteByNodeId(Long nodeId);
+
+    @Transactional
+    @Modifying
+    @Query(nativeQuery = true, value ="delete from active_node t where t.node_journey_id = ?1")
+    void deleteByNodeJourneyId(Long nodeJourneyId);
+
 }

@@ -1,6 +1,8 @@
 package springredis.demo.controller;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import springredis.demo.entity.*;
@@ -14,6 +16,7 @@ import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.serializer.SeDeFunction;
+import springredis.demo.structures.OutAPICaller;
 import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
@@ -125,7 +128,7 @@ public class JourneyController {
         for (Long nodeId: existingNode) {
             System.out.println("active node id: "+ activeNodeRepository.findByDBNodeId(nodeId).getId());
             System.out.println("Deleting node: " + nodeId);
-            activeAudienceRepository.deleteByActiveNodeId(activeNodeRepository.findByDBNodeId(nodeId).getId());
+            //activeAudienceRepository.deleteByActiveNodeId(activeNodeRepository.findByDBNodeId(nodeId).getId());
             activeNodeRepository.deleteByNodeId(nodeId);
         }
 //        --------------------------------------------------------------------------------------------------
@@ -380,6 +383,8 @@ public class JourneyController {
         newNode.setNexts(nexts);
         newNode.nextsSerialize();
         nodeRepository.save(newNode);
+        System.out.println("NodeIdList++++++++++++++++++++++++++++++:"+nodeIdList);
+        System.out.println("new Node"+newNode);
         //newNode = nodeRepository.searchNodeByid(nodeId);
         System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:"+journeyFrontEndId);
         return nodeId;
@@ -399,4 +404,47 @@ public class JourneyController {
         }
     }
 
+    public boolean DeleteActiveAudience(Long audienceId){
+        try {
+            activeAudienceRepository.deleteById(audienceId);
+            System.out.println("删除 DeleteActiveAudience  成功");
+            return true;
+        }catch (Exception e){
+            Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
+            logger.error("DeleteActiveAudience error log:"+e);
+            return false;
+        }
+    }
+    public boolean DeleteActiveNodeAndJourney(Long JourneyId){
+
+        try {
+            ActiveJourney ActiveJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(JourneyId);
+            Long nodeJourneyId = ActiveJourney.getId();
+            activeNodeRepository.deleteByNodeJourneyId(nodeJourneyId);
+            System.out.println("删除 DeleteActiveNode nodeJourneyId:"+nodeJourneyId+" 成功");
+            activeJourneyRepository.deleteByActiveJourneyId(JourneyId);
+            System.out.println("删除 DeleteActiveJourney Id:"+JourneyId+" 成功");
+            //System.out.println("删除 DeleteActiveJourney  成功");
+            return true;
+        }catch (Exception e){
+            Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
+            logger.error("DeleteActiveNode error log:"+e);
+            return false;
+        }
+
+    }
+    public boolean UpdateJourneyStatus(Long journeyId){
+
+        try {
+            Integer status = 4;
+            journeyRepository.updateJourneyStatus(status,journeyId);
+            System.out.println("修改  UpdateJourneyStatus 成功");
+            return true;
+        }catch (Exception e){
+            Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
+            logger.error("UpdateJourneyStatus error log:"+e);
+            return false;
+        }
+
+    }
 }

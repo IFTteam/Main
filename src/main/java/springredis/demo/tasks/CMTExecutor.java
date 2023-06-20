@@ -14,7 +14,7 @@ import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
-
+import springredis.demo.controller.JourneyController;
 import java.util.*;
 
 //takes a Core module task as parameter
@@ -28,6 +28,8 @@ public class CMTExecutor{
     private ActiveJourneyRepository activeJourneyRepository;
 
     private NodeRepository nodeRepository;
+    @Autowired
+    JourneyController journeyController;
 
     RestTemplate restTemplate;
     //Chanage the below to actual API endpoints of functional urls
@@ -63,7 +65,10 @@ public class CMTExecutor{
         System.out.println("The module to be execute is " + coreModuleTask);
         //first, if this coremoduletask's type is "end", we don't do anything and simply returns
         if (coreModuleTask.getType().equals("end")) {
-            System.out.println("End node CMT received, exiting");
+            Long JourneyId = coreModuleTask.getJourneyId();
+            journeyController.UpdateJourneyStatus(JourneyId);
+            journeyController.DeleteActiveAudience(coreModuleTask.getActiveAudienceId1().get(0));
+            journeyController.DeleteActiveNodeAndJourney(JourneyId);
             return;
         }
         CoreModuleTask restask = null;
