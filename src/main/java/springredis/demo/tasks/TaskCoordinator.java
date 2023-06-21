@@ -11,6 +11,7 @@ import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
+import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.structures.OutAPICaller;
 import springredis.demo.structures.SimulateHeapKeeper;
 import springredis.demo.structures.SimulateNewEvent;
@@ -30,6 +31,7 @@ public class TaskCoordinator implements DisposableBean,Runnable {
 
     @Autowired
     CMTExecutor cmtExecutor;
+
 
     private ExecutorService executorService;
 
