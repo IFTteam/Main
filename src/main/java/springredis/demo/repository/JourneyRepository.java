@@ -23,9 +23,5 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     Journey findById(long l);
 
     List<Journey> findByCreatedBy(String userid);
-    @Transactional
-    @Modifying
-    @Query(nativeQuery = true,value = "UPDATE JOURNEY j SET j.status =?1 WHERE j.id =?2")
-    Integer updateJourneyStatus(Integer Status,Long journeyId );
 
 }

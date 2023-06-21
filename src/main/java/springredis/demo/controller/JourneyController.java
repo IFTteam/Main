@@ -433,18 +433,4 @@ public class JourneyController {
         }
 
     }
-    public boolean UpdateJourneyStatus(Long journeyId){
-
-        try {
-            Integer status = 4;
-            journeyRepository.updateJourneyStatus(status,journeyId);
-            System.out.println("修改  UpdateJourneyStatus 成功");
-            return true;
-        }catch (Exception e){
-            Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
-            logger.error("UpdateJourneyStatus error log:"+e);
-            return false;
-        }
-
-    }
 }

@@ -66,7 +66,6 @@ public class CMTExecutor{
         //first, if this coremoduletask's type is "end", we don't do anything and simply returns
         if (coreModuleTask.getType().equals("end")) {
             Long JourneyId = coreModuleTask.getJourneyId();
-            journeyController.UpdateJourneyStatus(JourneyId);
             journeyController.DeleteActiveAudience(coreModuleTask.getActiveAudienceId1().get(0));
             journeyController.DeleteActiveNodeAndJourney(JourneyId);
             return;
