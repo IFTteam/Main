@@ -1,6 +1,7 @@
 package springredis.demo.structures;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestTemplate;
@@ -15,11 +16,13 @@ import springredis.demo.error.DataBaseObjectNotFoundException;
 import springredis.demo.error.TimeTaskNotExistException;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
+import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 public class OutAPICaller implements Runnable{
 
 	@Autowired
@@ -30,6 +33,9 @@ public class OutAPICaller implements Runnable{
     private RedisTemplate redisTemplate;
     @Autowired
     private RestTemplate restTemplate = new RestTemplate();
+
+	@Autowired
+	CMTExecutor cmtExecutor;
     
     private boolean isRunning = true;
     private String outQueueKey = "OutQueue";
@@ -51,11 +57,12 @@ public class OutAPICaller implements Runnable{
 
 
 
-    public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository) {
-        this.timeDelayRepository = timeDelayRepository;
-        this.redisTemplate = redisTemplate;
-        this.nodeRepository = nodeRepository;
-    }
+	public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository, ActiveNodeRepository activeNodeRepository) {
+		this.timeDelayRepository = timeDelayRepository;
+		this.redisTemplate = redisTemplate;
+		this.nodeRepository = nodeRepository;
+		cmtExecutor = new CMTExecutor(nodeRepository, restTemplate, activeNodeRepository);
+	}
 
     @SneakyThrows
 	@Override
@@ -71,7 +78,7 @@ public class OutAPICaller implements Runnable{
 	        	Long id = ((Number)outEvent.getId()).longValue();
 				System.out.println("the id is: " + id);
 	            Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
-	            if (!timeTaskOp.isPresent()) {
+	            if (timeTaskOp.isEmpty()) {
 	            	throw new DataBaseObjectNotFoundException("No Time Task Exist");
 				}
 				TimeTask timetask = timeTaskOp.get();
@@ -79,13 +86,16 @@ public class OutAPICaller implements Runnable{
             	System.out.println("================================================Time Task retrieved=====================================================");
 //            	TaskExecutor taskExectuor = new TaskExecutor(timeTaskOp.get().getCoreModuleTask());
             	CoreModuleTask coreModuleTask = timetask.getCoreModuleTask();
+
+				coreModuleTask.setMakenext(timetask.getMakenext());
+
             	System.out.println(coreModuleTask.getAudienceId1());
 				System.out.println("cur JI id is:" + timetask.getJourneyId());
 				coreModuleTask = restTemplate.postForObject("http://localhost:8080/move_user", coreModuleTask, CoreModuleTask.class);  //calls JiaQi's method
             	System.out.println("=================================CoreModuleTask ID: " + coreModuleTask.getId());
 				System.out.println("=================================Node: " + timetask);
             	Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
-				if (!optionalNode.isPresent()) {
+				if (optionalNode.isEmpty()) {
 					throw new DataBaseObjectNotFoundException("The corresponding Time Trigger node does not exist");
 				}
 				Node node = initializeNodeFromDB(optionalNode);
@@ -98,7 +108,7 @@ public class OutAPICaller implements Runnable{
            		System.out.println("Node getNexts Index 0 =======================" + node.getNexts().get(0));
            		Long next_node_id = node.getNexts().get(0);
            		Optional<Node> optionalNextNode = nodeRepository.findById(next_node_id);  //find next node by id from repository
-				if (!optionalNextNode.isPresent()) {
+				if (optionalNextNode.isEmpty()) {
 					throw new DataBaseObjectNotFoundException("The Next node does not exist");
 				}
 
@@ -152,11 +162,10 @@ public class OutAPICaller implements Runnable{
 				System.out.println("the usl is" + url);
 				ArrayList array = new ArrayList<Long>(1501);
 				//coreModuleTask.setAudienceId1(array);
-	            String result = restTemplate.postForObject(url, coreModuleTask, String.class);
-
+//	            String result = restTemplate.postForObject(url, coreModuleTask, String.class);
+				cmtExecutor.execute(coreModuleTask);
 	        }
     	}
-
     }
 
     public Node initializeNodeFromDB(Optional<Node> NodeOp){
