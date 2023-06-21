@@ -29,10 +29,10 @@ public class CoreModuleTask extends BaseTaskEntity {
     private int callapi=1;      //If this is 1 (by default), CMTEexecutor will call the respective API for this task. Else, it will simply transfer audience from this task's node to next node, and make next node's task
 
 
-	public CoreModuleTask(BaseTaskEntity baseTaskEntity) {
-		super(baseTaskEntity);
-		// TODO Auto-generated constructor stub
-	}
+    public CoreModuleTask(BaseTaskEntity baseTaskEntity) {
+        super(baseTaskEntity);
+        // TODO Auto-generated constructor stub
+    }
 
     public CoreModuleTask(CoreModuleTask cm) {
         super(cm);
@@ -44,8 +44,8 @@ public class CoreModuleTask extends BaseTaskEntity {
         this.makenext = cm.makenext;
         this.callapi = cm.callapi;
     }
-	
-	public CoreModuleTask() {
-		super();
-	}
+
+    public CoreModuleTask() {
+        super();
+    }
 }
