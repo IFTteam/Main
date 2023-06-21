@@ -15,7 +15,6 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
     @Autowired
     private AudienceRepository audienceRepository;
-
     @Autowired
     private TagDetailRepository tagDetailRepository;
 
@@ -80,9 +79,8 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
         List<Long> audienceIds = coreModuleTask.getAudienceId1();
 
-//        System.out.println(coreModuleTask);
+//        System.out.println("im here");
 //        System.out.println(audienceIds);
-
 
         List<Long> newlist = new ArrayList<>();
         for (Long audienceId : audienceIds) {
@@ -91,6 +89,9 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
 
             Audience real_audience = audience.get();
+
+
+//            System.out.println(real_audience.getId());
 
             // Audience audience = audienceRepository.findById(audienceId).get();
             // Tag tag = tagRepository.findById(tagId).get();
@@ -128,12 +129,9 @@ public class BackendTaskServiceImpl implements BackendTaskService {
     @Override
     public CoreModuleTask removeRelationBetweenAudienceAndTag(CoreModuleTask coreModuleTask) {
 
-        //Find current node
         Node currentNode = nodeRepository.findById(coreModuleTask.getNodeId()).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-
-        //Extract the tag name
         String name = jsonObject.getString("tag");
 
         //Get frontEndId, then find current journey

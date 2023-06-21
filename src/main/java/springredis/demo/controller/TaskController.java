@@ -36,7 +36,7 @@ public class TaskController {
     private final String taskQueueKey = "CoretaskQueue";
     @PostMapping("/ReturnTask")
     public Long addTask(@RequestBody CoreModuleTask coreModuleTask){
-        System.out.println("========== (TaskController) Pushed CMT into CoretaskQueue via ReturnTask API ==========");
+
         return redisTemplate.opsForList().leftPush(taskQueueKey ,coreModuleTask);
     }
 

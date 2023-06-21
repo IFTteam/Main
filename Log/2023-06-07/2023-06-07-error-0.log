@@ -1,0 +1,1 @@
+2023-06-07 00:12:58.797 ERROR [Thread-6] springredis.demo.structures.OutAPICaller - error log:org.springframework.data.redis.RedisConnectionFailureException: Cannot get Jedis connection; nested exception is redis.clients.jedis.exceptions.JedisConnectionException: Could not get a resource from the pool

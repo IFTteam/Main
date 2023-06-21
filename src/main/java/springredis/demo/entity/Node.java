@@ -35,6 +35,7 @@ public class Node extends BaseEntity {
     private String status;
     private String properties;
     private String journeyFrontEndId;
+
     @ElementCollection
     @JoinColumn(name = "node_id")
     // 需要先删除已有的表，然后build
@@ -55,8 +56,6 @@ public class Node extends BaseEntity {
 
     private String sNexts;
     private String sLasts;
-
-
 
     //Make Sure that sNexts is not empty when call this. sNexts->nexts
     public void nextsDeserialize(){

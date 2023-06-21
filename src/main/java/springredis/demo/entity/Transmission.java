@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Entity
 @Getter
@@ -17,7 +18,7 @@ public class Transmission extends BaseEntity{
     private Long id;
 
     @Column(name = "audience_email")
-    private String audience_email;
+    private String email;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "audience_id", referencedColumnName = "id", nullable = false)

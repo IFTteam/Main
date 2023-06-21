@@ -101,12 +101,11 @@ public class CMTExecutor{
         //change local host to server domain!!
         //moving active audience pool from current node to next node (via method in task controller)
         if (restask.getTaskType() == 0) {
-            System.out.println("Moving audience to next node");
             restask = restTemplate.exchange("http://localhost:8080/move_user", HttpMethod.POST, new HttpEntity<>(restask), CoreModuleTask.class).getBody();
         } else {
-            System.out.println("Creating audience for next node");
             restask = restTemplate.exchange("http://localhost:8080/create_user", HttpMethod.POST, new HttpEntity<>(restask), CoreModuleTask.class).getBody();
-            System.out.println("in CMT, after create user, the au is:" + restask.getActiveAudienceId1());
+            System.out.println("in CMT, after create user, the au is:" +
+                    restask.getActiveAudienceId1());
         }
         System.out.println("restask node id: " + restask.getNodeId());
         Node curnode = nodeRepository.searchNodeByid(restask.getNodeId());
@@ -114,7 +113,7 @@ public class CMTExecutor{
         System.out.println("current node is: " + curnode.getName());
         //finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {
-            System.out.println("========== (CMTExecutor) get nexts is being excuted ==========");
+            System.out.println("++++++++++++++++get nexts is being excute");
             System.out.println("curnode.getNexts() is" + curnode.getNexts().toString());
             Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
@@ -144,12 +143,12 @@ public class CMTExecutor{
             List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
             List<Long> activeIDs = new ArrayList<>();
             List<Long> IDs = new ArrayList<>();
-            /*for (ActiveAudience aud : activeAudienceList) {
-                activeIDs.add(aud.getId());
-                IDs.add(aud.getAudienceId());
-            }*/
-            newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
-            newtask.setAudienceId1(restask.getAudienceId1());
+//            for (ActiveAudience aud : activeAudienceList) {
+//                activeIDs.add(aud.getId());
+//                IDs.add(aud.getAudienceId());
+//            }
+            newtask.setActiveAudienceId1(activeIDs);
+            newtask.setAudienceId1(IDs);
             String url = "http://localhost:8080/ReturnTask";
             System.out.println("========== (CMTExecutor) Pushing new CMT to TaskController ==========");
             Long taskid = restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(newtask), Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
