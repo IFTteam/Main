@@ -47,7 +47,4 @@ public interface AudienceActivityRepository extends JpaRepository<AudienceActivi
     //@Query("select * from AudienceActivity where audience_id = ?1")
     List<AudienceActivity> findAllAudienceActivityByAudienceId(Long audienceID);
 
-    //@Query("select * from AudienceActivity where audience_id = ?1")
-    List<AudienceActivity> findAllAudienceActivityByAudienceId(Long audienceID);
-
 }

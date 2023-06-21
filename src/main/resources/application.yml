@@ -1,5 +1,5 @@
-4+/ver:
-  rt: 8080
+server:
+  port: 8080
 
 
 spring:
@@ -10,6 +10,7 @@ spring:
     password: xht19951005
   main:
     allow-circular-references: true
+
   jpa:
     show-sql: true
     hibernate:

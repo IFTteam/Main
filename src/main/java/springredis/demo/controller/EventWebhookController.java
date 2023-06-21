@@ -116,28 +116,6 @@ public class EventWebhookController {
         String targetLinkUrl = category.optString("target_link_url");
 
         if (eventType.equals("link_unsubscribe")) {
-
-                Audience audience = audienceRepository.findByEmail(audienceEmail);
-                Long audienceId = audience.getId();
-
-                // delete all in active_audience by audience_id
-                List<ActiveAudience> activeAudienceList = activeAudienceRepository.findByAudienceId(audienceId);
-                if(activeAudienceList != null)
-                {
-                    for(ActiveAudience activeAudience : activeAudienceList)
-                    {
-                        activeAudienceRepository.delete(activeAudience);
-                    }
-                }
-
-                // delete all in audience_audiencelist by audience_id
-                List <AudienceList> AudienceListList = audienceListRepository.findAll();
-                for (AudienceList audiencelist : AudienceListList)
-                {
-                    audiencelist.removeAudience(audienceRepository.searchAudienceByid(audienceId));
-                    audienceListRepository.save(audiencelist);
-                }
-
             Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
             transmission.ifPresent(value -> saveAudienceActivity(transmissionId, eventType, targetLinkUrl, value, audienceEmail));
 

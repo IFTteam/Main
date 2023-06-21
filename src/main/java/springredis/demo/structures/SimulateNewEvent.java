@@ -39,18 +39,16 @@ public class SimulateNewEvent implements Runnable{
             System.out.println(time.getTime());
             List<TimeTask> timeTasks = timeDelayRepository.findTasksBeforeTime(time.getTime()+timeAhead);
             for (TimeTask timeTask : timeTasks){
-                System.out.println("========== (SimulateNewEvent) Found TimeTask before NOW ==========");
                 time.setTime(timeTask.getTriggerTime());
                 Event event = new Event(time,timeTask.getId());
                 timeTask.setTaskStatus(1);
                 timeDelayRepository.save(timeTask);
 
                 redisTemplate.opsForList().leftPush(inQueueKey,event);
-                System.out.println("========== (SimulateNewEvent) Pushed into inQueue, New Event at " + time + " ==========");
+                System.out.println("Insert New Event at"+time);
 
                 //TODO: return response to Core Module with taskEntity
-                System.out.println("========== (SimulateNewEvent) Calling ReturnTask API with timeTask ==========");
-                //restTemplate.postForObject("http://localhost:8080/ReturnTask", timeTask, String.class);
+//                restTemplate.postForObject("http://localhost:8080/ReturnTask", timeTask, String.class);
             }
 
 

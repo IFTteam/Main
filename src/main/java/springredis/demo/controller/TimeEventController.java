@@ -130,26 +130,23 @@ public class TimeEventController {
         System.out.println("node id: " + node_id);
         Node node = nodeRepository.findById(node_id).get();
 
-        // Set the dummy coreModuleTask
+        /*
+         *   Initialize the new time task
+         */
+        TimeTask timeTask = new TimeTask(coreModuleTask);
+
+        // set make next
+        timeTask.setMakenext(coreModuleTask.getMakenext());
+
+        /*
+         *   Set the dummy coreModuleTask
+         */
         coreModuleTask.setMakenext(0);
 
-        // Initialize the new time task
-        TimeTask timeTask = createTimeTask(coreModuleTask, node_id);
-        timeTask.setCreatedBy("Time trigger");
+        timeTask.setTaskStatus(0);
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
-        System.out.println("Time info: " + node);
-//        JSONObject example1 = new JSONObject("{\n" +
-//                "        \"send\": \"2023-05-03T10:00AM\",\n" +
-//                "        \"list\": \"Any list\",\n" +
-//                "        \"frequency\": \"Once\"\n" +
-//                "      }");;
-//        JSONObject example2 = new JSONObject("{\n" +
-//                "        \"time\": \"Tuesday11PM,End date:12/12/2023\",\n" +
-//                "        \"Select List\": \"Any list\",\n" +
-//                "        \"Runs\": \"Recurring\"\n" +
-//                "      }");;
         String time = jsonObject.getString("send");
         String frequency = jsonObject.getString("frequency");
         if (Objects.equals(frequency, "Once")) {
@@ -159,12 +156,27 @@ public class TimeEventController {
             time_parser_recurring(time, timeTask);
         }
 
-        System.out.println("journey id before time: " + timeTask.getCoreModuleTask().getJourneyId());
-        System.out.println("The ActiveAudienceId1 is: " + coreModuleTask.getActiveAudienceId1());
-        System.out.println("Saved Time Trigger as TimeTask into timeDelayRepo");
+        //auditing support
+        timeTask.setNodeId(node_id);
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
+        timeTask.setCreatedAt(LocalDateTime.now());
+        timeTask.setUserId(coreModuleTask.getUserId());
+        timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
+        timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
+        timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
+        timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
+        timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
+        timeTask.setTaskStatus(0);
+        timeTask.setCoreModuleTask(coreModuleTask);
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
+
+        System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
+        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
+        //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
         timeDelayRepository.save(timeTask);
 
-        System.out.println("dummy CMT returned: " + coreModuleTask);
+        System.out.println("dummy task returned");
+        System.out.println(coreModuleTask);
         return coreModuleTask;
     }
 
@@ -184,12 +196,12 @@ public class TimeEventController {
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
-        JSONObject example1 = new JSONObject("{\n" +
-                "        \"date\": \"2023-05-10\",\n" +
-                "      }");;
-        JSONObject example2 = new JSONObject("{\n" +
-                "        \"date\": \"1 Hours\",\n" +
-                "      }");;
+//        JSONObject example1 = new JSONObject("{\n" +
+//                "        \"date\": \"2023-05-10\",\n" +
+//                "      }");;
+//        JSONObject example2 = new JSONObject("{\n" +
+//                "        \"date\": \"1 Hours\",\n" +
+//                "      }");;
         String time = jsonObject.getString("date");
         String[] parsed = time.split(" ");
         if (parsed.length == 1) {
@@ -223,6 +235,7 @@ public class TimeEventController {
         return timeTask;
     }
 
+
     @PostMapping("/TimetasktestRepeat")
     public CoreModuleTask TimetasktestRepeat(@RequestBody CoreModuleTask coreModuleTask){
         Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
@@ -254,6 +267,9 @@ public class TimeEventController {
     }
 
 
+
+
+
     // need modification for set time trigger
     private static void parseFStringDelayTimeInSecond(String fstring, TimeTask timeTask) {
         // 数据格式： fstring format "DelayTimeInSecond repeatTimes repeatInterval"
@@ -269,6 +285,8 @@ public class TimeEventController {
     // need modification for set time trigger
     private static void parseFStringWithSpecificTime(String fstring, TimeTask timeTask) {
         try {
+            // fstring format "specificTime(yyyy-MM-dd HH:mm:ss) repeatTimes repeatInterval"
+            // repeatInterval format "y m d"
             String[] flist = fstring.split("T");
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
             Date parse = format.parse(flist[0] + " " + flist[1]);

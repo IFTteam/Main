@@ -34,6 +34,7 @@ public class TransmissionRequest {
 
     @JsonProperty("options")
     private Options options;
+
     @Override
     public String toString() {
         return "TransmissionRequest{" +
