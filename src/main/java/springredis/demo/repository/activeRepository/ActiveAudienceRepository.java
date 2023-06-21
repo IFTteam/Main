@@ -17,9 +17,6 @@ public interface ActiveAudienceRepository extends JpaRepository<ActiveAudience, 
     @Query(value = "select t from ActiveAudience t where t.AudienceId = :audienceId")
     ActiveAudience findByDBId(Long audienceId);
 
-    @Query(value = "select t from ActiveAudience t where t.AudienceId = :audienceId")
-    List<ActiveAudience> findByAudienceId(Long audienceId);
-
     @Transactional
     @Modifying
     long deleteByActiveNodeId(Long id);

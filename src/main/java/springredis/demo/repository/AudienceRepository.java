@@ -12,8 +12,6 @@ import java.util.Optional;
 @Repository
 public interface AudienceRepository extends JpaRepository<Audience, Long> {
 
-    Audience findByEmail(String email);
-
     //equivalent to typed query with entitiy menager
     Audience findByEmail(String email);
 
