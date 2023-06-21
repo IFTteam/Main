@@ -203,7 +203,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
                                     //restAudience.remove(audience);
 
-                                    //audienceActivityRepository.delete(audienceActivity);
+                                    audienceActivityRepository.delete(audienceActivity);
                                 }
                             }
                         }
