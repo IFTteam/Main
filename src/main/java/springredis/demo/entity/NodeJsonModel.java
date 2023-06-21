@@ -65,6 +65,7 @@ public class NodeJsonModel {
         String sender;
         String subject;
         String tag;
+        String date;
         String sendOn;
         String waitFor;
         String property;
