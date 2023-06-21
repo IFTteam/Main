@@ -155,15 +155,14 @@ public class ActionSendController {
         System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().size());
         System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
-                                                                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
-                                                                 .header("Content-Type", "application/json")
-                                                                 .header("Accept", "application/json")
-                                                                 .accept(MediaType.APPLICATION_JSON)
-                                                                 .body(Mono.just(transmissionRequest), TransmissionRequest.class)
-                                                                 .retrieve()
-                                                                 .bodyToMono(SparkPostResponse.class)
-                                                                 .blockOptional();
-
+                .uri("/api/v1/transmissions?num_rcpt_errors=3")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(transmissionRequest), TransmissionRequest.class)
+                .retrieve()
+                .bodyToMono(SparkPostResponse.class)
+                .blockOptional();
         if(!sparkPostResponse.isPresent()) 
         {
         	return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body(new Response());

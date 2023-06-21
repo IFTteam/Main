@@ -50,7 +50,7 @@ public class SimulateNewEvent implements Runnable{
 
                 //TODO: return response to Core Module with taskEntity
                 System.out.println("========== (SimulateNewEvent) Calling ReturnTask API with timeTask ==========");
-                restTemplate.postForObject("http://localhost:8080/ReturnTask", timeTask, String.class);
+                //restTemplate.postForObject("http://localhost:8080/ReturnTask", timeTask, String.class);
             }
 
 
