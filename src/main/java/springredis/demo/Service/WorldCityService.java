@@ -27,7 +27,8 @@ public class WorldCityService {
         // 我自己测试时，0.85左右即可正常工作
 
         // Check to see if the input is null
-        if (targetCity == null) {
+        if (targetCity == null)
+        {
             throw new WorldCityNotExistException("City doesn't exist");
         }
 

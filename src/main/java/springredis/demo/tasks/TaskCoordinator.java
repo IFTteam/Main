@@ -11,6 +11,7 @@ import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
+import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.structures.OutAPICaller;
 import springredis.demo.structures.SimulateHeapKeeper;
 import springredis.demo.structures.SimulateNewEvent;
@@ -55,8 +56,9 @@ public class TaskCoordinator implements DisposableBean,Runnable {
         while (someCondition) {
             // 查Redis
             while (m_redisTemplate.opsForList().size(taskQueueKey)>0){
-                System.out.println("========== (TaskCoordinator) New CMT detected in CoreTaskQueue, start executing ========");
+                log.info("redis indicate more task to be run...");
                 CoreModuleTask coreModuleTask = (CoreModuleTask) m_redisTemplate.opsForList().rightPop(taskQueueKey);
+                log.info(coreModuleTask.toString());
                 cmtExecutor.execute(coreModuleTask);
             }
             try {

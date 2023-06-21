@@ -53,31 +53,31 @@ public class JourneyController {
     /**
      * journey current status is not activate yet
      */
-    private final int NOT_ACTIVATE = 0;
+    public static final int NOT_ACTIVATE = 0;
 
     /**
      * journey current status is activating
      */
-    private final int ACTIVATING = 1;
+    public static final int ACTIVATING = 1;
 
     /**
      * journey current status already activated but paused
      */
-    private final int ACTIVATED_PAUSED = 2;
+    public static final int ACTIVATED_PAUSED = 2;
 
     /**
      * journey current status already activated and is running
      */
-    private final int ACTIVATED_RUNNING = 3;
+    public static final int ACTIVATED_RUNNING = 3;
 
     /**
      * journey current status already activated and finished
      */
-    private final int ACTIVATED_FINISHED = 4;
+    public static final int ACTIVATED_FINISHED = 4;
 
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
-        System.out.println("Journey saved");
+        log.info("begin to save the journey...");
         SeDeFunction sede = new SeDeFunction();
 
         // Map JourneyJson to JourneyJsonModel
@@ -99,6 +99,7 @@ public class JourneyController {
         // check existing journey status code
         // if existing journey is not null and its status indicate activating, then stop saving
         if (existingJourney != null && existingJourney.getStatus() == ACTIVATING) {
+            log.info("The journey now is activating, so no need to save during activating.");
             return null;
         }
         nodeIdList.clear();
@@ -126,6 +127,7 @@ public class JourneyController {
             throw new JourneyNotFoundException("Journey not found by given journey front-end id!");
         }
 
+        log.info("set journey status from {} to {}", existingJourney.getStatus(), status);
         String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
         LocalDateTime updatedAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         existingJourney.setStatus(status);
@@ -273,11 +275,12 @@ public class JourneyController {
 
         System.out.println("Audience List 1 is:" + cmt.getAudienceId1().toString());
         System.out.println("======================= Moving to CMTExecutor ========================");
-        cmtExecutor.execute(cmt);
 
-        // after being executed, the journey status should label as ACTIVATED_FINISHED(4),
+        // after being activated, but before execute, the journey status should label as ACTIVATED_RUNNING(3),
         // meaning the journey already activated and is running
         setJourneyStatus(journeyJsonModel, ACTIVATED_RUNNING);
+
+        cmtExecutor.execute(cmt);
         return oneJourney;
     }
 
@@ -313,7 +316,7 @@ public class JourneyController {
 
 
     //TODO: Node和Journey级联关系没保存，要写一下
-    private Journey JourneyParse(Journey journey) {
+    private Journey JourneyParse(Journey journey) throws JourneyNotFoundException {
         //Deserialize function
         SeDeFunction seDeFunction = new SeDeFunction();
         List<Node> deserializedJourney =  seDeFunction.deserializing(journey.getJourneySerialized());
