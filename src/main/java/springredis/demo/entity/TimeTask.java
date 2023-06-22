@@ -7,6 +7,7 @@ import org.springframework.data.relational.core.sql.In;
 import springredis.demo.entity.base.BaseTaskEntity;
 
 import javax.persistence.*;
+import javax.transaction.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -23,7 +24,7 @@ public class TimeTask extends BaseTaskEntity {
     @GeneratedValue
     @Column(name="id")
     private Long id;
-    
+
     //Taken from BaseTaskEntity
     private Long nodeId;
     private String activeAudienceId1S;
@@ -44,7 +45,7 @@ public class TimeTask extends BaseTaskEntity {
     private int makenext = 0;
 
     private Integer taskStatus;
-    @OneToOne(cascade = {CascadeType.ALL})
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "core_module_task", referencedColumnName = "id")
     private CoreModuleTask coreModuleTask;
 

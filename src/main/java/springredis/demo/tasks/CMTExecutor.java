@@ -75,9 +75,6 @@ public class CMTExecutor{
         // first, if this coremoduletask's type is "end", we change the journey status to ACTIVATED_FINISHED and return
         if ("end".equals(coreModuleTask.getType())) {
             log.info("Prepare to end journey...");
-            // set journey status to end
-
-            // get journey id and find in DB
             Long journeyId = coreModuleTask.getJourneyId();
             Optional<Journey> optionalJourney = journeyRepository.findById(journeyId);
 

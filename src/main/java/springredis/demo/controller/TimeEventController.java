@@ -196,12 +196,6 @@ public class TimeEventController {
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
-//        JSONObject example1 = new JSONObject("{\n" +
-//                "        \"date\": \"2023-05-10\",\n" +
-//                "      }");;
-//        JSONObject example2 = new JSONObject("{\n" +
-//                "        \"date\": \"1 Hours\",\n" +
-//                "      }");;
         String time = jsonObject.getString("date");
         String[] parsed = time.split(" ");
         if (parsed.length == 1) {
@@ -221,7 +215,6 @@ public class TimeEventController {
     private TimeTask createTimeTask(@RequestBody CoreModuleTask coreModuleTask, Long node_id) {
         TimeTask timeTask = new TimeTask(coreModuleTask);
         timeTask.setNodeId(node_id);
-        timeTask.setJourneyId(coreModuleTask.getJourneyId());
         timeTask.setCreatedAt(LocalDateTime.now());
         timeTask.setUserId(coreModuleTask.getUserId());
         timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));

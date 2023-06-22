@@ -58,22 +58,22 @@ public class JourneyController {
     /**
      * journey current status is activating
      */
-    public static final int ACTIVATING = 1;
+    public static final Integer ACTIVATING = 1;
 
     /**
      * journey current status already activated but paused
      */
-    public static final int ACTIVATED_PAUSED = 2;
+    public static final Integer ACTIVATED_PAUSED = 2;
 
     /**
      * journey current status already activated and is running
      */
-    public static final int ACTIVATED_RUNNING = 3;
+    public static final Integer ACTIVATED_RUNNING = 3;
 
     /**
      * journey current status already activated and finished
      */
-    public static final int ACTIVATED_FINISHED = 4;
+    public static final Integer ACTIVATED_FINISHED = 4;
 
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
     public Journey saveJourney(@RequestBody String journeyJson){
