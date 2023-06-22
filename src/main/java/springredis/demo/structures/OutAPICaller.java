@@ -47,7 +47,7 @@ public class OutAPICaller implements Runnable{
     private HashMap<String, String> urlDict = new HashMap<String, String>() {{
 		put("Time Delay", "http://localhost:8080/Time_Delay");
 		put("API Trigger", "http://localhost:8080/API_trigger");
-		put("Time Trigger", "http://localhost:8080/add");
+		put("Time Trigger", "http://localhost:8080/Time_Trigger");
 		put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
 		put("If/Else", "http://localhost:8080/IfElse");
 		put("Add Tag", "http://localhost:8080/AddTag");
@@ -72,14 +72,14 @@ public class OutAPICaller implements Runnable{
 		System.out.println("================================================OutAPI Starts=====================================================");
 		System.out.println(redisTemplate.opsForList().size(outQueueKey));
 
-		while(isRunning = true) {
+		while(isRunning) {
 			while (redisTemplate.opsForList().size(outQueueKey) > 0){
 				System.out.println("========== (OutAPICaller) Event detected in outQueue ========");
 				Event outEvent = ((Event) redisTemplate.opsForList().rightPop(outQueueKey));
 				Long id = ((Number)outEvent.getId()).longValue();
 				System.out.println("the id is: " + id);
 				Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
-				if (!timeTaskOp.isPresent()) {
+				if (timeTaskOp.isEmpty()) {
 					throw new DataBaseObjectNotFoundException("No Time Task Exist");
 				}
 				TimeTask timetask = timeTaskOp.get();
@@ -88,7 +88,7 @@ public class OutAPICaller implements Runnable{
 				System.out.println("cur JI id is:" + timetask.getJourneyId());
 				System.out.println("Time Task Node: " + timetask);
 				Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
-				if (!optionalNode.isPresent()) {
+				if (optionalNode.isEmpty()) {
 					throw new DataBaseObjectNotFoundException("The corresponding Time Trigger node does not exist");
 				}
 				Node node = initializeNodeFromDB(optionalNode);
@@ -99,7 +99,7 @@ public class OutAPICaller implements Runnable{
 				System.out.println("Node getNexts Index 0: " + node.getNexts().get(0));
 				Long next_node_id = node.getNexts().get(0);
 				Optional<Node> optionalNextNode = nodeRepository.findById(next_node_id);  //find next node by id from repository
-				if (!optionalNextNode.isPresent()) {
+				if (optionalNextNode.isEmpty()) {
 					throw new DataBaseObjectNotFoundException("The Next node does not exist");
 				}
 				if (node.getNexts().size() > 1) {

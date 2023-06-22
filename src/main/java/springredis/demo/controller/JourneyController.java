@@ -76,7 +76,7 @@ public class JourneyController {
     public static final Integer ACTIVATED_FINISHED = 4;
 
     @PostMapping("/journey/saveJourney")//保存Journey,仅仅保存Serialized部分
-    public Journey saveJourney(@RequestBody String journeyJson){
+    public Journey saveJourney(@RequestBody String journeyJson) {
         log.info("begin to save the journey...");
         SeDeFunction sede = new SeDeFunction();
 
@@ -98,7 +98,7 @@ public class JourneyController {
 
         // check existing journey status code
         // if existing journey is not null and its status indicate activating, then stop saving
-        if (existingJourney != null && existingJourney.getStatus() == ACTIVATING) {
+        if (existingJourney != null && existingJourney.getStatus().equals(ACTIVATING)) {
             log.info("The journey now is activating, so no need to save during activating.");
             return null;
         }
@@ -117,8 +117,9 @@ public class JourneyController {
 
     /**
      * helper method to set journey status to the given status
+     *
      * @param journeyJsonModel given journey json model
-     * @param status the status need to be set
+     * @param status           the status need to be set
      */
     private Journey setJourneyStatus(JourneyJsonModel journeyJsonModel, int status) throws JourneyNotFoundException {
         String journeyFrontEndId = journeyJsonModel.getProperties().getJourneyId();
@@ -138,10 +139,11 @@ public class JourneyController {
 
     /**
      * a put mapping to update the current journey status to the newest status code
+     *
      * @param journeyJsonModel given parameter
      * @return a Journey object follow the previous functions mode
      * @throws JourneyNotFoundException if not found by the given journey front-end-id,
-     * then throw this exception
+     *                                  then throw this exception
      */
     @PutMapping("/journey/status")
     public Journey changeJourneyStatus(@RequestBody JourneyJsonModel journeyJsonModel) throws JourneyNotFoundException {
@@ -156,11 +158,12 @@ public class JourneyController {
     }
 
     @GetMapping("/journey/get-saved-journey/{journeyFrontEndId}")//激活Journey,查取数据库，反序列化
-    public String getSavedJourney(@PathVariable("journeyFrontEndId") String journeyFrontEndId){
+    public String getSavedJourney(@PathVariable("journeyFrontEndId") String journeyFrontEndId) {
         String journeyJson = journeyRepository.searchJourneyByFrontEndId(journeyFrontEndId).getJourneySerialized();
         System.out.println(journeyJson);
         return journeyJson;
     }
+
     @PostMapping("/journey/activateJourney")//激活Journey,查取数据库，反序列化
     public Journey activateJourney(@RequestBody String journeyJson) throws JourneyNotFoundException {
         nodeIdList.clear();
@@ -172,11 +175,11 @@ public class JourneyController {
         setJourneyStatus(journeyJsonModel, ACTIVATING);
         Long journeyId = journeyRepository.save(oneJourney).getId();
         String journeyFrontEndId = journeyRepository.searchJourneyById(journeyId).getFrontEndId();
-    /**
-    *   a set to store the result of "findNodesByJourneyFrontEndId".
-    *   Call DFS to modify/add nodes from the given journeyJson. After each (modify/add) operation, remove the nodeId from the set.
-    *   The left ones are deleted nodes.
-    */
+        /**
+         *   a set to store the result of "findNodesByJourneyFrontEndId".
+         *   Call DFS to modify/add nodes from the given journeyJson. After each (modify/add) operation, remove the nodeId from the set.
+         *   The left ones are deleted nodes.
+         */
 
         Node[] queryResult = nodeRepository.searchNodesByJourneyFrontEndId(journeyFrontEndId);
         Set<Long> existingNode = new LinkedHashSet<Long>();
@@ -187,7 +190,7 @@ public class JourneyController {
         // Traverse the journeyJsonModel object and add each node into DB
         System.out.println("The node list before dfs is: " + nodeIdList);
         System.out.println("========================== DFS started ==========================");
-        if (journeyJsonModel.getSequence().length<=0){
+        if (journeyJsonModel.getSequence().length <= 0) {
             return oneJourney;
         }
         dfs(journeyJsonModel.getSequence(), 0, journeyFrontEndId);
@@ -198,11 +201,11 @@ public class JourneyController {
                 existingNode.remove(nodeIdList.get(i));
             }
         }
-        System.out.println("The node List2 is "+ nodeIdList);
+        System.out.println("The node List2 is " + nodeIdList);
 
         nodeRepository.deleteAllById(existingNode);
-        for (Long nodeId: existingNode) {
-            System.out.println("active node id: "+ activeNodeRepository.findByDBNodeId(nodeId).getId());
+        for (Long nodeId : existingNode) {
+            System.out.println("active node id: " + activeNodeRepository.findByDBNodeId(nodeId).getId());
             System.out.println("Deleting node: " + nodeId);
             activeAudienceRepository.deleteByActiveNodeId(activeNodeRepository.findByDBNodeId(nodeId).getId());
             activeNodeRepository.deleteByNodeId(nodeId);
@@ -224,10 +227,13 @@ public class JourneyController {
         }
 
         // set first node as head
-        System.out.println("The node List is "+ nodeIdList);
+        System.out.println("The node List is " + nodeIdList);
         Node headNode = nodeRepository.searchNodeByid(nodeIdList.get(0));
-        if (headNode == null) System.out.println("The headNode is null");
-        else System.out.println("The headNode is" + headNode);
+        if (headNode == null) {
+            System.out.println("The headNode is null");
+        } else {
+            System.out.println("The headNode is" + headNode);
+        }
         headNode.setHeadOrTail(1); // 1: root, 0: node, 2: leaf
 
         // Dummy head initialization
@@ -285,7 +291,7 @@ public class JourneyController {
     }
 
 
-    private List<Long> AudienceFromAudienceList(Long nodeId, long userId){
+    private List<Long> AudienceFromAudienceList(Long nodeId, long userId) {
         System.out.println("current node ID is:" + nodeId.toString());
         Node currentNode = nodeRepository.findById(nodeId).get();
         String properties = currentNode.getProperties();
@@ -294,21 +300,20 @@ public class JourneyController {
 
         String name = jsonObject.getString("list");
         // if any list, return all list of that user
-        List<Long> audiencesId= new ArrayList<>();
+        List<Long> audiencesId = new ArrayList<>();
         List<Audience> audiences = new ArrayList<>();
-        if(name.equals("Any list")) {
-            User user=userRepository.findById(userId);
+        if (name.equals("Any list")) {
+            User user = userRepository.findById(userId);
             List<AudienceList> listList = audienceListRepository.findByUser(user);
             for (AudienceList audiencelist : listList) {
                 audiences.addAll(audiencelist.getAudiences());
             }
-        }
-        else {
+        } else {
             // user input specific list name. e.g. List A
             AudienceList audienceList = audienceListRepository.searchAudienceListByName(name);
             audiences = audienceList.getAudiences();
         }
-        for(Audience audience: audiences){
+        for (Audience audience : audiences) {
             audiencesId.add(audience.getId());
         }
         return audiencesId;
@@ -319,7 +324,7 @@ public class JourneyController {
     private Journey JourneyParse(Journey journey) throws JourneyNotFoundException {
         //Deserialize function
         SeDeFunction seDeFunction = new SeDeFunction();
-        List<Node> deserializedJourney =  seDeFunction.deserializing(journey.getJourneySerialized());
+        List<Node> deserializedJourney = seDeFunction.deserializing(journey.getJourneySerialized());
 
         //Setup active journey
         ActiveJourney activeJourney = new ActiveJourney();
@@ -330,13 +335,13 @@ public class JourneyController {
         System.out.println("the deserializedJourney size is:" + n);
         System.out.println(deserializedJourney.get(0).getNexts());
         //1.Use map frontEndId->BackEndId and replace the node nexts frontEndId->BackEndId
-        HashMap<String,Long> keyHash = new HashMap<>();
+        HashMap<String, Long> keyHash = new HashMap<>();
         List<Node> heads = new ArrayList<>();
-        for (int i=0; i<n; i++){
+        for (int i = 0; i < n; i++) {
             deserializedJourney.get(i).nextsSerialize();
-            deserializedJourney.set(i,nodeRepository.save(deserializedJourney.get(i)));
+            deserializedJourney.set(i, nodeRepository.save(deserializedJourney.get(i)));
             deserializedJourney.get(i).nextsDeserialize();
-            keyHash.put(deserializedJourney.get(i).getFrontEndId(),deserializedJourney.get(i).getId());
+            keyHash.put(deserializedJourney.get(i).getFrontEndId(), deserializedJourney.get(i).getId());
             //set up active node
             ActiveNode activeNode = new ActiveNode();
             activeNode.setActiveJourney(activeJourney);
@@ -346,23 +351,23 @@ public class JourneyController {
         System.out.println(keyHash);
         // replace nexts ID
 
-        for (int i=0; i<n; i++){
+        for (int i = 0; i < n; i++) {
             Node nodeI = deserializedJourney.get(i);
             List<Long> nexts = nodeI.getNexts();
             System.out.println(nexts);
-            for (int j=0; j<nexts.size(); j++){
+            for (int j = 0; j < nexts.size(); j++) {
                 nexts.set(j, keyHash.get(nexts.get(j)));
             }
             nodeI.setNexts(nexts);
             System.out.println(nexts);
             nodeI.nextsSerialize();
             nodeRepository.save(deserializedJourney.get(i));
-            if (nodeI.getHeadOrTail()==1){//add to start list if the node is a start node
+            if (nodeI.getHeadOrTail() == 1) {//add to start list if the node is a start node
                 heads.add(nodeI);
             }
         }
         //2.Start Journey from start node
-        for(int i=0; i<heads.size();i++){
+        for (int i = 0; i < heads.size(); i++) {
             CoreModuleTask coreModuleTask = new CoreModuleTask();
             coreModuleTask.setNodeId(heads.get(i).getId());
             //Dummy Task
@@ -382,11 +387,12 @@ public class JourneyController {
         endNode.setJourneyFrontEndId(journeyFrontEndId);
         return endNode;
     }
+
     private Node createNodeFromNodeJsonModel(NodeJsonModel nodeJsonModel, String journeyFrontEndId) {
         LocalDateTime createdAt = LocalDateTime.parse(nodeJsonModel.getCreatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         LocalDateTime updatedAt = LocalDateTime.parse(nodeJsonModel.getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         String name = nodeJsonModel.getName();
-        String type  = nodeJsonModel.getComponentType();
+        String type = nodeJsonModel.getComponentType();
         String status = nodeJsonModel.getStatus();
         String createdBy = nodeJsonModel.getCreatedBy();
         String updatedBy = nodeJsonModel.getUpdatedBy();
@@ -407,6 +413,7 @@ public class JourneyController {
         }
         return newNode;
     }
+
     public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
         Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx], journeyFrontEndId);
         System.out.println(nodeJsonModelList[idx].toString());
@@ -418,7 +425,7 @@ public class JourneyController {
 
         Long nodeId = newNode.getId();
         nodeIdList.add(nodeId);
-        System.out.println("The node List in [" + idx + "] is "+ nodeIdList);
+        System.out.println("The node List in [" + idx + "] is " + nodeIdList);
         //newNode = nodeRepository.searchNodeByid(nodeId);
 
         List<Long> nexts = new ArrayList<>();
@@ -460,11 +467,12 @@ public class JourneyController {
         newNode.nextsSerialize();
         nodeRepository.save(newNode);
         //newNode = nodeRepository.searchNodeByid(nodeId);
-        System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:"+journeyFrontEndId);
+        System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:" + journeyFrontEndId);
         return nodeId;
     }
 
     ArrayList<Long> nodeIdList = new ArrayList<>();
+
     private void createActiveNodesAndMapToNodes(ActiveJourney activeJourney) {
         for (int i = 0; i < nodeIdList.size(); i++) {
             System.out.println(nodeIdList.get(i));
@@ -478,31 +486,32 @@ public class JourneyController {
         }
     }
 
-    public boolean DeleteActiveAudience(Long audienceId){
+    public boolean DeleteActiveAudience(Long audienceId) {
         try {
             activeAudienceRepository.deleteById(audienceId);
             System.out.println("删除 DeleteActiveAudience  成功");
             return true;
-        }catch (Exception e){
-            Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
-            logger.error("DeleteActiveAudience error log:"+e);
+        } catch (Exception e) {
+            Logger logger = LoggerFactory.getLogger(OutAPICaller.class);
+            logger.error("DeleteActiveAudience error log:" + e);
             return false;
         }
     }
-    public boolean DeleteActiveNodeAndJourney(Long JourneyId){
+
+    public boolean DeleteActiveNodeAndJourney(Long JourneyId) {
 
         try {
             ActiveJourney ActiveJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(JourneyId);
             Long nodeJourneyId = ActiveJourney.getId();
             activeNodeRepository.deleteByNodeJourneyId(nodeJourneyId);
-            System.out.println("删除 DeleteActiveNode nodeJourneyId:"+nodeJourneyId+" 成功");
+            System.out.println("删除 DeleteActiveNode nodeJourneyId:" + nodeJourneyId + " 成功");
             activeJourneyRepository.deleteByActiveJourneyId(JourneyId);
-            System.out.println("删除 DeleteActiveJourney Id:"+JourneyId+" 成功");
+            System.out.println("删除 DeleteActiveJourney Id:" + JourneyId + " 成功");
             //System.out.println("删除 DeleteActiveJourney  成功");
             return true;
-        }catch (Exception e){
-            Logger logger =LoggerFactory.getLogger(OutAPICaller.class);
-            logger.error("DeleteActiveNode error log:"+e);
+        } catch (Exception e) {
+            Logger logger = LoggerFactory.getLogger(OutAPICaller.class);
+            logger.error("DeleteActiveNode error log:" + e);
             return false;
         }
 
