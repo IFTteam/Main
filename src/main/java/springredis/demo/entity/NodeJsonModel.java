@@ -71,6 +71,7 @@ public class NodeJsonModel {
         String property;
         String condition;
         String value;
+        String newTag;
         //        String address;
         String type;
         String content;
