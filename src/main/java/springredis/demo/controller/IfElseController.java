@@ -47,6 +47,7 @@ public class IfElseController {
 
         // Handled by AudienceAction filter
         if (json_text.contains("Actions")) {
+            System.out.println("handled by ifElseAction:" + json_text);
             return ifElseTaskController.filterByAudienceAction(task);
         }
 

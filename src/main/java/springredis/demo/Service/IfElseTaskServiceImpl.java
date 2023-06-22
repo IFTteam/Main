@@ -64,7 +64,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
         List<Long> listOfAudienceId = new ArrayList<>();
         List<Audience> listOfAudiences = new ArrayList<>();
-        for (Long id : listOfActiveAudienceId) {
+        for (Long id : listOfActiveAudienceId)
+        {
             // active_audience := id
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
 
@@ -83,7 +84,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         // todo: parsing需要对应前端的修改
         // parse the property, condition, and value
-        // {"property": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
+        // {"property": "Opened", "condition": "Campaign","value" : "1 Hour(s)"}
         String marker1 = "property"; String marker2 = "condition"; String marker3 = "value";
         String property = "";
         String condition = "";
@@ -91,9 +92,9 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         int indexOfMarker1  = json_text.indexOf(marker1);
         int indexOfMarker2  = json_text.indexOf(marker2);
         int indexOfMarker3  = json_text.indexOf(marker3);
-        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 8);
-        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 8);
-        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.indexOf("type") - 8);
+        property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
+        condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
+        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.indexOf("type") - 5);
 
         System.out.println("property: "+property);
         System.out.println("condition: "+condition);
@@ -102,12 +103,12 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         String[] parsedTriggerTime = value.split(" ");
         String unit = parsedTriggerTime[1];
 
-        Long userId = coreModuleTask.getUserId();
-        Long nodeId = coreModuleTask.getNodeId();
-        Long targetNodeId = coreModuleTask.getTargetNodeId();
+        //Long userId = coreModuleTask.getUserId();
+        //Long nodeId = coreModuleTask.getNodeId();
+        //Long targetNodeId = coreModuleTask.getTargetNodeId();
         Long journeyId = coreModuleTask.getJourneyId();
 
-        Optional<Journey> journey = journeyRepository.findById(journeyId);
+        //Optional<Journey> journey = journeyRepository.findById(journeyId);
         //Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
 
         /*
@@ -144,72 +145,78 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         List<Long> haveBehavior = new ArrayList<>();
 
-            for (Audience audience: listOfAudiences) {
-                // Firstly, check every audience, and get the audienceActivity List for this specific audience
+        for (Audience audience: listOfAudiences) {
+            // Firstly, check every audience, and get the audienceActivity List for this specific audience
 
-                //List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
-                List <AudienceActivity> audienceActivityList = audienceActivityRepository.findAllAudienceActivityByAudienceId(audience.getId());
+            //List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
+            List <AudienceActivity> audienceActivityList = audienceActivityRepository.findAllAudienceActivityByAudienceId(audience.getId());
 
-                System.out.println("audience activity list size: "+audienceActivityList.size());
+            System.out.println("audience activity list size: "+audienceActivityList.size());
 
-                if( audienceActivityList != null || audienceActivityList.size() != 0)
+            if( audienceActivityList != null || audienceActivityList.size() != 0)
+            {
+                for(AudienceActivity audienceActivity: audienceActivityList)
                 {
-                    for(AudienceActivity audienceActivity: audienceActivityList)
+                    // Check every activity to see if this activity matches what we expect
+                    // 1. check the activity type
+                    // 2. check whether the activity happened in specific time interval
+                    String currentType = audienceActivity.getEventType();
+
+                    LocalDateTime audienceActivityCreateTime = audienceActivity.getCreatedAt();
+                    LocalDateTime filterTime = null;
+                    if(unit.toLowerCase().contains("hour"))
                     {
-                        // Check every activity to see if this activity matches what we expect
-                        // 1. check the activity type
-                        // 2. check whether the activity happened in specific time interval
-                        String currentType = audienceActivity.getEventType();
+                        filterTime = audienceActivityCreateTime.minusHours( Integer.valueOf(parsedTriggerTime[0]) );
+                    }
+                    else if(unit.toLowerCase().contains("day"))
+                    {
+                        filterTime = audienceActivityCreateTime.minusDays( Integer.valueOf(parsedTriggerTime[0]) );
+                    }
+                    else if(unit.toLowerCase().contains("month"))
+                    {
+                        filterTime = audienceActivityCreateTime.minusMonths( Integer.valueOf(parsedTriggerTime[0]) );
+                    }
+                    else if(unit.toLowerCase().contains("year"))
+                    {
+                        filterTime = audienceActivityCreateTime.minusYears( Integer.valueOf(parsedTriggerTime[0]) );
+                    }
 
-                        LocalDateTime audienceActivityCreateTime = audienceActivity.getCreatedAt();
-                        LocalDateTime filterTime = null;
+                    if (property.contains(currentType))
+                    {
+                        /*
+                         if this specific audience_activity matches the activity type we are seeking for:
+                         1) find the transmission corresponding to this activity,
+                         2) continue to check whether this activity happens within the expected time period
+                        */
+                        Transmission t = transmissionRepository.getTransmissionById(audienceActivity.getTransmission_id());
 
-                        if(unit.toLowerCase().contains("hour"))
+                        LocalDateTime transmissionTime = t.getCreatedAt();
+                        if(transmissionTime.isBefore(audienceActivityCreateTime) && transmissionTime.isAfter(filterTime))
                         {
-                            filterTime = audienceActivityCreateTime.minusHours( Integer.valueOf(parsedTriggerTime[0]) );
-                        }
-                        else if(unit.toLowerCase().contains("day"))
-                        {
-                            filterTime = audienceActivityCreateTime.minusDays( Integer.valueOf(parsedTriggerTime[0]) );
-                        }
-                        else if(unit.toLowerCase().contains("month"))
-                        {
-                            filterTime = audienceActivityCreateTime.minusMonths( Integer.valueOf(parsedTriggerTime[0]) );
-                        }
-                        else if(unit.toLowerCase().contains("year"))
-                        {
-                            filterTime = audienceActivityCreateTime.minusYears( Integer.valueOf(parsedTriggerTime[0]) );
-                        }
-
-                        if (property.contains(currentType)) {
-                            List<Transmission> transmissionList = transmissionRepository.getTransmissionByEmail(audience.getEmail());
-                            for (Transmission t: transmissionList)
+                            System.out.println("audienceActivityCreateTime: "+audienceActivityCreateTime.toString());
+                            System.out.println("filterTime: "+filterTime.toString());
+                            System.out.println("transmissionTime: "+transmissionTime.toString());
+                            if(! haveBehavior.contains(audience.getId()))
                             {
-                                LocalDateTime transmissionTime = t.getCreatedAt();
-                                if(transmissionTime.isBefore(audienceActivityCreateTime) && transmissionTime.isAfter(filterTime))
-                                {
-                                    if(! haveBehavior.contains(audience.getId()))
-                                    {
-                                        haveBehavior.add(audience.getId());
-                                    }
-
-                                    //CoreModuleTask newTask = coreModuleTask;
-                                    //newTask.setAudienceId1(audienceList1);
-                                    //newTask.setAudienceId2(new ArrayList<>());
-                                    //newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
-                                    //newTask.setMakenext(1);
-                                    //newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
-                                    //cmtExecutor.execute(newTask);
-
-                                    //restAudience.remove(audience);
-
-                                    //audienceActivityRepository.delete(audienceActivity);
-                                }
+                                haveBehavior.add(audience.getId());
                             }
+
+                            //CoreModuleTask newTask = coreModuleTask;
+                            //newTask.setAudienceId1(audienceList1);
+                            //newTask.setAudienceId2(new ArrayList<>());
+                            //newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
+                            //newTask.setMakenext(1);
+                            //newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
+                            //cmtExecutor.execute(newTask);
+
+                            //restAudience.remove(audience);
+
+                            //audienceActivityRepository.delete(audienceActivity);
                         }
                     }
                 }
             }
+        }
 
         List<Long> audienceList1 = new ArrayList<>();
         List<Long> audienceList2 = new ArrayList<>();
@@ -229,7 +236,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             audienceList2 = listOfAudienceId;
             audienceList2.removeAll(audienceList1);
         }
-
 
         System.out.println("________________audiencelist1: ");
         for (long audienceID: audienceList1) {
