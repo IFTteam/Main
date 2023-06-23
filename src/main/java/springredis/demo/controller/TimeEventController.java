@@ -1,5 +1,6 @@
 package springredis.demo.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
 
 import java.nio.file.OpenOption;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -21,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController
+@Slf4j
 public class TimeEventController {
     @Autowired
     private TimeDelayRepository timeDelayRepository;
@@ -28,13 +31,13 @@ public class TimeEventController {
     private NodeRepository nodeRepository;
 
     @GetMapping("/allTasks")
-    public List<TimeTask> getAll(){
+    public List<TimeTask> getAll() {
         return timeDelayRepository.findAll();
     }
 
     @ResponseBody
     @PostMapping("/addNewTask")
-    public TimeTask add(@RequestBody BaseTaskEntity baseTaskEntity){
+    public TimeTask add(@RequestBody BaseTaskEntity baseTaskEntity) {
         Optional<Node> node = nodeRepository.findById(baseTaskEntity.getNodeId());
         Node node1 = node.get();
         // 为什么节点的名称，是fstring呢？
@@ -42,7 +45,7 @@ public class TimeEventController {
         System.out.println("The fstring is " + fstring);
         CoreModuleTask coreModuleTask = new CoreModuleTask(baseTaskEntity);
         /*
-        *   initialize new Time task
+         *   initialize new Time task
          */
         TimeTask timeTask = new TimeTask();
         timeTask.setCoreModuleTask(coreModuleTask);
@@ -52,9 +55,9 @@ public class TimeEventController {
         timeTask.audienceId1SDeserialize(baseTaskEntity.getAudienceId1());
         timeTask.audienceId2SDeserialize(baseTaskEntity.getAudienceId2());
         timeTask.setTaskStatus(0);
-        
+
         parseFStringDelay(fstring, timeTask);
-        
+
         System.out.println("======================================================TimeEventController Node ID: " + baseTaskEntity.getNodeId());
         System.out.println("======================================================TimeEventController TimeEvent Node ID: " + timeTask.getCoreModuleTask().getNodeId());
         //auditing support
@@ -78,21 +81,21 @@ public class TimeEventController {
 //
 //
 //    }
-    
-    public static void parseFStringDelay(String fstring,TimeTask timeTask){
+
+    public static void parseFStringDelay(String fstring, TimeTask timeTask) {
 //        SpecificTime 2023-10-10 10:12:12 1
         String type = fstring.split(" ")[0];
         if ("DelayTimeInSecond".equals(type)) {
             parseFStringDelayTimeInSecond(fstring.replace("DelayTimeInSecond ", ""), timeTask);
-        }else  if ("SpecificTime".equals(type)) {
+        } else if ("SpecificTime".equals(type)) {
             parseFStringWithSpecificTime(fstring.replace("SpecificTime ", ""), timeTask);
-        }else  if ("TimeUnit".equals(type)) {
+        } else if ("TimeUnit".equals(type)) {
             parseFStringWithTimeUnit(fstring.replace("TimeUnit ", ""), timeTask);
         }
     }
 
     @PostMapping("/addNewTaskWithSpecificTime")
-    public TimeTask addNewTaskWithSpecificTime(@RequestBody BaseTaskEntity baseTaskEntity){
+    public TimeTask addNewTaskWithSpecificTime(@RequestBody BaseTaskEntity baseTaskEntity) {
         Optional<Node> node = nodeRepository.findById(baseTaskEntity.getNodeId());
         Node node1 = node.get();
         String fstring = node1.getName();
@@ -108,23 +111,23 @@ public class TimeEventController {
 
 
     /**
-     *
      * Regarding the add method in TimeEventController
-     *
+     * <p>
      * Change parameter to CoreModuleTask
-     *
+     * <p>
      * Change return object to CoreModuleTask
-     *
+     * <p>
      * For the input CoreModuleTask
-     *
+     * <p>
      * Change status to 0
-     *
+     * <p>
      * Return the same CoreModuleTask that is inputted
-     *
+     * <p>
      * Still save the TimeTask to TimeDelayRepository
      */
     @PostMapping("/Time_Trigger")
-    public CoreModuleTask Time_Trigger(@RequestBody CoreModuleTask coreModuleTask){
+    public CoreModuleTask saveTimeTaskByTimeTrigger(@RequestBody CoreModuleTask coreModuleTask) {
+        log.info("begin to save a new time task from Time_Trigger path...");
         Long node_id = coreModuleTask.getNodeId();
         System.out.println("(TimeEventController) CMT passed into Time_Trigger: " + coreModuleTask);
         System.out.println("node id: " + node_id);
@@ -151,8 +154,7 @@ public class TimeEventController {
         String frequency = jsonObject.getString("frequency");
         if (Objects.equals(frequency, "Once")) {
             time_parser_once(time, timeTask);
-        }
-        else if (Objects.equals(frequency, "Recurring")){
+        } else if (Objects.equals(frequency, "Recurring")) {
             time_parser_recurring(time, timeTask);
         }
 
@@ -169,10 +171,10 @@ public class TimeEventController {
         timeTask.setTaskStatus(0);
         timeTask.setCoreModuleTask(coreModuleTask);
         timeTask.setJourneyId(coreModuleTask.getJourneyId());
+        timeTask.setCreatedBy("Time trigger");
 
         System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
         System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
-        //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
         timeDelayRepository.save(timeTask);
 
         System.out.println("dummy task returned");
@@ -181,17 +183,25 @@ public class TimeEventController {
     }
 
     @PostMapping("/Time_Delay")
-    public CoreModuleTask Time_Delay(@RequestBody CoreModuleTask coreModuleTask){
-        Long node_id = coreModuleTask.getNodeId();
+    public CoreModuleTask saveTimeTaskByTimeDelay(@RequestBody CoreModuleTask coreModuleTask) throws SQLException {
+        log.info("begin to save a new time task from Time_Delay path...");
+        Long nodeId = coreModuleTask.getNodeId();
         System.out.println("(TimeEventController) CMT passed into Time_Delay: " + coreModuleTask);
-        System.out.println("node id: " + node_id);
-        Node node = nodeRepository.findById(node_id).get();
+        System.out.println("node id: " + nodeId);
+        Optional<Node> optionalNode = nodeRepository.findById(nodeId);
+
+        if (optionalNode.isEmpty()) {
+            log.error("Cannot find certain by node id in Time_Delay path");
+            throw new SQLException("exception when running Time_Delay path");
+        }
+
+        Node node = optionalNode.get();
 
         // Set the dummy coreModuleTask
         coreModuleTask.setMakenext(0);
 
         // Initialize the new time task
-        TimeTask timeTask = createTimeTask(coreModuleTask, node_id);
+        TimeTask timeTask = createTimeTask(coreModuleTask, nodeId);
         timeTask.setCreatedBy("Time delay");
 
         //parsing the time information
@@ -200,8 +210,7 @@ public class TimeEventController {
         String[] parsed = time.split(" ");
         if (parsed.length == 1) {
             time_parser_wait_date(parsed[0], timeTask);
-        }
-        else {
+        } else {
             time_parser_wait_duration(parsed, timeTask);
         }
 
@@ -230,7 +239,7 @@ public class TimeEventController {
 
 
     @PostMapping("/TimetasktestRepeat")
-    public CoreModuleTask TimetasktestRepeat(@RequestBody CoreModuleTask coreModuleTask){
+    public CoreModuleTask TimetasktestRepeat(@RequestBody CoreModuleTask coreModuleTask) {
         Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
         String fstring = node.get().getName();
         String[] flist = fstring.split(" ");
@@ -260,9 +269,6 @@ public class TimeEventController {
     }
 
 
-
-
-
     // need modification for set time trigger
     private static void parseFStringDelayTimeInSecond(String fstring, TimeTask timeTask) {
         // 数据格式： fstring format "DelayTimeInSecond repeatTimes repeatInterval"
@@ -270,7 +276,7 @@ public class TimeEventController {
         String[] flist = fstring.split(" ");
         Date date = new Date();
         // ms
-        timeTask.setTriggerTime(date.getTime()+Long.parseLong(flist[0])*1000);//Trigger Time = Time now + Delay Time
+        timeTask.setTriggerTime(date.getTime() + Long.parseLong(flist[0]) * 1000);//Trigger Time = Time now + Delay Time
         timeTask.setRepeatTimes(Integer.parseInt(flist[1]));
         timeTask.setRepeatInterval(flist[2]);
     }
@@ -289,52 +295,51 @@ public class TimeEventController {
         }
     }
 
-    private void parseFStringWithFrequency(String frequency, TimeTask timeTask) {
-        Calendar now = Calendar.getInstance();
-        int weekday = now.get(Calendar.DAY_OF_WEEK);
-        int tar_date = Calendar.MONDAY;
-        switch (frequency){
-            case "Monday":
-                tar_date = Calendar.MONDAY;
-                break;
-            case "Tuesday":
-                tar_date = Calendar.TUESDAY;
-                break;
-            case "Wednesday":
-                tar_date = Calendar.WEDNESDAY;
-                break;
-            case "Thursday":
-                tar_date = Calendar.THURSDAY;
-                break;
-            case "Friday":
-                tar_date = Calendar.FRIDAY;
-                break;
-            case "Saturday":
-                tar_date = Calendar.SATURDAY;
-                break;
-            case "Sunday":
-                tar_date = Calendar.SUNDAY;
-                break;
-        }
-        if (weekday != tar_date)
-        {
-            // calculate how much to add
-            // the 2 is the difference between Saturday and Monday
-            int days = (Calendar.SATURDAY - weekday + 2) % 7;
-            now.add(Calendar.DAY_OF_YEAR, days);
-            now.set(Calendar.HOUR_OF_DAY, 0);
-            now.set(Calendar.MINUTE, 0);
-
-        }
-        Date date = now.getTime();
-        //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
-        System.out.println("The recurring monday is:" + format);
-
-    }
-
-    private void parseFStringWithWaitTime(String waitTime, TimeTask timeTask) {
-    }
+//    private void parseFStringWithFrequency(String frequency, TimeTask timeTask) {
+//        Calendar now = Calendar.getInstance();
+//        int weekday = now.get(Calendar.DAY_OF_WEEK);
+//        int tar_date = Calendar.MONDAY;
+//        switch (frequency) {
+//            case "Monday":
+//                tar_date = Calendar.MONDAY;
+//                break;
+//            case "Tuesday":
+//                tar_date = Calendar.TUESDAY;
+//                break;
+//            case "Wednesday":
+//                tar_date = Calendar.WEDNESDAY;
+//                break;
+//            case "Thursday":
+//                tar_date = Calendar.THURSDAY;
+//                break;
+//            case "Friday":
+//                tar_date = Calendar.FRIDAY;
+//                break;
+//            case "Saturday":
+//                tar_date = Calendar.SATURDAY;
+//                break;
+//            case "Sunday":
+//                tar_date = Calendar.SUNDAY;
+//                break;
+//        }
+//        if (weekday != tar_date) {
+//            // calculate how much to add
+//            // the 2 is the difference between Saturday and Monday
+//            int days = (Calendar.SATURDAY - weekday + 2) % 7;
+//            now.add(Calendar.DAY_OF_YEAR, days);
+//            now.set(Calendar.HOUR_OF_DAY, 0);
+//            now.set(Calendar.MINUTE, 0);
+//
+//        }
+//        Date date = now.getTime();
+//        //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+//        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
+//        System.out.println("The recurring monday is:" + format);
+//
+//    }
+//
+//    private void parseFStringWithWaitTime(String waitTime, TimeTask timeTask) {
+//    }
 
     private void time_parser_once(String time, TimeTask timeTask) {
         String[] list = time.split("T");
@@ -365,7 +370,7 @@ public class TimeEventController {
         Calendar now = Calendar.getInstance();
         int weekday = now.get(Calendar.DAY_OF_WEEK);
         int tar_date = Calendar.MONDAY;
-        switch (week){
+        switch (week) {
             case "Monday":
                 tar_date = Calendar.MONDAY;
                 break;
@@ -388,8 +393,7 @@ public class TimeEventController {
                 tar_date = Calendar.SUNDAY;
                 break;
         }
-        if (weekday != tar_date)
-        {
+        if (weekday != tar_date) {
             int days = (Calendar.SATURDAY - weekday + 2) % 7;
             now.add(Calendar.DAY_OF_YEAR, days);
             now.set(Calendar.HOUR_OF_DAY, 0);
@@ -402,22 +406,22 @@ public class TimeEventController {
 
     }
 
-    private void time_parser_wait_date(String time, TimeTask timeTask){
+    private void time_parser_wait_date(String time, TimeTask timeTask) {
         try {
             SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            Date parse = format.parse(time + " " +"00:00");
+            Date parse = format.parse(time + " " + "00:00");
             timeTask.setTriggerTime(parse.getTime());
         } catch (ParseException e) {
             e.printStackTrace();
         }
     }
 
-    private void time_parser_wait_duration(String[] time, TimeTask timeTask){
+    private void time_parser_wait_duration(String[] time, TimeTask timeTask) {
         int t = Integer.parseInt(time[0]);
         String unit = time[1];
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime date = null;
-        switch (unit){
+        switch (unit) {
             case "Hours":
                 date = now.plusHours(t);
                 break;
@@ -434,6 +438,7 @@ public class TimeEventController {
         Date d = Date.from(Timestamp.valueOf(date).toInstant());
         timeTask.setTriggerTime(d.getTime());
     }
+
     private static void parseFStringWithTimeUnit(String fstring, TimeTask timeTask) {
         try {
             // fstring format "num timeUnit(DAYS,HOURS,WEEKS) repeatTimes repeatInterval"
@@ -444,10 +449,10 @@ public class TimeEventController {
             String timeUnit = flist[1];
             if (TimeUnit.DAYS.name().equals(timeUnit)) {
                 timeTask.setTriggerTime(new Date().getTime() + TimeUnit.DAYS.toMillis(num));
-            }else if (TimeUnit.HOURS.name().equals(timeUnit)) {
+            } else if (TimeUnit.HOURS.name().equals(timeUnit)) {
                 timeTask.setTriggerTime(new Date().getTime() + TimeUnit.HOURS.toMillis(num));
-            }else if ("WEEKS".equals(timeUnit)) {
-                timeTask.setTriggerTime(new Date().getTime() + TimeUnit.DAYS.toMillis(7*num));
+            } else if ("WEEKS".equals(timeUnit)) {
+                timeTask.setTriggerTime(new Date().getTime() + TimeUnit.DAYS.toMillis(7 * num));
             }
             timeTask.setRepeatTimes(Integer.parseInt(flist[2]));
             timeTask.setRepeatInterval(flist[3]);
@@ -457,10 +462,8 @@ public class TimeEventController {
     }
 
 
-
-    @GetMapping ("/taskbytime")
-
-    public List<TimeTask> getTaskByTime(@PathVariable(value = "triggerTime", required = false)Long triggerTime){
+    @GetMapping("/taskbytime")
+    public List<TimeTask> getTaskByTime(@PathVariable(value = "triggerTime", required = false) Long triggerTime) {
 
         return timeDelayRepository.findTasksBeforeTime(triggerTime);
     }

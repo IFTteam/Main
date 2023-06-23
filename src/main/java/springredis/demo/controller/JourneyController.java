@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveJourney;
@@ -22,6 +23,7 @@ import springredis.demo.serializer.SeDeFunction;
 import springredis.demo.structures.OutAPICaller;
 import springredis.demo.tasks.CMTExecutor;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -271,6 +273,7 @@ public class JourneyController {
         cmt.setCallapi(0);
         cmt.setTaskType(1);
         cmt.setJourneyId(journeyId);
+        cmt.setName("dummyHead");
         System.out.println("Journey Id is " + journeyId);
 
         //get audience list from properties
@@ -498,6 +501,7 @@ public class JourneyController {
         }
     }
 
+    @Transactional(rollbackFor = {SQLException.class})
     public boolean DeleteActiveNodeAndJourney(Long JourneyId) {
 
         try {

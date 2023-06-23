@@ -6,15 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestTemplate;
 
-import springredis.demo.DemoApplication;
-import springredis.demo.Service.DAO;
+import springredis.demo.controller.JourneyController;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Event;
 import springredis.demo.entity.Node;
 import springredis.demo.entity.TimeTask;
-import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.error.DataBaseObjectNotFoundException;
-import springredis.demo.error.TimeTaskNotExistException;
+import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
@@ -22,8 +20,6 @@ import springredis.demo.tasks.CMTExecutor;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Slf4j
 public class OutAPICaller implements Runnable{
@@ -36,8 +32,8 @@ public class OutAPICaller implements Runnable{
     private RedisTemplate redisTemplate;
     @Autowired
     private RestTemplate restTemplate = new RestTemplate();
-	@Autowired
-	CMTExecutor cmtExecutor;
+
+	private final CMTExecutor cmtExecutor;
 
     private boolean isRunning = true;
     private String outQueueKey = "OutQueue";
@@ -59,11 +55,15 @@ public class OutAPICaller implements Runnable{
 
 
 
-	public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, NodeRepository nodeRepository, ActiveNodeRepository activeNodeRepository) {
+	public OutAPICaller(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate,
+						NodeRepository nodeRepository, ActiveNodeRepository activeNodeRepository,
+						JourneyRepository journeyRepository, JourneyController journeyController,
+						CMTExecutor cmtExecutor) {
 		this.timeDelayRepository = timeDelayRepository;
 		this.redisTemplate = redisTemplate;
 		this.nodeRepository = nodeRepository;
-		cmtExecutor = new CMTExecutor(nodeRepository, restTemplate, activeNodeRepository);
+//		this.cmtExecutor = new CMTExecutor(nodeRepository, restTemplate, activeNodeRepository, journeyRepository);
+		this.cmtExecutor = cmtExecutor;
 	}
 
     @SneakyThrows

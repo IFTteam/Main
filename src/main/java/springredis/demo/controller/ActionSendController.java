@@ -41,7 +41,7 @@ import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-@Slf4j // logger
+@Slf4j
 @RestController
 @RequestMapping(path = "/actionSend")
 @CrossOrigin(origins="*")

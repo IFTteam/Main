@@ -1,5 +1,6 @@
 package springredis.demo.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 //the API controller to receive task from other module
 @RestController
+@Slf4j
 public class TaskController {
     @Autowired
     RedisTemplate redisTemplate;
@@ -43,6 +45,7 @@ public class TaskController {
     //returns the created user's id in buffer (not main DB!!)
     @PostMapping("/create_user")
     private CoreModuleTask createUser(@RequestBody CoreModuleTask coreModuleTask) {
+        log.info("begin to create audience...");
         if (coreModuleTask.getAudienceId1().size() != 0) {                  //this means we have audience to create in the first connected node of the source node
             for (Long Audid : coreModuleTask.getAudienceId1()) {
                 ActiveAudience activeAudience = new ActiveAudience(Audid);
@@ -74,12 +77,14 @@ public class TaskController {
             }
         }
         System.out.println("success");
+        log.info("created user successfully!");
         System.out.println("after create user, the au is:" + coreModuleTask.getActiveAudienceId1());
         return coreModuleTask;
     }
 
     @PostMapping("/move_user")
     private CoreModuleTask moveUser(@RequestBody CoreModuleTask coreModuleTask) {
+        log.info("begin to move audience...");
         if (coreModuleTask.getAudienceId1() != null) {
             //this means we have audience to create in the first connected node of the source node
             for (Long AudId : coreModuleTask.getActiveAudienceId1()) {
@@ -113,6 +118,7 @@ public class TaskController {
                 }
             }
         }
+        log.info("moved user successfully!");
         System.out.println("move audience successful");
         return coreModuleTask;
     }

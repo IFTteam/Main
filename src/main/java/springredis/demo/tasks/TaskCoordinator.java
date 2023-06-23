@@ -7,7 +7,9 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import springredis.demo.controller.JourneyController;
 import springredis.demo.entity.CoreModuleTask;
+import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
@@ -29,21 +31,22 @@ public class TaskCoordinator implements DisposableBean,Runnable {
 
     private RedisTemplate m_redisTemplate;
 
-    @Autowired
-    CMTExecutor cmtExecutor;
+    private final CMTExecutor cmtExecutor;
 
 
     private ExecutorService executorService;
 
     // dao 和service注入
     @Autowired
-    public TaskCoordinator(RedisTemplate redisTemplate, TimeDelayRepository timeDelayRepository, NodeRepository nodeRepository, ActiveNodeRepository activeNodeRepository) {
+    public TaskCoordinator(RedisTemplate redisTemplate, TimeDelayRepository timeDelayRepository, NodeRepository nodeRepository,
+                           ActiveNodeRepository activeNodeRepository, JourneyRepository journeyRepository, JourneyController journeyController, CMTExecutor cmtExecutor) {
         RedisConnection redisConnection = RedisConnectionUtils.getConnection(redisTemplate.getConnectionFactory(),true);
         redisConnection.flushDb();
         SimulateHeapKeeper simulateHeapKeeper = new SimulateHeapKeeper(redisTemplate);
-        OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate, nodeRepository, activeNodeRepository);
+        OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate, nodeRepository, activeNodeRepository, journeyRepository, journeyController, cmtExecutor);
         SimulateNewEvent simulateNewEvent = new SimulateNewEvent(timeDelayRepository, redisTemplate);
         this.m_redisTemplate = redisTemplate;
+        this.cmtExecutor = cmtExecutor;
         new Thread(simulateNewEvent).start();
         new Thread(simulateHeapKeeper).start();
         new Thread(outAPICaller).start();

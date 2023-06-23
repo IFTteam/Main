@@ -1,13 +1,13 @@
 package springredis.demo.tasks;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import springredis.demo.Service.DAO;
 import springredis.demo.controller.JourneyController;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Journey;
@@ -20,7 +20,6 @@ import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
 import springredis.demo.repository.activeRepository.ActiveNodeRepository;
-import springredis.demo.controller.JourneyController;
 
 import java.util.*;
 
@@ -29,8 +28,6 @@ import java.util.*;
 @Component
 @Slf4j
 public class CMTExecutor {
-    @Autowired
-    private JourneyRepository journeyRepository;
 
     private ActiveAudienceRepository activeAudienceRepository;
 
@@ -39,6 +36,10 @@ public class CMTExecutor {
     private ActiveJourneyRepository activeJourneyRepository;
 
     private NodeRepository nodeRepository;
+
+    private final JourneyRepository journeyRepository;
+
+//    private final JourneyController journeyController;
     @Autowired
     JourneyController journeyController;
 
@@ -59,17 +60,23 @@ public class CMTExecutor {
     };
 
     @Autowired
-    public CMTExecutor(NodeRepository nodeRepository, RestTemplate restTemplate, ActiveNodeRepository activeNodeRepository) {
+    public CMTExecutor(NodeRepository nodeRepository, RestTemplate restTemplate, ActiveNodeRepository activeNodeRepository, JourneyRepository journeyRepository) {
         this.nodeRepository = nodeRepository;
         this.restTemplate = restTemplate;
         this.activeNodeRepository = activeNodeRepository;
+        this.journeyRepository = journeyRepository;
+//        this.journeyController = journeyController;
     }
 
-    public CMTExecutor(CoreModuleTask coreModuleTask, ActiveAudienceRepository activeAudienceRepository, ActiveNodeRepository activeNodeRepository, ActiveJourneyRepository activeJourneyRepository, NodeRepository nodeRepository) {
+    public CMTExecutor(CoreModuleTask coreModuleTask, ActiveAudienceRepository activeAudienceRepository,
+                       ActiveNodeRepository activeNodeRepository, ActiveJourneyRepository activeJourneyRepository,
+                       NodeRepository nodeRepository, JourneyRepository journeyRepository) {
         this.activeAudienceRepository = activeAudienceRepository;
         this.activeNodeRepository = activeNodeRepository;
         this.activeJourneyRepository = activeJourneyRepository;
         this.nodeRepository = nodeRepository;
+        this.journeyRepository = journeyRepository;
+//        this.journeyController = journeyController;
     }
 
     public void execute(CoreModuleTask coreModuleTask) {
@@ -140,35 +147,28 @@ public class CMTExecutor {
             Long id = curnode.getNexts().get(i);
             Node nextnode = nodeRepository.searchNodeByid(id);
             nextnode.nextsDeserialize();
-            CoreModuleTask newtask = new CoreModuleTask();
-            newtask.setUserId(restask.getUserId());
-            newtask.setJourneyId(restask.getJourneyId());
-            newtask.setNodeId(id);
-            newtask.setTaskType(0);
-            newtask.setType(nextnode.getType());
-            newtask.setName(nextnode.getName());
-            newtask.setSourceNodeId(nextnode.getId());
-            newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
-            newtask.setActiveAudienceId2(restask.getActiveAudienceId2());
-            newtask.setAudienceId1(restask.getAudienceId1());
-            newtask.setAudienceId2(restask.getAudienceId2());
+            CoreModuleTask newTask = new CoreModuleTask();
+            BeanUtils.copyProperties(restask, newTask, "nodeId", "taskType", "type", "name", "sourceNodeId", "targetNodeId", "callapi");
+            newTask.setNodeId(id);
+            newTask.setTaskType(0);
+            newTask.setType(nextnode.getType());
+            newTask.setName(nextnode.getName());
+            newTask.setSourceNodeId(nextnode.getId());
             if (nextnode.getNexts().size() > 0) {
-                newtask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
+                newTask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
             }
             //now we identify the current activeNode
-            ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
-            Node node = nodeRepository.searchNodeByid(id);
-            List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
-            List<Long> activeIDs = new ArrayList<>();
-            List<Long> IDs = new ArrayList<>();
+//            ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
+//            Node node = nodeRepository.searchNodeByid(id);
+//            List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
+//            List<Long> activeIDs = new ArrayList<>();
+//            List<Long> IDs = new ArrayList<>();
             /*for (ActiveAudience aud : activeAudienceList) {
                 activeIDs.add(aud.getId());
                 IDs.add(aud.getAudienceId());
             }*/
-            newtask.setActiveAudienceId1(restask.getActiveAudienceId1());
-            newtask.setAudienceId1(restask.getAudienceId1());
             String url = "http://localhost:8080/ReturnTask";
-            HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newtask);
+            HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newTask);
             Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
         }
     }

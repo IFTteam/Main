@@ -1,5 +1,6 @@
 package springredis.demo.structures;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestTemplate;
@@ -10,8 +11,8 @@ import springredis.demo.repository.TimeDelayRepository;
 import java.util.Date;
 import java.util.List;
 
-
-public class SimulateNewEvent implements Runnable{
+@Slf4j
+public class SimulateNewEvent implements Runnable {
 
 
     private TimeDelayRepository timeDelayRepository;
@@ -27,31 +28,27 @@ public class SimulateNewEvent implements Runnable{
     private String inQueueKey = "InQueue";
 
 
-
     @Override
     public void run() {
         int timeAhead = 0;//the time before the task trigger that we bring a task from sql to redis(ms)
         int scanInterval = 10000;
-        while(true){
+        while (true) {
             Date time = new Date();
             System.out.println(time.getTime());
-
-            System.out.println(time.getTime());
-            List<TimeTask> timeTasks = timeDelayRepository.findTasksBeforeTime(time.getTime()+timeAhead);
-            for (TimeTask timeTask : timeTasks){
+            List<TimeTask> timeTasks = timeDelayRepository.findTasksBeforeTime(time.getTime() + timeAhead);
+            for (TimeTask timeTask : timeTasks) {
+                log.info(Thread.currentThread().getName() + "caught a triggered time task...");
                 time.setTime(timeTask.getTriggerTime());
-                Event event = new Event(time,timeTask.getId());
+                Event event = new Event(time, timeTask.getId());
                 timeTask.setTaskStatus(1);
                 timeDelayRepository.save(timeTask);
 
-                redisTemplate.opsForList().leftPush(inQueueKey,event);
-                System.out.println("Insert New Event at"+time);
+                redisTemplate.opsForList().leftPush(inQueueKey, event);
+                System.out.println("Insert New Event at" + time);
 
                 //TODO: return response to Core Module with taskEntity
                 //restTemplate.postForObject("http://localhost:8080/ReturnTask", timeTask, String.class);
             }
-
-
 
 
             try {
