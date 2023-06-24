@@ -65,16 +65,13 @@ public class NodeJsonModel {
         String sender;
         String subject;
         String tag;
-        String date;
         String sendOn;
         String waitFor;
         String property;
         String condition;
         String value;
-        String newTag;
-        //        String address;
-        String type;
         String content;
+        String type;
     }
     @Data
     public class Branch {
