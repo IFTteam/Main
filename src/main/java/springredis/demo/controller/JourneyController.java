@@ -55,7 +55,7 @@ public class JourneyController {
     /**
      * journey current status is not activate yet
      */
-    public static final int NOT_ACTIVATE = 0;
+    public static final Integer NOT_ACTIVATE = 0;
 
     /**
      * journey current status is activating

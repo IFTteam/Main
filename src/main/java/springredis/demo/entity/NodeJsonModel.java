@@ -72,6 +72,7 @@ public class NodeJsonModel {
         String value;
         String content;
         String type;
+        String date;
     }
     @Data
     public class Branch {

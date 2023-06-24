@@ -1,66 +1,103 @@
 package springredis.demo.structures;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import springredis.demo.entity.Event;
 import springredis.demo.entity.TimeTask;
 import springredis.demo.repository.TimeDelayRepository;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 
 @Slf4j
-public class SimulateNewEvent implements Runnable {
+@Component
+public class SimulateNewEvent {
 
 
-    private TimeDelayRepository timeDelayRepository;
-    private RedisTemplate redisTemplate;
+    private final TimeDelayRepository timeDelayRepository;
+    private final RedisTemplate redisTemplate;
     private RestTemplate restTemplate = new RestTemplate();
 
-    public SimulateNewEvent(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate) {
+    private ScheduledFuture<?> scheduledFuture;
+
+    /**
+     * auto-wired taskScheduler to do scheduling task
+     */
+    private final TaskScheduler taskScheduler;
+
+    /**
+     * corn Expression to determine current running status
+     */
+    @Setter
+    @Getter
+    @Value("${corn.expressions.everyTenSecond}")
+    private String cronExpression;
+
+    @Value("${redis-key.in-queue-key}")
+    private String inQueueKey;
+
+
+    @Autowired
+    public SimulateNewEvent(TimeDelayRepository timeDelayRepository, RedisTemplate redisTemplate, TaskScheduler taskScheduler) {
         this.redisTemplate = redisTemplate;
         this.timeDelayRepository = timeDelayRepository;
+        this.taskScheduler = taskScheduler;
     }
 
+    @PostConstruct
+    public void init() {
+        log.info("start SimulateNewEvent...");
+        startSimulateNewEvent(cronExpression);
+    }
 
-    private String inQueueKey = "InQueue";
+    /**
+     * start processSimulateNewEvent() with given cronExpression
+     * @param cronExpression given cronExpression
+     */
+    public void startSimulateNewEvent(String cronExpression) {
+        log.info("start running SimulateNewEvent for {} ...", cronExpression);
+        Runnable task = this::processSimulateNewEvent;
+        setCronExpression(cronExpression);
+        scheduledFuture = taskScheduler.schedule(task, new CronTrigger(cronExpression));
+    }
 
-
-    @Override
-    public void run() {
-        int timeAhead = 0;//the time before the task trigger that we bring a task from sql to redis(ms)
-        int scanInterval = 10000;
-        while (true) {
-            Date time = new Date();
-            System.out.println(time.getTime());
-            List<TimeTask> timeTasks = timeDelayRepository.findTasksBeforeTime(time.getTime() + timeAhead);
-            for (TimeTask timeTask : timeTasks) {
-                log.info(Thread.currentThread().getName() + "caught a triggered time task...");
-                time.setTime(timeTask.getTriggerTime());
-                Event event = new Event(time, timeTask.getId());
-                timeTask.setTaskStatus(1);
-                timeDelayRepository.save(timeTask);
-
-                redisTemplate.opsForList().leftPush(inQueueKey, event);
-                System.out.println("Insert New Event at" + time);
-
-                //TODO: return response to Core Module with taskEntity
-                //restTemplate.postForObject("http://localhost:8080/ReturnTask", timeTask, String.class);
-            }
-
-
-            try {
-                Thread.sleep(scanInterval);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+    /**
+     * stop processSimulateNewEvent()
+     */
+    @PreDestroy
+    public void stopSimulateNewEvent() {
+        log.info("stop running SimulateNewEvent...");
+        if (this.scheduledFuture != null) {
+            this.scheduledFuture.cancel(true);
         }
-
     }
 
-//    public int getRandom(int min, int max) {
-//        return (int) min + (int) (Math.random() * (max - min));
-//    }
+    public void processSimulateNewEvent() {
+        int timeAhead = 0;//the time before the task trigger that we bring a task from sql to redis(ms)
+        Date time = new Date();
+        System.out.println(time.getTime());
+        List<TimeTask> timeTasks = timeDelayRepository.findTasksBeforeTime(time.getTime() + timeAhead);
+        for (TimeTask timeTask : timeTasks) {
+            log.info(Thread.currentThread().getName() + "caught a triggered time task...");
+            time.setTime(timeTask.getTriggerTime());
+            Event event = new Event(time, timeTask.getId());
+            timeTask.setTaskStatus(1);
+            timeDelayRepository.save(timeTask);
+
+            redisTemplate.opsForList().leftPush(inQueueKey, event);
+            System.out.println("Insert New Event at" + time);
+        }
+    }
 }

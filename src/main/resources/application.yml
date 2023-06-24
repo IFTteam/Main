@@ -22,3 +22,14 @@ spring:
 SPARKPOST_API_KEY: 0cce3a0b7ea7d58f4ca86f19425774b37d79cf6c
 SP_BASE_URI: https://api.sparkpost.com
 TESTING_DOMAIN: paradx.dev
+
+corn:
+  expressions:
+    everySecond: "*/1 * * * * ?"
+    everyTenSecond: "*/10 * * * * ?"
+#    never: "0 0 0 30 2 ?"
+
+redis-key:
+  in-queue-key: "InQueue"
+  out-queue-key: "OutQueue"
+  task-queue-key: "CoretaskQueue"

@@ -1,80 +1,89 @@
 package springredis.demo.tasks;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
-import springredis.demo.controller.JourneyController;
 import springredis.demo.entity.CoreModuleTask;
-import springredis.demo.repository.JourneyRepository;
-import springredis.demo.repository.NodeRepository;
-import springredis.demo.repository.activeRepository.ActiveNodeRepository;
-import springredis.demo.repository.TimeDelayRepository;
-import springredis.demo.repository.activeRepository.ActiveNodeRepository;
-import springredis.demo.structures.OutAPICaller;
-import springredis.demo.structures.SimulateHeapKeeper;
-import springredis.demo.structures.SimulateNewEvent;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.util.Objects;
+import java.util.concurrent.ScheduledFuture;
 
 @Component
 @Slf4j
-public class TaskCoordinator implements DisposableBean,Runnable {
-
-    private volatile boolean someCondition = true;
-
-    private final String taskQueueKey = "CoretaskQueue";
-
-    private RedisTemplate m_redisTemplate;
+public class TaskCoordinator {
+    private final RedisTemplate m_redisTemplate;
 
     private final CMTExecutor cmtExecutor;
 
+    private final TaskScheduler taskScheduler;
 
-    private ExecutorService executorService;
+    private ScheduledFuture<?> scheduledFuture;
+
+    @Value("${redis-key.task-queue-key}")
+    private String taskQueueKey;
+
+    /**
+     * corn Expression to determine current running status
+     */
+    @Setter
+    @Getter
+    @Value("${corn.expressions.everySecond}")
+    private String cronExpression;
 
     // dao 和service注入
     @Autowired
-    public TaskCoordinator(RedisTemplate redisTemplate, TimeDelayRepository timeDelayRepository, NodeRepository nodeRepository,
-                           ActiveNodeRepository activeNodeRepository, JourneyRepository journeyRepository, JourneyController journeyController, CMTExecutor cmtExecutor) {
-        RedisConnection redisConnection = RedisConnectionUtils.getConnection(redisTemplate.getConnectionFactory(),true);
-        redisConnection.flushDb();
-        SimulateHeapKeeper simulateHeapKeeper = new SimulateHeapKeeper(redisTemplate);
-        OutAPICaller outAPICaller = new OutAPICaller(timeDelayRepository, redisTemplate, nodeRepository, activeNodeRepository, journeyRepository, journeyController, cmtExecutor);
-        SimulateNewEvent simulateNewEvent = new SimulateNewEvent(timeDelayRepository, redisTemplate);
+    public TaskCoordinator(RedisTemplate redisTemplate, CMTExecutor cmtExecutor, TaskScheduler taskScheduler) {
         this.m_redisTemplate = redisTemplate;
         this.cmtExecutor = cmtExecutor;
-        new Thread(simulateNewEvent).start();
-        new Thread(simulateHeapKeeper).start();
-        new Thread(outAPICaller).start();
-        new Thread(this).start();                   //since task coordinator itself is also a runnable,its run function is also started when it is constructed
+        this.taskScheduler = taskScheduler;
     }
 
+    @PostConstruct
+    public void init() {
+        log.info("start TaskCoordinator...");
+        RedisConnection redisConnection = RedisConnectionUtils.getConnection(Objects.requireNonNull(m_redisTemplate.getConnectionFactory()), true);
+        redisConnection.flushDb();
+        startTaskCoordinator(cronExpression);
+    }
 
-    @Override
-    public void run() {
-//        ExecutorService executorService = Executors.newFixedThreadPool(10);//初始化线程池
-        while (someCondition) {
-            // 查Redis
-            while (m_redisTemplate.opsForList().size(taskQueueKey)>0){
-                log.info("redis indicate more task to be run...");
-                CoreModuleTask coreModuleTask = (CoreModuleTask) m_redisTemplate.opsForList().rightPop(taskQueueKey);
-                log.info(coreModuleTask.toString());
-                cmtExecutor.execute(coreModuleTask);
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+    /**
+     * start processTaskCoordinator() with given cronExpression
+     * @param cronExpression given cronExpression
+     */
+    public void startTaskCoordinator(String cronExpression) {
+        log.info("start running TaskCoordinator for {} ...", cronExpression);
+        Runnable task = this::processTaskCoordinator;
+        setCronExpression(cronExpression);
+        scheduledFuture = taskScheduler.schedule(task, new CronTrigger(cronExpression));
+    }
+
+    /**
+     * stop processTaskCoordinator()
+     */
+    @PreDestroy
+    public void stopTaskCoordinator() {
+        log.info("stop running TaskCoordinator...");
+        if (this.scheduledFuture != null) {
+            this.scheduledFuture.cancel(true);
         }
     }
 
-    @Override
-    public void destroy() throws Exception {
-        someCondition = false;
+    private void processTaskCoordinator() {
+        // 查Redis
+        while (m_redisTemplate.opsForList().size(taskQueueKey) > 0) {
+            log.info("redis indicate more task to be run...");
+            CoreModuleTask coreModuleTask = (CoreModuleTask) m_redisTemplate.opsForList().rightPop(taskQueueKey);
+            log.info(coreModuleTask.toString());
+            cmtExecutor.execute(coreModuleTask);
+        }
     }
 }

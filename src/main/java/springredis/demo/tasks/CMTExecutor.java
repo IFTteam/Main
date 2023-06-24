@@ -94,11 +94,11 @@ public class CMTExecutor {
 
             // set journey status
             Journey journey = optionalJourney.get();
-            log.info("set journey status from {} to {}", journey.getStatus(), JourneyController.ACTIVATED_FINISHED);
             journeyController.DeleteActiveAudience(coreModuleTask.getActiveAudienceId1().get(0));
             journeyController.DeleteActiveNodeAndJourney(journeyId);
             journey.setStatus(JourneyController.ACTIVATED_FINISHED);
             journeyRepository.save(journey);
+            log.info("set journey status from {} to {}", journey.getStatus(), JourneyController.ACTIVATED_FINISHED);
 
             // end execute
             return;
