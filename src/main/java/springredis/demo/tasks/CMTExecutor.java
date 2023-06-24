@@ -8,18 +8,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
-import springredis.demo.controller.JourneyController;
+import springredis.demo.Service.JourneyService;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Journey;
 import springredis.demo.entity.Node;
-import springredis.demo.entity.activeEntity.ActiveAudience;
-import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.error.JourneyNotFoundException;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
-import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
-import springredis.demo.repository.activeRepository.ActiveJourneyRepository;
-import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 
 import java.util.*;
 
@@ -28,20 +23,12 @@ import java.util.*;
 @Component
 @Slf4j
 public class CMTExecutor {
-
-    private ActiveAudienceRepository activeAudienceRepository;
-
-    private ActiveNodeRepository activeNodeRepository;
-
-    private ActiveJourneyRepository activeJourneyRepository;
-
-    private NodeRepository nodeRepository;
+    private final NodeRepository nodeRepository;
 
     private final JourneyRepository journeyRepository;
 
-//    private final JourneyController journeyController;
     @Autowired
-    JourneyController journeyController;
+    private JourneyService journeyService;
 
     RestTemplate restTemplate;
     //Chanage the below to actual API endpoints of functional urls
@@ -60,23 +47,11 @@ public class CMTExecutor {
     };
 
     @Autowired
-    public CMTExecutor(NodeRepository nodeRepository, RestTemplate restTemplate, ActiveNodeRepository activeNodeRepository, JourneyRepository journeyRepository) {
+    public CMTExecutor(NodeRepository nodeRepository, RestTemplate restTemplate,
+                       JourneyRepository journeyRepository) {
         this.nodeRepository = nodeRepository;
         this.restTemplate = restTemplate;
-        this.activeNodeRepository = activeNodeRepository;
         this.journeyRepository = journeyRepository;
-//        this.journeyController = journeyController;
-    }
-
-    public CMTExecutor(CoreModuleTask coreModuleTask, ActiveAudienceRepository activeAudienceRepository,
-                       ActiveNodeRepository activeNodeRepository, ActiveJourneyRepository activeJourneyRepository,
-                       NodeRepository nodeRepository, JourneyRepository journeyRepository) {
-        this.activeAudienceRepository = activeAudienceRepository;
-        this.activeNodeRepository = activeNodeRepository;
-        this.activeJourneyRepository = activeJourneyRepository;
-        this.nodeRepository = nodeRepository;
-        this.journeyRepository = journeyRepository;
-//        this.journeyController = journeyController;
     }
 
     public void execute(CoreModuleTask coreModuleTask) {
@@ -94,11 +69,11 @@ public class CMTExecutor {
 
             // set journey status
             Journey journey = optionalJourney.get();
-            journeyController.DeleteActiveAudience(coreModuleTask.getActiveAudienceId1().get(0));
-            journeyController.DeleteActiveNodeAndJourney(journeyId);
-            journey.setStatus(JourneyController.ACTIVATED_FINISHED);
+            journeyService.deleteActiveAudience(coreModuleTask.getActiveAudienceId1().get(0));
+            journeyService.deleteActiveNodeAndJourney(journeyId);
+            journey.setStatus(Journey.ACTIVATED_FINISHED);
             journeyRepository.save(journey);
-            log.info("set journey status from {} to {}", journey.getStatus(), JourneyController.ACTIVATED_FINISHED);
+            log.info("set journey status from {} to {}", journey.getStatus(), Journey.ACTIVATED_FINISHED);
 
             // end execute
             return;

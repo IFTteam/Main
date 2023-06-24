@@ -1,7 +1,7 @@
 package springredis.demo.entity;
 
 import springredis.demo.structures.FuzzyStringMatch.MatchingBlock;
-import springredis.demo.Service.FuzzyStringMatchImpl;
+import springredis.demo.Service.impl.FuzzyStringMatchImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;

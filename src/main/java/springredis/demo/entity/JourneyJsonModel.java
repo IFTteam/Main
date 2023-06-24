@@ -17,7 +17,7 @@ public class JourneyJsonModel {
         String updatedBy;
         String journeyId;
         String thumbNailURL;
-        int status;
+        Integer status;
         String stage;
     }
 }

@@ -13,10 +13,8 @@ import org.springframework.web.client.RestTemplate;
 import springredis.demo.entity.Event;
 import springredis.demo.entity.TimeTask;
 import springredis.demo.repository.TimeDelayRepository;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
@@ -38,7 +36,7 @@ public class SimulateNewEvent {
     private final TaskScheduler taskScheduler;
 
     /**
-     * corn Expression to determine current running status
+     * cron Expression to determine current running status
      */
     @Setter
     @Getter

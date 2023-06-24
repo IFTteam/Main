@@ -1,8 +1,9 @@
-package springredis.demo.Service;
+package springredis.demo.Service.impl;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import springredis.demo.Service.DashBoardService;
 import springredis.demo.entity.Journey;
 import springredis.demo.repository.JourneyRepository;
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @Service
-public class DashBoardServiceImpl implements DashBoardService{
+public class DashBoardServiceImpl implements DashBoardService {
 
     @Autowired
     private JourneyRepository journeyRepository;

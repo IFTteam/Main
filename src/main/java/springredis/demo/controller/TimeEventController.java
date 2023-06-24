@@ -197,12 +197,14 @@ public class TimeEventController {
 
         Node node = optionalNode.get();
 
-        // Set the dummy coreModuleTask
-        coreModuleTask.setMakenext(0);
 
         // Initialize the new time task
         TimeTask timeTask = createTimeTask(coreModuleTask, nodeId);
         timeTask.setCreatedBy("Time delay");
+        timeTask.setMakenext(coreModuleTask.getMakenext());
+
+        // Set the dummy coreModuleTask
+        coreModuleTask.setMakenext(0);
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
