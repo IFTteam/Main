@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,19 +46,10 @@ public class OutAPICaller {
 
     private final CMTExecutor cmtExecutor;
 
-    //    private boolean isRunning = true;
     private String outQueueKey = "OutQueue";
-    public String timeKey = "triggerTime";
-    public String idKey = "id";
-    final String url = "http://localhost:3000";
-    private final HashMap<String, String> urlDict = new HashMap<>() {{
-        put("Time Delay", "http://localhost:8080/Time_Delay");
-        put("API Trigger", "http://localhost:8080/API_trigger");
-        put("Time Trigger", "http://localhost:8080/Time_Trigger");
-        put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
-        put("If/Else", "http://localhost:8080/IfElse");
-        put("Add Tag", "http://localhost:8080/AddTag");
-    }};
+//    public String timeKey = "triggerTime";
+//    public String idKey = "id";
+//    final String url = "http://localhost:3000";
 
     private ScheduledFuture<?> scheduledFuture;
 
@@ -125,77 +117,52 @@ public class OutAPICaller {
             if (timeTaskOp.isEmpty()) {
                 throw new DataBaseObjectNotFoundException("No Time Task Exist");
             }
-            TimeTask timetask = timeTaskOp.get();
-            timetask.audience_serialize();
+            TimeTask timeTask = timeTaskOp.get();
+            timeTask.audience_serialize();
             System.out.println("================================================Time Task retrieved=====================================================");
-            System.out.println("cur JI id is:" + timetask.getJourneyId());
-            System.out.println("Time Task Node: " + timetask);
-            Optional<Node> optionalNode = nodeRepository.findById(timetask.getNodeId());  //retrieves node from repository
-            if (optionalNode.isEmpty()) {
-                throw new DataBaseObjectNotFoundException("The corresponding Time Trigger node does not exist");
-            }
-            Node node = initializeNodeFromDB(optionalNode);
-
+            System.out.println("cur JI id is:" + timeTask.getJourneyId());
+            System.out.println("Time Task Node: " + timeTask);
             System.out.println("================================================Time Trigger node retrieved=====================================================");
-
-            //for now, assume we only have one branch in the journey, so we only take nexts[0]
-            System.out.println("Node getNexts Index 0: " + node.getNexts().get(0));
-            Long next_node_id = node.getNexts().get(0);
-            Optional<Node> optionalNextNode = nodeRepository.findById(next_node_id);  //find next node by id from repository
-            if (optionalNextNode.isEmpty()) {
-                throw new DataBaseObjectNotFoundException("The Next node does not exist");
-            }
-            if (node.getNexts().size() > 1) {
-                // TODO: if more than one branch in the journey exists, there could be multiple next nodes
-            }
-            Node nextNode = initializeNodeFromDB(optionalNextNode);
-
-            //CoreModuleTask nextCoreModuleTask = new CoreModuleTask(coreModuleTask);  //create new CoreModuleTask based on current CoreModuleTask
-            CoreModuleTask nextCoreModuleTask = new CoreModuleTask();
-            //System.out.println("cur CM id is:" + coreModuleTask);
-
-            nextCoreModuleTask.setType(nextNode.getType());
-            nextCoreModuleTask.setName(nextNode.getName());
-            //This information will be lost when saved into DB. Does CoreModuleTask need its own attributes for nodeId and audience?
-            System.out.println("next node id is:" + nextNode.getId());
-            nextCoreModuleTask.setJourneyId(timetask.getJourneyId());
-            nextCoreModuleTask.setNodeId(nextNode.getId());  //set the node id to next node
-//            	nextCoreModuleTask.setActiveAudienceId1(timeTaskOp.get().activeAudienceId1SSerialize());
-//            	nextCoreModuleTask.setActiveAudienceId2(timeTaskOp.get().activeAudienceId2SSerialize());
-            System.out.println("TTAA1 info" + timetask.getActiveAudienceId1());
-            System.out.println("TTAA2 info" + timetask.getActiveAudienceId2());
-            System.out.println("TTA1 info" + timetask.getAudienceId1());
-            System.out.println("TTA2 info" + timetask.getAudienceId2());
-            nextCoreModuleTask.setActiveAudienceId1(timetask.activeAudienceId1SSerialize());
-            nextCoreModuleTask.setActiveAudienceId2(timetask.audienceId2SSerialize());
-            nextCoreModuleTask.setAudienceId1(timetask.audienceId1SSerialize());
-            nextCoreModuleTask.setAudienceId2(timetask.audienceId2SSerialize());
-            System.out.println("NAA1 info" + nextCoreModuleTask.getActiveAudienceId1());
-            System.out.println("NAA2 info" + nextCoreModuleTask.getActiveAudienceId2());
-            System.out.println("NA1 info" + nextCoreModuleTask.getAudienceId1());
-            System.out.println("NA2 info" + nextCoreModuleTask.getAudienceId2());
-            //auditing support
-            nextCoreModuleTask.setCreatedAt(LocalDateTime.now());
-            nextCoreModuleTask.setCreatedBy("TimeModule");
-
-            System.out.println("================================================OUTAPI successful 3=====================================================");
-
-            String type = nextCoreModuleTask.getName();
-            System.out.println("In outAPI the CM is:" + nextCoreModuleTask);
-            System.out.println("In outAPI the type is:" + type);
-            String url = urlDict.get(type);
-            System.out.println("the url is " + url);
-
-//				String result = restTemplate.postForObject(url, nextCoreModuleTask, String.class);
-            cmtExecutor.execute(nextCoreModuleTask);
+            // prepare a new cmt corresponding to dummy time task to execute
+            CoreModuleTask coreModuleTask = createDummyCMTFromDummyTimeNode(timeTask);
+            cmtExecutor.execute(coreModuleTask);
         }
     }
 
-    public Node initializeNodeFromDB(Optional<Node> NodeOp) {
-        Node node = NodeOp.get();
+    private Node initializeNodeFromDB(Optional<Node> nodeOp) throws DataBaseObjectNotFoundException {
+        if (nodeOp.isEmpty()) {
+            throw new DataBaseObjectNotFoundException("The corresponding Time Trigger node does not exist");
+        }
+        Node node = nodeOp.get();
         node.nextsDeserialize();
-        node.setLasts(new ArrayList<>());
         return node;
     }
 
+    /**
+     * helper method to create a dummy CoreModuleTask according to
+     * the given dummy time node
+     * @param timeTask given dummy task
+     * @return a dummy CoreModuleTask
+     * @throws DataBaseObjectNotFoundException if not found by given time
+     */
+    private CoreModuleTask createDummyCMTFromDummyTimeNode(TimeTask timeTask) throws DataBaseObjectNotFoundException {
+        // retrieves node from repository
+        Optional<Node> optionalNode = nodeRepository.findById(timeTask.getNodeId());
+        Node curNode = initializeNodeFromDB(optionalNode);
+        CoreModuleTask coreModuleTask = new CoreModuleTask();
+        coreModuleTask.setName("dummyTimeTask");
+        coreModuleTask.setCallapi(0);
+        coreModuleTask.setType("dummy");
+        coreModuleTask.setJourneyId(timeTask.getJourneyId());
+        coreModuleTask.setNodeId(curNode.getId());
+        coreModuleTask.setActiveAudienceId1(timeTask.activeAudienceId1SSerialize());
+        coreModuleTask.setAudienceId1(timeTask.audienceId1SSerialize());
+        coreModuleTask.setCreatedAt(LocalDateTime.now());
+        coreModuleTask.setCreatedBy("TimeModule");
+        coreModuleTask.setTaskType(0);
+        coreModuleTask.setUpdatedAt(LocalDateTime.now());
+        coreModuleTask.setUpdatedBy("TimeModule");
+        coreModuleTask.setSourceNodeId(curNode.getId());
+        return coreModuleTask;
+    }
 }

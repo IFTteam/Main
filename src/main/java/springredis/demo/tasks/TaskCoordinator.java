@@ -12,6 +12,8 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 import springredis.demo.entity.CoreModuleTask;
+import springredis.demo.error.DataBaseObjectNotFoundException;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Objects;

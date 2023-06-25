@@ -11,6 +11,7 @@ import springredis.demo.Service.JourneyService;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveJourney;
 import springredis.demo.entity.activeEntity.ActiveNode;
+import springredis.demo.error.DataBaseObjectNotFoundException;
 import springredis.demo.error.JourneyNotFoundException;
 import springredis.demo.repository.AudienceListRepository;
 import springredis.demo.repository.JourneyRepository;
@@ -236,6 +237,7 @@ public class JourneyServiceImpl implements JourneyService {
         cmt.setTaskType(1);
         cmt.setJourneyId(journeyId);
         cmt.setName("dummyHead");
+        cmt.setType("dummy");
         System.out.println("Journey Id is " + journeyId);
 
         //get audience list from properties

@@ -12,6 +12,7 @@ import springredis.demo.Service.JourneyService;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Journey;
 import springredis.demo.entity.Node;
+import springredis.demo.error.DataBaseObjectNotFoundException;
 import springredis.demo.error.JourneyNotFoundException;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
@@ -80,7 +81,6 @@ public class CMTExecutor {
         }
         CoreModuleTask restask = null;
         //else, we can first call the respective functional API's based on task type if the callapi attribute is 1:
-        System.out.println("The task is:" + coreModuleTask.toString());
         if (StringUtils.hasText(coreModuleTask.getName())) {
             System.out.println("The type of the task is:" + coreModuleTask.getName());
             System.out.println("The taskID is:" + coreModuleTask.getId());
@@ -88,18 +88,18 @@ public class CMTExecutor {
         } else {
             System.out.println("The getcallapi is:" + coreModuleTask.getCallapi());
         }
-        //System.out.println("The url is:" + urlDict.get(coreModuleTask.getType()).toString());
+
         if (coreModuleTask.getCallapi() == 1) {
             restask = restTemplate.exchange(urlDict.get(coreModuleTask.getName()), HttpMethod.POST, new HttpEntity<>(coreModuleTask), CoreModuleTask.class).getBody();
         } else {
             restask = coreModuleTask;
         }
+
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
         if (restask.getMakenext() == 0) {
             return;
         }
         //else: first move audience from curnode to next node, or create new active audience in nextnode
-        Long activeid;
         //change local host to server domain!!
         //moving active audience pool from current node to next node (via method in task controller)
         if (restask.getTaskType() == 0) {
@@ -115,12 +115,16 @@ public class CMTExecutor {
         System.out.println("current node is: " + curnode.getName());
         System.out.println("the size of getNexts() of current node: " + curnode.getNexts().size());
 
-        //finally, make and push new tasks based on next node
+        // finally, make and push new tasks based on next node
         for (int i = 0; i < curnode.getNexts().size(); i++) {
             System.out.println("++++++++++++++++get nexts is being excute");
             System.out.println("curnode.getNexts() is" + curnode.getNexts().toString());
             Long id = curnode.getNexts().get(i);
-            Node nextnode = nodeRepository.searchNodeByid(id);
+            Optional<Node> optionalNextNode = nodeRepository.findById(id);
+            if (optionalNextNode.isEmpty()) {
+                throw new DataBaseObjectNotFoundException("The Next node does not exist");
+            }
+            Node nextnode = optionalNextNode.get();
             nextnode.nextsDeserialize();
             CoreModuleTask newTask = new CoreModuleTask();
             BeanUtils.copyProperties(restask, newTask, "nodeId", "taskType", "type", "name", "sourceNodeId", "targetNodeId", "callapi");
@@ -130,7 +134,10 @@ public class CMTExecutor {
             newTask.setName(nextnode.getName());
             newTask.setSourceNodeId(nextnode.getId());
             if (nextnode.getNexts().size() > 0) {
-                newTask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());         //this targetnodeid attribute is not really useful anymore
+                // this targetnodeid attribute is not really useful anymore
+                newTask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());
+                // if nextnode has nexts, then newTask should make next node
+                newTask.setMakenext(1);
             }
             //now we identify the current activeNode
 //            ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
@@ -144,7 +151,9 @@ public class CMTExecutor {
             }*/
             String url = "http://localhost:8080/ReturnTask";
             HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newTask);
-            Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();              //successfully pushed a new task by calling task controller (return task id if successful)
+            // successfully pushed a new task by calling task controller (return task id if successful)
+            Long taskid = restTemplate.exchange(url, HttpMethod.POST, httpEntity, Long.class).getBody();
         }
     }
+
 }

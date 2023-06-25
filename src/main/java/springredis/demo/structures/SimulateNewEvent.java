@@ -88,7 +88,7 @@ public class SimulateNewEvent {
         System.out.println(time.getTime());
         List<TimeTask> timeTasks = timeDelayRepository.findTasksBeforeTime(time.getTime() + timeAhead);
         for (TimeTask timeTask : timeTasks) {
-            log.info(Thread.currentThread().getName() + "caught a triggered time task...");
+            log.info(Thread.currentThread().getName() + " caught a triggered time task...");
             time.setTime(timeTask.getTriggerTime());
             Event event = new Event(time, timeTask.getId());
             timeTask.setTaskStatus(1);
