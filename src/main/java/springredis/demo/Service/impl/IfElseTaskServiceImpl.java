@@ -96,7 +96,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         int indexOfMarker3  = json_text.indexOf(marker3);
         property = json_text.substring(indexOfMarker1 + marker1.length() + 4, indexOfMarker2 - 6);
         condition = json_text.substring(indexOfMarker2 + marker2.length() + 4, indexOfMarker3 - 6);
-        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.indexOf("type") - 5);
+        value = json_text.substring(indexOfMarker3 + marker3.length() + 4, json_text.indexOf("type") - 6);
 
         System.out.println("property: "+property);
         System.out.println("condition: "+condition);
@@ -217,6 +217,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             }
         }
 
+        // get the IDs for audienceList1 and audienceList2
         List<Long> audienceList1 = new ArrayList<>();
         List<Long> audienceList2 = new ArrayList<>();
 
@@ -228,7 +229,8 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             audienceList1 = listOfAudienceId;
             audienceList1.removeAll(audienceList2);
         }
-        else {
+        else
+        {
             for (long audienceID: haveBehavior) {
                 audienceList1.add(audienceID);
             }
@@ -264,11 +266,11 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         List<Audience> haveProperty = new ArrayList<>();
 
-        List<Long> listOfAudienceId = coreModuleTask.getActiveAudienceId1();
-        System.out.println("size of active Audience Id1: "+listOfAudienceId.size());
+        List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
+        System.out.println("size of active Audience Id1: "+listOfActiveAudienceId.size());
 
         List<Audience> listOfAudiences = new ArrayList<>();
-        for (Long id : listOfAudienceId) {
+        for (Long id : listOfActiveAudienceId) {
             //Audience audience = audienceRepository.findById(id).get();
 
             // active_audience := id
@@ -564,10 +566,10 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     public CoreModuleTask ifElsePropertyWithoutValue(CoreModuleTask coreModuleTask) {
         List<Audience> haveProperty = new ArrayList<>();
 
-        List<Long> listOfAudienceId = coreModuleTask.getActiveAudienceId1();
+        List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
         List<Audience> listOfAudiences = new ArrayList<>();
 
-        for (Long id : listOfAudienceId) {
+        for (Long id : listOfActiveAudienceId) {
             // active_audience := id
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
             // active_audience := audience_id
