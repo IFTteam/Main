@@ -46,10 +46,8 @@ public class OutAPICaller {
 
     private final CMTExecutor cmtExecutor;
 
-    private String outQueueKey = "OutQueue";
-//    public String timeKey = "triggerTime";
-//    public String idKey = "id";
-//    final String url = "http://localhost:3000";
+    @Value("${redis-key.out-queue-key}")
+    private String outQueueKey;
 
     private ScheduledFuture<?> scheduledFuture;
 

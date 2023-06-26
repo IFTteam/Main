@@ -11,6 +11,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * scheduler task thead pool config
  * can use @Scheduled for async doing a task
+ * @author zeqing wang
  */
 @Configuration
 public class SchedulerConfig {
