@@ -2,6 +2,7 @@ package springredis.demo.Service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,16 +67,19 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
         List<Long> listOfAudienceId = new ArrayList<>();
         List<Audience> listOfAudiences = new ArrayList<>();
+        List<ActiveAudience> listOfActiveAudiences = new ArrayList<>();
+
         for (Long id : listOfActiveAudienceId)
         {
-            // active_audience := id
+            // find active audience through its audience id in active audience repository
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
 
-            // active_audience := audience_id
+            // find audience through its active audience id in audience repository
             Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
-            listOfAudiences.add(audience);
 
             listOfAudienceId.add(audience.getId());
+            listOfAudiences.add(audience);
+            listOfActiveAudiences.add(activeAudience);
         }
 
         // {"property": "opened", "condition": "in 1 hour(s)","value" : "campaign 1"}
@@ -250,9 +254,41 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
         System.out.println();
 
+        // get the IDs for activeAudienceList1 and activeAudienceList2
+        List<Long> activeAudienceList1 = new ArrayList<>();
+        List<Long> activeAudienceList2 = new ArrayList<>();
+
+        for (ActiveAudience activeAudience: listOfActiveAudiences)
+        {
+            Long audienceId = activeAudience.getAudienceId();
+            Long activeAudienceId = activeAudience.getId();
+            if(audienceList1.contains(audienceId))
+            {
+                activeAudienceList1.add(activeAudienceId);
+            }
+            if(audienceList2.contains(audienceId))
+            {
+                activeAudienceList2.add(activeAudienceId);
+            }
+        }
+
+        System.out.println("________________active audience list1: ");
+        for (Long id : activeAudienceList1) {
+            System.out.print(" "+id);
+        }
+        System.out.println();
+
+        System.out.println("________________active audience list2: ");
+        for (Long id : activeAudienceList2) {
+            System.out.print(" "+id);
+        }
+        System.out.println();
+
         CoreModuleTask newTask = coreModuleTask;
         newTask.setAudienceId1 (audienceList1);
         newTask.setAudienceId2 (audienceList2);
+        newTask.setActiveAudienceId1(activeAudienceList1);
+        newTask.setActiveAudienceId2(activeAudienceList2);
         newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
         newTask.setMakenext(1);
         newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
@@ -270,6 +306,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         System.out.println("size of active Audience Id1: "+listOfActiveAudienceId.size());
 
         List<Audience> listOfAudiences = new ArrayList<>();
+        List<ActiveAudience> listOfActiveAudiences = new ArrayList<>();
         for (Long id : listOfActiveAudienceId) {
             //Audience audience = audienceRepository.findById(id).get();
 
@@ -279,6 +316,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
 
             listOfAudiences.add(audience);
+            listOfActiveAudiences.add(activeAudience);
         }
 
         // get the json_text from node
@@ -552,12 +590,43 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
         System.out.println();
 
+        List<Long> activeAudienceList1 = new ArrayList<>();
+        List<Long> activeAudienceList2 = new ArrayList<>();
+
+        for (ActiveAudience activeAudience: listOfActiveAudiences)
+        {
+            Long audienceId = activeAudience.getAudienceId();
+            Long activeAudienceId = activeAudience.getId();
+            if(audienceList1.contains(audienceId))
+            {
+                activeAudienceList1.add(activeAudienceId);
+            }
+            if(audienceList2.contains(audienceId))
+            {
+                activeAudienceList2.add(activeAudienceId);
+            }
+        }
+
+        System.out.println("________________active audience list1: ");
+        for (Long id : activeAudienceList1) {
+            System.out.print(" "+id);
+        }
+        System.out.println();
+
+        System.out.println("________________active audience list2: ");
+        for (Long id : activeAudienceList2) {
+            System.out.print(" "+id);
+        }
+        System.out.println();
+
         CoreModuleTask newTask = coreModuleTask;
         newTask.setAudienceId1(audienceList1);
         newTask.setAudienceId2(audienceList2);
+        newTask.setActiveAudienceId1(activeAudienceList1);
+        newTask.setActiveAudienceId2(activeAudienceList2);
         //jiaqi:这里为了确保task的状态，还是要手动的set一下makenext为1来确保return之后下一个task会被task coordinator的CMTexecutor制作
         newTask.setMakenext(1);
-        newTask.setTaskType(1);
+        newTask.setTaskType(0);
         return newTask;
     }
 
@@ -568,6 +637,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         List<Long> listOfActiveAudienceId = coreModuleTask.getActiveAudienceId1();
         List<Audience> listOfAudiences = new ArrayList<>();
+        List<ActiveAudience> listOfActiveAudiences = new ArrayList<>();
 
         for (Long id : listOfActiveAudienceId) {
             // active_audience := id
@@ -576,6 +646,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
             Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
 
             listOfAudiences.add(audience);
+            listOfActiveAudiences.add(activeAudience);
         }
 
         Node node = NodeRepository.searchNodeByid(coreModuleTask.getNodeId());
@@ -699,12 +770,43 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         }
         System.out.println();
 
+        List<Long> activeAudienceList1 = new ArrayList<>();
+        List<Long> activeAudienceList2 = new ArrayList<>();
+
+        for (ActiveAudience activeAudience: listOfActiveAudiences)
+        {
+            Long audienceId = activeAudience.getAudienceId();
+            Long activeAudienceId = activeAudience.getId();
+            if(audienceList1.contains(audienceId))
+            {
+                activeAudienceList1.add(activeAudienceId);
+            }
+            if(audienceList2.contains(audienceId))
+            {
+                activeAudienceList2.add(activeAudienceId);
+            }
+        }
+
+        System.out.println("________________active audience list1: ");
+        for (Long id : activeAudienceList1) {
+            System.out.print(" "+id);
+        }
+        System.out.println();
+
+        System.out.println("________________active audience list2: ");
+        for (Long id : activeAudienceList2) {
+            System.out.print(" "+id);
+        }
+        System.out.println();
+
         CoreModuleTask newTask = coreModuleTask;
         newTask.setAudienceId1(audienceList1);
         newTask.setAudienceId2(audienceList2);
+        newTask.setActiveAudienceId1(activeAudienceList1);
+        newTask.setActiveAudienceId2(activeAudienceList2);
         //jiaqi:这里为了确保task的状态，还是要手动的set一下makenext为1来确保return之后下一个task会被task coordinator的CMTexecutor制作
         newTask.setMakenext(1);
-        newTask.setTaskType(1);
+        newTask.setTaskType(0);
         return newTask;
     }
 
