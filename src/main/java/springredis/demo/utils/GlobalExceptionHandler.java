@@ -1,4 +1,4 @@
-package springredis.demo.entity.response;
+package springredis.demo.utils;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import springredis.demo.entity.response.Response;
 import springredis.demo.error.JourneyNotFoundException;
 
 @ControllerAdvice(annotations = {RestController.class, Controller.class})

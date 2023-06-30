@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springredis.demo.Service.JourneyService;
@@ -23,6 +24,7 @@ import springredis.demo.repository.activeRepository.ActiveNodeRepository;
 import springredis.demo.serializer.SeDeFunction;
 import springredis.demo.structures.OutAPICaller;
 import springredis.demo.tasks.CMTExecutor;
+import springredis.demo.utils.OptionalUtils;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -106,19 +108,24 @@ public class JourneyServiceImpl implements JourneyService {
     }
 
 
-    public Journey setJourneyStatus(JourneyJsonModel journeyJsonModel, int status) throws JourneyNotFoundException {
+    public Journey setJourneyStatus(JourneyJsonModel journeyJsonModel, int status) {
         String journeyFrontEndId = journeyJsonModel.getProperties().getJourneyId();
         Journey existingJourney = journeyRepository.searchJourneyByFrontEndId(journeyFrontEndId);
         if (existingJourney == null) {
             throw new JourneyNotFoundException("Journey not found by given journey front-end id!");
         }
 
-        log.info("set journey status from {} to {}", existingJourney.getStatus(), status);
+        if (status == Journey.ACTIVATED_FINISHED) {
+            endJourney(existingJourney.getId());
+        }
+        else {
+            existingJourney.setStatus(status);
+        }
         String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
         LocalDateTime updatedAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
-        existingJourney.setStatus(status);
         existingJourney.setUpdatedAt(updatedAt);
         existingJourney.setUpdatedBy(updatedBy);
+        log.info("set journey status from {} to {}", existingJourney.getStatus(), status);
         return journeyRepository.save(existingJourney);
     }
 
@@ -215,6 +222,10 @@ public class JourneyServiceImpl implements JourneyService {
         dummyHead.setUpdatedAt(LocalDateTime.now());
         dummyHead.setCreatedBy("System");
         dummyHead.setUpdatedBy("System");
+        dummyHead.setName("dummyHead");
+        dummyHead.setEndNodesCount(headNode.getEndNodesCount());
+        dummyHead.setJourneyFrontEndId(journeyFrontEndId);
+
         Long dummyHeadId = nodeRepository.save(dummyHead).getId();
         ActiveJourney activeJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(journeyId);
         // Set activeDummyHead who corresponds to dummyHead
@@ -308,11 +319,22 @@ public class JourneyServiceImpl implements JourneyService {
         }
         newNode.setNexts(nexts);
         newNode.nextsSerialize();
+        Integer endNodesCount = 0;
+        for (Long next : nexts) {
+            Optional<Node> optionalNode = nodeRepository.findById(next);
+            if (optionalNode.isEmpty()) {
+                throw new DataBaseObjectNotFoundException("not found");
+            }
+            Node node = optionalNode.get();
+            endNodesCount += node.getEndNodesCount();
+        }
+        newNode.setEndNodesCount(endNodesCount);
         nodeRepository.save(newNode);
         //newNode = nodeRepository.searchNodeByid(nodeId);
         System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:" + journeyFrontEndId);
         return nodeId;
     }
+
 
     private void createActiveNodesAndMapToNodes(ActiveJourney activeJourney) {
         for (int i = 0; i < nodeIdList.size(); i++) {
@@ -355,7 +377,8 @@ public class JourneyServiceImpl implements JourneyService {
 
     private List<Long> AudienceFromAudienceList(Long nodeId, long userId) {
         System.out.println("current node ID is:" + nodeId.toString());
-        Node currentNode = nodeRepository.findById(nodeId).get();
+        Optional<Node> optionalNode = nodeRepository.findById(nodeId);
+        Node currentNode = OptionalUtils.getObjectOrThrow(optionalNode, "Not found current Node by given node id");
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
         System.out.println("object is:" + jsonObject);
@@ -387,11 +410,12 @@ public class JourneyServiceImpl implements JourneyService {
         endNode.setHeadOrTail(2);
         endNode.setName("endNode");
         endNode.setJourneyFrontEndId(journeyFrontEndId);
+        endNode.setEndNodesCount(1);
         return endNode;
     }
 
     // TODO: Node和Journey级联关系没保存，要写一下
-    private Journey JourneyParse(Journey journey) throws JourneyNotFoundException {
+    public Journey journeyParse(Journey journey) {
         //Deserialize function
         SeDeFunction seDeFunction = new SeDeFunction();
         List<Node> deserializedJourney = seDeFunction.deserializing(journey.getJourneySerialized());
@@ -448,15 +472,12 @@ public class JourneyServiceImpl implements JourneyService {
         return journey;
     }
 
-    @Override
-    public Journey journeyParse(Journey journey) throws JourneyNotFoundException {
-        return null;
-    }
 
     @Override
-    public Boolean deleteActiveAudience(Long audienceId) {
+    public Boolean deleteActiveAudience(List<Long> activeNodeIdList) {
         try {
-            activeAudienceRepository.deleteById(audienceId);
+            activeAudienceRepository.deleteWhenEndNode(activeNodeIdList);
+//            activeAudienceRepository.deleteWhenEndNode(activeAudienceNodeId);
             System.out.println("删除 DeleteActiveAudience  成功");
             return true;
         } catch (Exception e) {
@@ -474,13 +495,47 @@ public class JourneyServiceImpl implements JourneyService {
             Long nodeJourneyId = ActiveJourney.getId();
             activeNodeRepository.deleteByNodeJourneyId(nodeJourneyId);
             System.out.println("删除 DeleteActiveNode nodeJourneyId:" + nodeJourneyId + " 成功");
+            //System.out.println("删除 DeleteActiveJourney  成功");
             activeJourneyRepository.deleteByActiveJourneyId(JourneyId);
             System.out.println("删除 DeleteActiveJourney Id:" + JourneyId + " 成功");
-            //System.out.println("删除 DeleteActiveJourney  成功");
             return true;
         } catch (Exception e) {
             Logger logger = LoggerFactory.getLogger(OutAPICaller.class);
             logger.error("DeleteActiveNode error log:" + e);
+            return false;
+        }
+    }
+
+    /**
+     * end journey method
+     * @param journeyId given journey id
+     * @return
+     */
+    public Boolean endJourney(Long journeyId) {
+        try {
+            log.info("Prepare to end journey...");
+
+            Optional<Journey> optionalJourney = journeyRepository.findById(journeyId);
+
+            // if journey not found by given journey id, throw JourneyNotFoundException
+            Journey journey = OptionalUtils.getObjectOrThrow(optionalJourney, "Jaudienceourney not found by given journey id!");
+
+            ActiveJourney activeJourney = activeJourneyRepository.searchActiveJourneyByJourneyId(journeyId);
+            List<Long> activeNodeIdList = new ArrayList<>();
+            for (ActiveNode activeNode : activeNodeRepository.searchByNodeJourneyId(activeJourney.getId())) {
+                activeNodeIdList.add(activeNode.getId());
+            }
+
+            // set journey status
+            deleteActiveAudience(activeNodeIdList);
+            deleteActiveNodeAndJourney(journeyId);
+            journey.setStatus(Journey.ACTIVATED_FINISHED);
+            journeyRepository.save(journey);
+            log.info("set journey status from {} to {}", journey.getStatus(), Journey.ACTIVATED_FINISHED);
+            return true;
+        }
+        catch (Exception e) {
+            log.info("End journey error");
             return false;
         }
     }

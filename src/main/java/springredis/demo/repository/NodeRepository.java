@@ -24,4 +24,9 @@ public interface NodeRepository extends JpaRepository<Node, Long> {
     @Query(value="SELECT n from Node n WHERE n.createdBy=:createdBy AND n.name=:nodeType")
     List<Node> searchNodesByCreatedByAndName(String createdBy, String nodeType);
 
+    @Query(value="SELECT n from Node n WHERE n.journeyFrontEndId=:journeyFrontEndId AND n.name=:nodeName")
+    Node searchByJourneyFrontEndIdAndName(String journeyFrontEndId, String nodeName);
+
+//    @Query(value="SELECT n from Node n WHERE n.journeyFrontEndId=:journeyFrontEndId AND n.headOrTail=:headOrTail")
+//    Node searchByJourneyFrontEndIdAndHeadOrTail(String journeyFrontEndId, Integer headOrTail);
 }

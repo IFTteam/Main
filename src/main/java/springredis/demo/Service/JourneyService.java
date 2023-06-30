@@ -5,6 +5,8 @@ import springredis.demo.entity.Journey;
 import springredis.demo.entity.JourneyJsonModel;
 import springredis.demo.error.JourneyNotFoundException;
 
+import java.util.List;
+
 /**
  * journey service layer
  * @author zeqing wang
@@ -44,7 +46,9 @@ public interface JourneyService {
 
     Journey journeyParse(Journey journey);
 
-    Boolean deleteActiveAudience(Long audienceId);
+    Boolean deleteActiveAudience(List<Long> activeNodeIdList);
 
     Boolean deleteActiveNodeAndJourney(Long JourneyId);
+
+    Boolean endJourney(Long journeyId);
 }

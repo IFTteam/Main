@@ -9,6 +9,7 @@ import springredis.demo.entity.Audience;
 import springredis.demo.entity.activeEntity.ActiveNode;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Repository
 public interface ActiveNodeRepository extends JpaRepository<ActiveNode, Long> {
@@ -25,7 +26,12 @@ public interface ActiveNodeRepository extends JpaRepository<ActiveNode, Long> {
 
     @Transactional
     @Modifying
-    @Query(nativeQuery = true, value ="delete from active_node t where t.node_journey_id = ?1")
+//    @Query(nativeQuery = true, value ="delete from active_node t where t.node_journey_id = ?1")
+    @Query(value="DELETE FROM ActiveNode t WHERE t.activeJourney.id=:nodeJourneyId")
     void deleteByNodeJourneyId(Long nodeJourneyId);
 
+    @Transactional
+    @Modifying
+    @Query(value="select t from ActiveNode t where t.activeJourney.id=:nodeJourneyId")
+    List<ActiveNode> searchByNodeJourneyId(Long nodeJourneyId);
 }

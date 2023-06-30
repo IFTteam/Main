@@ -24,4 +24,6 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
 
     List<Journey> findByCreatedBy(String userid);
 
+
+
 }

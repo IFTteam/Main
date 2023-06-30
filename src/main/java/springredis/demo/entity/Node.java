@@ -35,6 +35,7 @@ public class Node extends BaseEntity {
     private String status;
     private String properties;
     private String journeyFrontEndId;
+    private Integer endNodesCount;
 
     @ElementCollection
     @JoinColumn(name = "node_id")

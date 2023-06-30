@@ -1,6 +1,6 @@
 package springredis.demo.error;
 
-public class JourneyNotFoundException extends RuntimeException {
+public class JourneyNotFoundException extends DataBaseObjectNotFoundException {
 
     public JourneyNotFoundException() {
         super();

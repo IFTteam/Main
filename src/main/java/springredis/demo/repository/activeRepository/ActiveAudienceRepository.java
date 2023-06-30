@@ -30,8 +30,8 @@ public interface ActiveAudienceRepository extends JpaRepository<ActiveAudience, 
     List<ActiveAudience> findByAudienceId(Long audienceId);
 
     @Modifying
-    @Query(nativeQuery = true, value = "delete from ActiveAudience where  audience_id = ?1  and audience_node_id = ?2")
-    void deleteWhenEndNode(Long audienceId, Long audienceNodeId);
-
+    @Transactional
+    @Query(nativeQuery = true, value = "delete from active_audience where audience_node_id in ?1")
+    void deleteWhenEndNode(List<Long> activeNodeIdList);
 
 }

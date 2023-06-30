@@ -16,6 +16,7 @@ import springredis.demo.error.DataBaseObjectNotFoundException;
 import springredis.demo.error.JourneyNotFoundException;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.NodeRepository;
+import springredis.demo.utils.OptionalUtils;
 
 import java.util.*;
 
@@ -30,6 +31,7 @@ public class CMTExecutor {
 
     @Autowired
     private JourneyService journeyService;
+
 
     RestTemplate restTemplate;
     //Chanage the below to actual API endpoints of functional urls
@@ -55,30 +57,50 @@ public class CMTExecutor {
         this.journeyRepository = journeyRepository;
     }
 
+
     public void execute(CoreModuleTask coreModuleTask) {
         System.out.println("The module to be execute is " + coreModuleTask);
-        // first, if this coremoduletask's type is "end", we change the journey status to ACTIVATED_FINISHED and return
-        if ("end".equals(coreModuleTask.getType())) {
-            log.info("Prepare to end journey...");
-            Long journeyId = coreModuleTask.getJourneyId();
-            Optional<Journey> optionalJourney = journeyRepository.findById(journeyId);
+        // find the curNode and dummyHeadNode in terms of coreModuleTask's NodeId
+        Long nodeId = coreModuleTask.getNodeId();
+        Optional<Node> optionalNode = nodeRepository.findById(nodeId);
+        Node curNode = OptionalUtils.getObjectOrThrow(optionalNode, "Not found the node according to the given node id");
+        Node dummyHeadNode = nodeRepository.searchByJourneyFrontEndIdAndName(curNode.getJourneyFrontEndId(), "dummyHead");
+        Integer curEndNodesCount = curNode.getEndNodesCount();
+        dummyHeadNode.nextsDeserialize();
 
-            // if journey not found by given journey id, throw JourneyNotFoundException
-            if (optionalJourney.isEmpty()) {
-                throw new JourneyNotFoundException("Journey not found by given journey id!");
+        // find the trigger node and check if it is a time trigger
+        Long triggerNodeId = dummyHeadNode.getNexts().get(0);
+        Optional<Node> optionalTriggerNode = nodeRepository.findById(triggerNodeId);
+        Node triggerNode = OptionalUtils.getObjectOrThrow(optionalTriggerNode, "Not found the node according to the given node id");
+
+        boolean isTimeTrigger;
+        isTimeTrigger = "Time Trigger".equals(triggerNode.getName());
+
+        // first, if this coreModuleTask's type is "end", we change the journey status to ACTIVATED_FINISHED and return
+        // TODO: find last end nodes
+        if ("end".equals(coreModuleTask.getType())) {
+            if (isTimeTrigger) {
+                // if it's belong to a time trigger journey, then delete the endNodesCount by 1
+                dummyHeadNode.setEndNodesCount(dummyHeadNode.getEndNodesCount() - 1);
+                nodeRepository.save(dummyHeadNode);
             }
 
-            // set journey status
-            Journey journey = optionalJourney.get();
-            journeyService.deleteActiveAudience(coreModuleTask.getActiveAudienceId1().get(0));
-            journeyService.deleteActiveNodeAndJourney(journeyId);
-            journey.setStatus(Journey.ACTIVATED_FINISHED);
-            journeyRepository.save(journey);
-            log.info("set journey status from {} to {}", journey.getStatus(), Journey.ACTIVATED_FINISHED);
-
-            // end execute
+            if (isTimeTrigger && dummyHeadNode.getEndNodesCount() == 0) {
+                journeyService.endJourney(coreModuleTask.getJourneyId());
+            }
             return;
         }
+
+        // check activeAudienceId1 is empty
+        if (!"dummyHead".equals(coreModuleTask.getName()) && coreModuleTask.getActiveAudienceId1().size() == 0) {
+            if (isTimeTrigger) {
+                dummyHeadNode.setEndNodesCount(dummyHeadNode.getEndNodesCount() - curEndNodesCount);
+                nodeRepository.save(dummyHeadNode);
+            }
+
+            return;
+        }
+
         CoreModuleTask restask = null;
         //else, we can first call the respective functional API's based on task type if the callapi attribute is 1:
         if (StringUtils.hasText(coreModuleTask.getName())) {
@@ -94,7 +116,6 @@ public class CMTExecutor {
         } else {
             restask = coreModuleTask;
         }
-
         //now, if restask.makenext is set to 0, the task executor will simply return since it won't do anything
         if (restask.getMakenext() == 0) {
             return;
