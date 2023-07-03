@@ -268,6 +268,7 @@ public class JourneyServiceImpl implements JourneyService {
         return oneJourney;
     }
 
+    @Transactional
     private Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
         Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx], journeyFrontEndId);
         System.out.println(nodeJsonModelList[idx].toString());

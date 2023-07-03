@@ -77,7 +77,6 @@ public class CMTExecutor {
         isTimeTrigger = "Time Trigger".equals(triggerNode.getName());
 
         // first, if this coreModuleTask's type is "end", we change the journey status to ACTIVATED_FINISHED and return
-        // TODO: find last end nodes
         if ("end".equals(coreModuleTask.getType())) {
             if (isTimeTrigger) {
                 // if it's belong to a time trigger journey, then delete the endNodesCount by 1
@@ -148,28 +147,26 @@ public class CMTExecutor {
             Node nextnode = optionalNextNode.get();
             nextnode.nextsDeserialize();
             CoreModuleTask newTask = new CoreModuleTask();
-            BeanUtils.copyProperties(restask, newTask, "nodeId", "taskType", "type", "name", "sourceNodeId", "targetNodeId", "callapi");
+            BeanUtils.copyProperties(restask, newTask, "nodeId", "taskType", "type", "name", "sourceNodeId", "targetNodeId", "callapi", "activeAudienceId1", "activeAudienceId2", "audienceId1", "audienceId2");
             newTask.setNodeId(id);
             newTask.setTaskType(0);
             newTask.setType(nextnode.getType());
             newTask.setName(nextnode.getName());
             newTask.setSourceNodeId(nextnode.getId());
+            if (i == 0) {
+                newTask.setActiveAudienceId1(restask.getActiveAudienceId1());
+                newTask.setAudienceId1(restask.getAudienceId1());
+            }
+            else {
+                newTask.setActiveAudienceId1(restask.getActiveAudienceId2());
+                newTask.setAudienceId1(restask.getAudienceId2());
+            }
             if (nextnode.getNexts().size() > 0) {
                 // this targetnodeid attribute is not really useful anymore
                 newTask.setTargetNodeId(nodeRepository.searchNodeByid(nextnode.getNexts().get(0)).getId());
                 // if nextnode has nexts, then newTask should make next node
                 newTask.setMakenext(1);
             }
-            //now we identify the current activeNode
-//            ActiveNode activeNode = activeNodeRepository.findByDBNodeId(id);
-//            Node node = nodeRepository.searchNodeByid(id);
-//            List<ActiveAudience> activeAudienceList = activeNode.getActiveAudienceList();                       //since the corresponding active audience pool for the possible if/else nextnode is already taken care of in move audience, we simply assign the active audience list to the first AAL attribute of the node's CMT
-//            List<Long> activeIDs = new ArrayList<>();
-//            List<Long> IDs = new ArrayList<>();
-            /*for (ActiveAudience aud : activeAudienceList) {
-                activeIDs.add(aud.getId());
-                IDs.add(aud.getAudienceId());
-            }*/
             String url = "http://localhost:8080/ReturnTask";
             HttpEntity<CoreModuleTask> httpEntity = new HttpEntity<>(newTask);
             // successfully pushed a new task by calling task controller (return task id if successful)
