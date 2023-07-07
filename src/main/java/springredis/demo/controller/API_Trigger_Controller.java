@@ -79,18 +79,24 @@ public class API_Trigger_Controller {
             productService.setNewTNR(tnr);
         }
         triggerType_node_relation restnr = productService.searchTNR(user.getId(),"purchase").get();
+        System.out.println("========= TNR is :" + restnr);
+
+        // removing all the old trigger nodes
         List<Node> nodes = restnr.getNodes();
-        boolean found = false;
-        for(Node n:nodes){
-            if(n.getId()==node.getId()){
-                found = true;
-            }
+        for(Node n : nodes) {
+            System.out.println("Old node: " + n.getId());
+            n.setTriggertype_node_relation(null);
         }
-        if(!found) {
-            node.setTriggertype_node_relation(restnr);
-            restnr = productService.setNewTNR(restnr);                   //at this point since restnr was created before, it is an update operation to update the node field
-            node = productService.addNewNode(node);
-        }
+        // setting the new trigger node to relate to TNR
+        System.out.println("========= Node " + node.getId() + " is NOT found in TNR, adding it into TNR");
+        node.setTriggertype_node_relation(restnr);          //setting node's tnr node id
+        restnr.setNode(node);                               //setting node to tnr's nodes list
+        productService.setNewTNR(restnr);                   //update restnr
+
+        restnr = productService.searchTNR(user.getId(),"purchase").get();
+        System.out.println("========= TNR after update is :" + restnr);
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+
         // webhook exist already
         if(checkIfWebhookExists(task, "orders/create")) {
             System.out.println("========= Webhook already exists, returning...");
@@ -100,9 +106,9 @@ public class API_Trigger_Controller {
             System.out.println("========= Webhook does not exists, creating...");
             String devstore = user.getShopifydevstore();
             String token = user.getShopifyApiAccessToken();
-            String url = "https://" + devstore + ".myshopify.com/admin/api/2022-04/webhooks.json";
+            String url = "https://" + devstore + ".myshopify.com/admin/api/2023-04/webhooks.json";
             //String url = "http://localhost:8080/show"; //for testing
-            String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://cd88-74-213-227-187.ngrok-free.app/shopify_purchase_update/" + user.getId() + "\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
+            String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://5112-131-179-156-9.ngrok-free.app/shopify_purchase_update/" + user.getId() + "\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
             HttpHeaders header = new HttpHeaders();
             header.set("X-Shopify-Access-Token", token);
             header.setContentType(MediaType.APPLICATION_JSON);
@@ -151,7 +157,7 @@ public class API_Trigger_Controller {
         ///////////////////////////////////////////////////////////////////////////////////////////////////
 
         // webhook exist already
-        if(checkIfWebhookExists(task, "checkouts/update")) {
+        if(checkIfWebhookExists(task, "checkouts/create")) {
             System.out.println("========= Webhook already exists, returning...");
         }
         // webhook doesn't exist
@@ -159,9 +165,9 @@ public class API_Trigger_Controller {
             System.out.println("========= Webhook does not exists, creating...");
             String devstore = user.getShopifydevstore();
             String token = user.getShopifyApiAccessToken();
-            String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
+            String url = "https://"+devstore+".myshopify.com/admin/api/2023-04/webhooks.json";
             System.out.println(url);
-            String data = "{\"webhook\":{\"topic\":\"checkouts/update\",\"address\":\"https://cd88-74-213-227-187.ngrok-free.app/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
+            String data = "{\"webhook\":{\"topic\":\"checkouts/create\",\"address\":\"https://5112-131-179-156-9.ngrok-free.app/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"abandoned_checkout_url\"]}}";
             HttpHeaders header = new HttpHeaders();
             header.set("X-Shopify-Access-Token",token);
             header.setContentType(MediaType.APPLICATION_JSON);
@@ -270,6 +276,11 @@ public class API_Trigger_Controller {
         Long audienceId = null;
         Audience audience;
         JSONObject order = new JSONObject(jsonstr);
+        // if checkout is already completed
+        if(order.optString("completed_at") != null) {
+            System.out.println(order.optString("completed_at"));
+            return null;
+        }
         String email = order.optString("email");
         String updateAt = order.getString("updated_at");
         OffsetDateTime offsetDateTime = OffsetDateTime.parse(updateAt);
