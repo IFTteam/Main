@@ -20,6 +20,8 @@ import springredis.demo.error.DataBaseObjectNotFoundException;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
 import springredis.demo.tasks.CMTExecutor;
+import springredis.demo.utils.OptionalUtils;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
@@ -112,10 +114,7 @@ public class OutAPICaller {
             Long id = ((Number) outEvent.getId()).longValue();
             System.out.println("the id is: " + id);
             Optional<TimeTask> timeTaskOp = timeDelayRepository.findById(id);
-            if (timeTaskOp.isEmpty()) {
-                throw new DataBaseObjectNotFoundException("No Time Task Exist");
-            }
-            TimeTask timeTask = timeTaskOp.get();
+            TimeTask timeTask = OptionalUtils.getObjectOrThrow(timeTaskOp, "No Time Task Exist");
             timeTask.audience_serialize();
             System.out.println("================================================Time Task retrieved=====================================================");
             System.out.println("cur JI id is:" + timeTask.getJourneyId());

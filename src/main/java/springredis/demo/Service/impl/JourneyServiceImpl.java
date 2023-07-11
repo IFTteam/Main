@@ -119,13 +119,13 @@ public class JourneyServiceImpl implements JourneyService {
             endJourney(existingJourney.getId());
         }
         else {
+            log.info("set journey status from {} to {}", existingJourney.getStatus(), status);
             existingJourney.setStatus(status);
         }
         String updatedBy = journeyJsonModel.getProperties().getUpdatedBy();
         LocalDateTime updatedAt = LocalDateTime.parse(journeyJsonModel.getProperties().getUpdatedAt(), DateTimeFormatter.ISO_DATE_TIME);
         existingJourney.setUpdatedAt(updatedAt);
         existingJourney.setUpdatedBy(updatedBy);
-        log.info("set journey status from {} to {}", existingJourney.getStatus(), status);
         return journeyRepository.save(existingJourney);
     }
 
@@ -530,9 +530,13 @@ public class JourneyServiceImpl implements JourneyService {
             // set journey status
             deleteActiveAudience(activeNodeIdList);
             deleteActiveNodeAndJourney(journeyId);
-            journey.setStatus(Journey.ACTIVATED_FINISHED);
-            journeyRepository.save(journey);
             log.info("set journey status from {} to {}", journey.getStatus(), Journey.ACTIVATED_FINISHED);
+            journey.setStatus(Journey.ACTIVATED_FINISHED);
+            // set updated properties
+            LocalDateTime updateAt = LocalDateTime.now();
+            journey.setUpdatedAt(updateAt);
+            journey.setUpdatedBy("System");
+            journeyRepository.save(journey);
             return true;
         }
         catch (Exception e) {
