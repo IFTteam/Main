@@ -1,8 +1,9 @@
-package springredis.demo.Service;
+package springredis.demo.Service.impl;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import springredis.demo.Service.FrontendAudienceService;
 import springredis.demo.entity.Audience;
 import springredis.demo.entity.Tag;
 import springredis.demo.entity.User;

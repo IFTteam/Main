@@ -26,19 +26,10 @@ import java.util.Optional;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
-import springredis.demo.entity.Audience;
-import springredis.demo.entity.CoreModuleTask;
-import springredis.demo.entity.Journey;
-import springredis.demo.entity.Node;
-import springredis.demo.entity.Transmission;
-import springredis.demo.entity.User;
+import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.base.BaseTaskEntity;
-import springredis.demo.entity.request.Address;
-import springredis.demo.entity.request.Content;
-import springredis.demo.entity.request.ScheduledTransmissionRequest;
-import springredis.demo.entity.request.Sender;
-import springredis.demo.entity.request.TransmissionRequest;
+import springredis.demo.entity.request.*;
 import springredis.demo.entity.response.Response;
 import springredis.demo.entity.response.SparkPostResponse;
 import springredis.demo.repository.AudienceRepository;
@@ -50,7 +41,7 @@ import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-@Slf4j // logger
+@Slf4j
 @RestController
 @RequestMapping(path = "/actionSend")
 @CrossOrigin(origins="*")
@@ -64,7 +55,7 @@ public class ActionSendController {
     private final WebClient webClient;
     private final RestTemplate restTemplate = new RestTemplate();
 
-
+    private final String unsubscribe_url = "https://www.yelp.com/";
 
     @Autowired
     public ActionSendController(TransmissionRepository transmissionRepository,
@@ -155,15 +146,14 @@ public class ActionSendController {
         System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().size());
         System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
-                                                                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
-                                                                 .header("Content-Type", "application/json")
-                                                                 .header("Accept", "application/json")
-                                                                 .accept(MediaType.APPLICATION_JSON)
-                                                                 .body(Mono.just(transmissionRequest), TransmissionRequest.class)
-                                                                 .retrieve()
-                                                                 .bodyToMono(SparkPostResponse.class)
-                                                                 .blockOptional();
-
+                .uri("/api/v1/transmissions?num_rcpt_errors=3")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .accept(MediaType.APPLICATION_JSON)
+                .body(Mono.just(transmissionRequest), TransmissionRequest.class)
+                .retrieve()
+                .bodyToMono(SparkPostResponse.class)
+                .blockOptional();
         if(!sparkPostResponse.isPresent()) 
         {
         	return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY).body(new Response());
@@ -178,7 +168,7 @@ public class ActionSendController {
         Transmission transmission = new Transmission();
         log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
-        transmission.setAudience_email(transmissionRequest.getAddressList().get(0).getAddress());
+        transmission.setEmail(transmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(transmissionRequest.getAudienceId()));
         System.out.println(transmissionRequest.getUserId());
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
@@ -222,7 +212,7 @@ public class ActionSendController {
         Transmission transmission = new Transmission();
         log.info("transmission id is" + sparkPostResponse.get().getSparkPostResults().getTransmissionId());
         transmission.setId(sparkPostResponse.get().getSparkPostResults().getTransmissionId());
-        transmission.setAudience_email(scheduledTransmissionRequest.getAddressList().get(0).getAddress());
+        transmission.setEmail(scheduledTransmissionRequest.getAddressList().get(0).getAddress());
         transmission.setAudience(audienceRepository.getReferenceById(scheduledTransmissionRequest.getAudienceId()));
         transmission.setUser(userRepository.getReferenceById(scheduledTransmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
@@ -245,21 +235,15 @@ public class ActionSendController {
     @ResponseBody
     public CoreModuleTask createCMTTransmission(@RequestBody CoreModuleTask coreModuleTask) {
     	List<ActiveAudience> activeAudienceList = new ArrayList<ActiveAudience>();  //obtain active audience list from CMT
-        System.out.println("(ActionSendController) The CMT module is " + coreModuleTask.toString());
-        System.out.println("(ActionSendController) The CMT module ActiveAudience is " + coreModuleTask.getActiveAudienceId1());
-        System.out.println("(ActionSendController) The CMT module Audience is " + coreModuleTask.getAudienceId1());
-        for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++)
+    	for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++) 
     	{
     		Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(i));
     		if(activeAudience.isPresent())
     		{
     			activeAudienceList.add(activeAudience.get());
     		}
-            else{
-                System.out.println("no audience for" + coreModuleTask.getActiveAudienceId1().get(i));
-            }
     	}
-        System.out.println("The CMT activeAudienceList is " + activeAudienceList.size());
+    	
     	List<Audience> audienceList = new ArrayList<Audience>();  //obtain audience list from the CMT
     	for(int i = 0; i < activeAudienceList.size(); i++) 
     	{
@@ -269,12 +253,11 @@ public class ActionSendController {
     			audienceList.add(audience.get());
     		}
     	}
-        //System.out.println("The CMT audienceList is " + audienceList);
     	
     	TransmissionRequest request = new TransmissionRequest();
     	
     	request.setCampaignId("1");  //Not entirely sure how to obtain campaign ID yet
-
+    	
     	List<Address> addressList = new ArrayList<Address>();  //set address list for the request
     	for(int i = 0; i < audienceList.size(); i++) 
     	{
@@ -282,53 +265,93 @@ public class ActionSendController {
     		address.setAddress(audienceList.get(i).getEmail());
     		addressList.add(address);
     	}
-        Address address = new Address();
-        address.setAddress("jingchen.tang@altomni.com");
-        addressList.add(address);
     	request.setAddressList(addressList);
 
-        for(int i = 0; i < addressList.size(); i++)
-            System.out.println(addressList.get(i).getAddress());
+        System.out.println(addressList.toString());
 
     	Content content = new Content();  //set content for the request
     	Node node = nodeRepository.findById(coreModuleTask.getNodeId()).get();
 
         String properties = node.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-        System.out.println("in CMT, the properties" + jsonObject);
+
 
         Sender sender = new Sender();
     	//(sender, subject, email, name"sender", subject, html, text)
         String user_name = "user1";
-        String add = user_name + "@sub.paradx.net";
-    	sender.setEmail("duke.tang@sub.paradx.net");
-    	sender.setName(jsonObject.getString("sender"));
+        String add = user_name + "@paradx.dev";
+    	sender.setEmail("duke.tang@paradx.dev");
+        if(jsonObject.isNull("sender")) {
+            sender.setName("Unknow");
+        }else{
+            sender.setName(jsonObject.getString("sender"));
+        }
+
     	content.setSender(sender);
-    	content.setSubject(jsonObject.getString("subject"));
+        if(jsonObject.isNull("subject"))
+        {
+            content.setSubject("Unknow");
+        }else{
+            content.setSubject(jsonObject.getString("subject"));
+        }
+        Options options = new Options();
+        options.setOpenTracking(true);
+        options.setClickTracking(true);
+
     	//content.setHtml();
+//        if(jsonObject.getString("content") != null)
+//            content.setText(jsonObject.getString("content"));
+//        else
+//    	    content.setText("hello,testing");
+//    	request.setContent(content);
+        content.setType(jsonObject.getString("type"));
+        content.setContent(jsonObject.getString("content"));
+        if (content.getType().equalsIgnoreCase("html")) {
+            content.setHtml(content.getContent(), unsubscribe_url);
+            content.setText("text here");
+        }
+        if (content.getType().equalsIgnoreCase("text")) {
+            content.setText(content.getContent(), unsubscribe_url);
+        }
+
+        //content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
+
+        //content.setText("text here");
+        request.setContent(content);
+        request.setOptions(options);
         if(jsonObject.getString("content") != null)
             content.setText(jsonObject.getString("content"));
         else
     	    content.setText("hello,testing");
     	request.setContent(content);
-    	
+
     	request.setAudienceId(coreModuleTask.getAudienceId1().get(0));  //set audience id. Is it just the first audience id stored on CMT?
 
         System.out.println("The coreModuleTask is:" + coreModuleTask.toString());
 
+        /*
         // TODO: user is manually created generated here for testing purpose
         User user = new User();
         user.setUsername("user" + coreModuleTask.getNodeId());
         user.setCreatedBy("Bryan");
         userRepository.save(user);
+        */
 
-        coreModuleTask.setUserId(user.getId());
+        // Find its user from journey
+        Journey journey = journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
+        System.out.println("(ActionSendController) The CMT module journey is createdBy " + journey.getCreatedBy());
+        Long userId = Long.valueOf(journey.getCreatedBy());
+        System.out.println("(ActionSendController) The CMT module userId is " + userId);
+        //User user = userRepository.searchUserById(userId);
+
+        coreModuleTask.setUserId(userId);
         System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
-//        request.setUserId(1L);  //set user id
 
 
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
+
+
     	
     	//restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
         //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
@@ -352,7 +375,7 @@ public class ActionSendController {
     	request.setAddressList(list);
     	Content content = new Content();
     	Sender sender = new Sender();
-    	sender.setEmail("testing@sub.paradx.net");
+    	sender.setEmail("testing@paradx.dev");
     	sender.setName("Luke Leon");
     	content.setSender(sender);
     	content.setSubject("News1");
@@ -422,8 +445,8 @@ public class ActionSendController {
         activeAudience.setAudienceId(audience.getId());
         activeAudienceRepository.save(activeAudience);
         Node node = new Node();
-        node.setType("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
-        node.setProperties("Luke Leon,News1,testing@sub.paradx.net,Luke Leon,News1, ,Piggy Zhu Mi Bun");
+        node.setType("Luke Leon,News1,testing@paradx.dev,Luke Leon,News1, ,Piggy Zhu Mi Bun"); //should be send - subject - content and should be node property
+        node.setProperties("Luke Leon,News1,testing@paradx.dev,Luke Leon,News1, ,Piggy Zhu Mi Bun");
         nodeRepository.save(node);
         Journey journey = new Journey();
         journeyRepository.save(journey);

@@ -13,6 +13,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Data
@@ -40,6 +41,10 @@ public class AudienceList extends BaseEntity {
     )
     List<Audience> audiences = new ArrayList<>();
 
+    public void removeAudience(Audience audience) {
+        this.audiences.remove(audience);
+        audience.getAudienceLists().remove(this);
+    }
 
     @ManyToOne(
             cascade = CascadeType.ALL

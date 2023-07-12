@@ -1,8 +1,9 @@
-package springredis.demo.Service;
+package springredis.demo.Service.impl;
 
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import springredis.demo.Service.BackendTaskService;
 import springredis.demo.entity.*;
 import springredis.demo.repository.*;
 
@@ -36,14 +37,29 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         Node currentNode = nodeRepository.findById(coreModuleTask.getNodeId()).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-        String name = jsonObject.getString("tag");
+//        System.out.println(jsonObject);
+        String name = jsonObject.getString("newTag");
+        if (name == null || name.isEmpty()){
+            name = jsonObject.getString("tag");
+        } else {
+            name = jsonObject.getString("newTag");
+        };
+
+        //Get frontEndId, then find current journey
+        String frontEndId = currentNode.getJourneyFrontEndId();
+        Journey currentJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
+
+        //Find user ID by get createBy
+        String userId = currentJourney.getCreatedBy();
+        Long userIdLong = Long.parseLong(userId);
+
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
-        //User user=userRepository.findById(coreModuleTask.getUserId()).get();
-        User user=userRepository.findById(1);
+        User user=userRepository.findById(userIdLong).get();
 
         TagDetail real_tag = new TagDetail();
 
         Optional<Tag> tagOp = tagRepository.findByUserIdName(name,user);
+
         Tag tag;
         if (!tagOp.isPresent()){
             tag = new Tag();
@@ -52,7 +68,9 @@ public class BackendTaskServiceImpl implements BackendTaskService {
             tagRepository.save(tag);
         }
         else {
+            System.out.println("Tag already exists, not creating a new one.");
             tag = tagOp.get();
+            System.out.println(tag);
         }
 
         real_tag.setJourney(journey);
@@ -116,14 +134,76 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
         String name = jsonObject.getString("tag");
+
+        //Get frontEndId, then find current journey
+        String frontEndId = currentNode.getJourneyFrontEndId();
+        Journey currentJourney = journeyRepository.searchJourneyByFrontEndId(frontEndId);
+
+        //Find user ID by get createBy
+        String userId = currentJourney.getCreatedBy();
+        Long userIdLong = Long.parseLong(userId);
+
+        //Find the journey and user
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
-        User user=userRepository.findById(coreModuleTask.getUserId()).get();
-        Tag tag = tagRepository.findByUserIdName(name,user).get();
+        User user=userRepository.findById(userIdLong).get();
+//        Tag tag = tagRepository.findByUserIdName(name,user).get();
+//        Tag tag = tagRepository.findByUserIdName(name).get(0);
 
-        Long tagId = tag.getTagId();
+        //Find the tag by user and name
+        Optional<Tag> tagOp = tagRepository.findByUserIdName(name, user);
+        if (!tagOp.isPresent()) {
+            System.out.println("Tag not found.");
+            return coreModuleTask;
+        }
+
+        Tag tag = tagOp.get();
+        Long TagId = tag.getTagId();
+
+        // Find TagDetail by TagId
+        List<TagDetail> tagDetailOp = tagDetailRepository.findByTagId(TagId);
+        if (tagDetailOp.isEmpty()) {
+            System.out.println("TagDetail not found for the id.");
+            return coreModuleTask;
+        }
 
 
-        coreModuleTask.setTaskType(1);
+        List<TagDetail> tagDetails = tagDetailRepository.findByTagId(TagId);
+
+        // Get audience ids from the task
+        List<Long> audienceIds = coreModuleTask.getAudienceId1();
+
+        // Iterate through all tagDetails associated with the TagId
+        for (TagDetail tagDetail : tagDetails) {
+
+            // Iterate through the audience IDs and remove the relationship if it exists
+            for (Long audienceId : audienceIds) {
+                Optional<Audience> audience = audienceRepository.findById(audienceId);
+                if (audience.isPresent()) {
+                    Audience real_audience = audience.get();
+
+                    // Check if the relationship exists, if yes, remove it
+                    if (tagDetail.getAudiences().contains(real_audience)) {
+                        // Remove the relationship
+                        tagDetail.getAudiences().remove(real_audience);
+                        real_audience.getTagDetails().remove(tagDetail);
+
+                        // Save the changes
+                        audienceRepository.save(real_audience);
+                        tagDetailRepository.save(tagDetail);
+
+                        System.out.println("Tag-audience relation removed.");
+                    } else {
+                        System.out.println("Tag-audience relation not found for audience id: " + audienceId);
+                    }
+                } else {
+                    System.out.println("Audience not found for id: " + audienceId);
+                }
+            }
+        }
+
+
+
+        coreModuleTask.setMakenext(1);
         coreModuleTask.setTaskType(1);
         return coreModuleTask;
     }

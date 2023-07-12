@@ -64,4 +64,10 @@ public class AudienceActivity {
     @Column(name = "updated_by", insertable = false)
     @JsonIgnore
     private String updatedBy;
+
+    @Column(name = "transmission_id")
+    private Long transmission_id;
+
+    @Column(name = "link_url")
+    private String link_url;
 }

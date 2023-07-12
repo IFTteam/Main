@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.util.internal.StringUtil;
 import lombok.Data;
 import org.apache.tomcat.util.buf.StringUtils;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.yaml.snakeyaml.util.ArrayUtils;
 import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.entity.base.BaseEntity;
@@ -14,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
+import org.hibernate.annotations.CascadeType;
 
 @Entity
 @Data
@@ -32,9 +35,19 @@ public class Node extends BaseEntity {
     private String status;
     private String properties;
     private String journeyFrontEndId;
+    private Integer endNodesCount;
+
     @ElementCollection
+    @JoinColumn(name = "node_id")
+    // 需要先删除已有的表，然后build
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @Cascade(value = {CascadeType.ALL})
     private List<Long> nexts = new ArrayList<>();
+
     @ElementCollection
+    @JoinColumn(name = "node_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @Cascade(value = {CascadeType.ALL})
     private List<Long> lasts = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY,targetEntity = triggerType_node_relation.class)
@@ -44,8 +57,6 @@ public class Node extends BaseEntity {
 
     private String sNexts;
     private String sLasts;
-
-
 
     //Make Sure that sNexts is not empty when call this. sNexts->nexts
     public void nextsDeserialize(){

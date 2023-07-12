@@ -1,6 +1,7 @@
 package springredis.demo.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -8,6 +9,7 @@ import springredis.demo.entity.Audience;
 import springredis.demo.entity.Journey;
 import springredis.demo.entity.Node;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Repository
@@ -21,5 +23,7 @@ public interface JourneyRepository extends JpaRepository<Journey, Long> {
     Journey findById(long l);
 
     List<Journey> findByCreatedBy(String userid);
+
+
 
 }
