@@ -39,9 +39,6 @@ public class DAO {
 
     }
 
-    public Audience searchAudienceById(Long id){
-        return audienceRepository.searchAudienceByid(id);
-    }
 
     public User searchUserById(Long userId) {
         return userRepository.searchUserById(userId);
@@ -61,10 +58,6 @@ public class DAO {
 
     public ActiveNode searchActiveNodeById(Long id){return activeNodeRepository.findByActiveNodeId(id);}
 
-    public ActiveAudience searchActiveAudienceByAudienceID(Long audienceID){
-        return activeAudienceRepository.findByDBId(audienceID);
-    }
-
     public Optional<triggerType_node_relation> searchTNR(Long uid,String type){return tnr_repository.searchTNR(uid,type);}
 
     public Audience addNewAudience(Audience audience){
@@ -80,12 +73,6 @@ public class DAO {
     public ActiveNode addNewActiveNode(ActiveNode node){return activeNodeRepository.save(node);}
 
     public ActiveAudience addNewActiveAudience(ActiveAudience aud){return activeAudienceRepository.save(aud);}
-
-
-
-    public Journey addNewJourney(Journey journey){
-        return journeyRepository.save(journey);
-    }
 
     public triggerType_node_relation addNewTNR(triggerType_node_relation tnr){
         return tnr_repository.save(tnr);

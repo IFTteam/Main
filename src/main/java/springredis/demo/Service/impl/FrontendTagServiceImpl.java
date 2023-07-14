@@ -35,8 +35,6 @@ public class FrontendTagServiceImpl implements FrontendTagService {
             throw new UserNotFoundException("User Not Available");
         }
         User real_user = user.get();
-        // User user = userRepository.findById(userId).get();
-
         List<Tag> tagList = tagRepository.getTagByUser(real_user);
         List<String> tagNameResultList = new ArrayList<>();
         List<Tag> resultList = new ArrayList<>();
@@ -73,8 +71,6 @@ public class FrontendTagServiceImpl implements FrontendTagService {
         }
 
         Audience real_audience = audience.get();
-
-        // Audience audience = audienceRepository.findById(audienceId).get();
         List<TagDetail> tagList = real_audience.getTagDetails();
         return tagList;
     }

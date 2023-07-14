@@ -26,8 +26,6 @@ public class SimulateNewEvent {
 
     private final TimeDelayRepository timeDelayRepository;
     private final RedisTemplate redisTemplate;
-    private RestTemplate restTemplate = new RestTemplate();
-
     private ScheduledFuture<?> scheduledFuture;
 
     /**
