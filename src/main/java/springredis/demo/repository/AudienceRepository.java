@@ -7,7 +7,6 @@ import springredis.demo.entity.Audience;
 import springredis.demo.entity.User;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface AudienceRepository extends JpaRepository<Audience, Long> {
