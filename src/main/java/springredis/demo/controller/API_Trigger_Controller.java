@@ -1,6 +1,4 @@
 package springredis.demo.controller;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -8,8 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
-import springredis.demo.entity.activeEntity.ActiveAudience;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -69,8 +65,7 @@ public class API_Trigger_Controller {
         }
         String devstore = user.getShopifydevstore();
         String token = user.getShopifyApiKey();
-//        String url = "https://"+devstore+".myshopify.com/admin/api/2022-04/webhooks.json";
-String url = "http://localhost:8080/show"; //for testing
+        String url = "http://localhost:8080/show"; //for testing
         String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"localhost:8080/shopify_purchase_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"note\"]}}";
         HttpHeaders header = new HttpHeaders();
         header.set("X-Shopify-Access-Token",token);

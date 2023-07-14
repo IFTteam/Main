@@ -9,12 +9,8 @@ import springredis.demo.entity.Transmission;
 import springredis.demo.entity.User;
 import springredis.demo.entity.Journey;
 import springredis.demo.repository.*;
-import springredis.demo.repository.activeRepository.ActiveNodeRepository;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
 @RestController
 public class IfElseController {
     @Autowired
@@ -32,11 +28,6 @@ public class IfElseController {
     public CoreModuleTask redirect(@RequestBody CoreModuleTask task) throws JsonProcessingException {
         CoreModuleTask nullTask = new CoreModuleTask();
         nullTask.setName("nullTask");
-
-        // {'property': 'XXX', 'condition': 'YYY', 'value': 'ZZZ'}
-        // {'property': 'XXX', 'condition': 'YYY', 'value': null}
-        // {'repeatInterval': 'XXX', 'repeat': #, 'triggerTime': #, 'eventType': 'WWW', 'httpEntity': [{'aaa'},{'bbb'}, ... ,{'ccc'}]}
-
         // active_node table: node_id
         Node node = nodeRepository.searchNodeByid(task.getNodeId());
         String json_text = node.getProperties();
@@ -68,6 +59,7 @@ public class IfElseController {
         } else if (json_text.contains("httpEntity") && json_text.contains("repeatInterval") && json_text.contains("triggerTime")) {
             return ifElseTaskController.filterByAudienceAction(task);
         }
+        System.out.println("ifelse=======================return null task==============="+nullTask);
         return nullTask;
     }
 

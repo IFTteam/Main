@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import springredis.demo.entity.CoreModuleTask;
-import springredis.demo.entity.Node;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.entity.activeEntity.ActiveNode;
 import springredis.demo.repository.AudienceRepository;
@@ -32,8 +31,6 @@ public class TaskController {
     ActiveNodeRepository activeNodeRepository;
     @Autowired
     NodeRepository nodeRepository;
-    @Autowired
-    AudienceRepository audienceRepository;
 
     @Value("${redis-key.task-queue-key}")
     private String taskQueueKey;
