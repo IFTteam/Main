@@ -63,7 +63,7 @@ public class IfElseController {
         return nullTask;
     }
 
-
+    @CrossOrigin(origins = "*", maxAge = 3600)
     @GetMapping("/getTransmission/{userId}")
     public List<String> getTransmission(@PathVariable("userId") long userId){
         // 返还和当前user对应的所有transmission
