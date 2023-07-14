@@ -1,11 +1,9 @@
 package springredis.demo.entity;
 
 import lombok.Data;
-import org.springframework.data.relational.core.sql.In;
 import springredis.demo.entity.base.BaseEntity;
 
 import javax.persistence.*;
-import java.sql.Date;
 
 @Entity
 @Data
@@ -27,9 +25,6 @@ public class User extends BaseEntity {
     private String address;
     private Long apiId;
     private Long apiKey;
-//    private Integer preferEmailSvcProvider;
-//    private Integer onlySendDeliverableEmail;
-
     private String salesforceApiKey;
     private String hubspotApiKey;
     private String shopifyApiKey;

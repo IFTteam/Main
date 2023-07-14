@@ -1,10 +1,7 @@
 package springredis.demo.entity;
 
 import lombok.Data;
-import lombok.Generated;
 import lombok.NoArgsConstructor;
-import springredis.demo.entity.base.BaseEntity;
-
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +26,5 @@ public class triggerType_node_relation {
         triggerType = s;
         userId = uid;
     }
-
-//    public void addnode(Node node){
-//        nodes.add(node);
-//    }
 
 }
