@@ -1,8 +1,5 @@
 package springredis.demo.entity.activeEntity;
-
-import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +16,6 @@ public class ActiveJourney {
 
     @OneToMany(mappedBy = "activeJourney", cascade = CascadeType.REMOVE)
     private List<ActiveNode> activeNodeList = new ArrayList<>();
-
-
-
-
-//    @OneToMany(mappedBy = "activeJourney")
-//    private List<ActiveAudience> activeAudienceList = new ArrayList<>();
   
     public ActiveJourney(Long journeyId) {
         this.journeyId = journeyId;
@@ -48,9 +39,5 @@ public class ActiveJourney {
 
     public List<ActiveNode> getActiveNodeList() {
         return activeNodeList;
-    }
-
-    public void setActiveNodeList(List<ActiveNode> activeNodeList) {
-        this.activeNodeList = activeNodeList;
     }
 }

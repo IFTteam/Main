@@ -1,7 +1,4 @@
 package springredis.demo.controller;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,12 +15,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import springredis.demo.entity.*;
@@ -73,20 +68,6 @@ public class ActionSendController {
         this.journeyRepository = journeyRepository;
         this.webClient = webClient;
     }
-
-//    @SneakyThrows
-//    public static void main(String[] args) {
-//        TransmissionRequest a = new TransmissionRequest();
-//        a.setCampaignId("");
-//        a.setAddressList(Collections.singletonList(new Address().setAddress(""))); // 邮箱
-//        Content content = new Content();
-//        content.setSender(new Sender("邮箱@google.cn", "wang"));
-//        content.setText("这是各测试邮件的内容");
-//        content.setSubject("这是邮件标题");
-//        a.setContent(content);
-//        System.out.println(new ObjectMapper().writeValueAsString(a));
-//    }
-
     /**
      * <pre>
      * {@code
@@ -125,15 +106,9 @@ public class ActionSendController {
 
         HashMap<Object, Object> param = new HashMap<>();
         param.put("options", new HashMap<String, Object>() {{
-            //"open_tracking": true,
-                    //"click_tracking": true
             put("open_tracking", true);
             put("click_tracking", true);
         }});
-        // "metadata": {
-        //          "user_type": "students",
-        //          "education_level": "college"
-        //      }
         param.put("metadata", new HashMap<String, Object>() {{
             put("user_type", "students");
             put("education_level", "college");
@@ -174,7 +149,6 @@ public class ActionSendController {
         transmission.setUser(userRepository.getReferenceById(transmissionRequest.getUserId()));
         transmission.setCreatedAt(LocalDateTime.now());
         transmission.setCreatedBy("" + transmissionRequest.getUserId());
-//        transmission.setJourney(journeyRepository.findById(transmissionRequest.getJourneyId()).get());
         transmission.setJourney(journeyRepository.searchJourneyById(transmissionRequest.getJourneyId()));
         System.out.println("Front end ID: " + journeyRepository.searchJourneyById(transmissionRequest.getJourneyId()).getFrontEndId());
         transmissionRepository.save(transmission);
@@ -182,12 +156,6 @@ public class ActionSendController {
         Response response = new Response();
         response.setStatusCode(200);
         response.setMsg("Transmission successfully created");
-
-        //return task to core module
-        //BaseTaskEntity coreModuleTask = new BaseTaskEntity();
-        //CoreModuleTask coreModuleTask = new CoreModuleTask();
-        //restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
-
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -197,8 +165,6 @@ public class ActionSendController {
                                 @RequestBody ScheduledTransmissionRequest scheduledTransmissionRequest){
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
-//                .header("Content-Type", "application/json")
-//                .header("Accept", "application/json")
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(scheduledTransmissionRequest), ScheduledTransmissionRequest.class)
                 .retrieve()
@@ -226,8 +192,6 @@ public class ActionSendController {
 
         //return task to core module
         BaseTaskEntity coreModuleTask = new BaseTaskEntity();
-        //restTemplate.postForObject("http://localhost:8081/ReturnTask", coreModuleTask, String.class);
-
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
     
@@ -297,13 +261,6 @@ public class ActionSendController {
         Options options = new Options();
         options.setOpenTracking(true);
         options.setClickTracking(true);
-
-    	//content.setHtml();
-//        if(jsonObject.getString("content") != null)
-//            content.setText(jsonObject.getString("content"));
-//        else
-//    	    content.setText("hello,testing");
-//    	request.setContent(content);
         content.setType(jsonObject.getString("type"));
         content.setContent(jsonObject.getString("content"));
         if (content.getType().equalsIgnoreCase("html")) {
@@ -313,10 +270,6 @@ public class ActionSendController {
         if (content.getType().equalsIgnoreCase("text")) {
             content.setText(content.getContent(), unsubscribe_url);
         }
-
-        //content.setHtml(content.getContent(), " https://www.yelp.com/"); // set link url here
-
-        //content.setText("text here");
         request.setContent(content);
         request.setOptions(options);
         if(jsonObject.getString("content") != null)
@@ -331,10 +284,6 @@ public class ActionSendController {
 
         /*
         // TODO: user is manually created generated here for testing purpose
-        User user = new User();
-        user.setUsername("user" + coreModuleTask.getNodeId());
-        user.setCreatedBy("Bryan");
-        userRepository.save(user);
         */
 
         // Find its user from journey
@@ -342,19 +291,10 @@ public class ActionSendController {
         System.out.println("(ActionSendController) The CMT module journey is createdBy " + journey.getCreatedBy());
         Long userId = Long.valueOf(journey.getCreatedBy());
         System.out.println("(ActionSendController) The CMT module userId is " + userId);
-        //User user = userRepository.searchUserById(userId);
-
         coreModuleTask.setUserId(userId);
         System.out.println("The coreModuleTask UserId is:" + coreModuleTask.getUserId());
     	request.setUserId(coreModuleTask.getUserId());  //set user id
-
-
     	request.setJourneyId(coreModuleTask.getJourneyId());  //set journey id
-
-
-    	
-    	//restTemplate.postForObject("http://localhost:8080/actionSend/createTransmission", request, String.class);
-        //restTemplate.postForObject("http://localhost:8080/ReturnTask", coreModuleTask, String.class);
     	//Ask JiaQi what needs to be done before returning the CMT
         ResponseEntity<Response> response = createTransmission(request);
         System.out.println(response);
@@ -408,28 +348,6 @@ public class ActionSendController {
         System.out.println("Audience=======================" + audience.isPresent());
         Optional<Node> node = nodeRepository.findById(coreModuleTask.getNodeId());
         System.out.println("Node=======================" + node.isPresent());
-
-//    	TransmissionRequest request = new TransmissionRequest();
-//    	Address address = new Address();
-//    	address.setAddress(audience.get().getEmail());
-//    	List<Address> list = new ArrayList<>();
-//    	list.add(address);
-//    	request.setCampaignId("1");
-//    	request.setAddressList(list);
-//    	Content content = new Content();
-//    	Sender sender = new Sender();
-//    	List<String> typeList = ActionSendController.propertySerialize(node.get().getType());
-//    	sender.setEmail(typeList.get(2));
-//    	sender.setName(typeList.get(3));
-//    	content.setSender(sender);
-//    	content.setSubject(typeList.get(4));
-//    	content.setHtml(typeList.get(5));
-//    	content.setText(typeList.get(6));
-//    	request.setContent(content);
-//    	request.setAudienceId((long)1);
-//    	request.setJourneyId((long)4);
-//    	request.setCampaignId("1");
-//    	request.setUserId((long)5);
         restTemplate.postForObject("http://localhost:8080/actionSend/createCMTTransmission", coreModuleTask, String.class);
         return coreModuleTask;
     }
@@ -453,17 +371,4 @@ public class ActionSendController {
         User user = new User();
         userRepository.save(user);
     }
-    
-    //Serialize properties in Node class
-//    public static List<String> propertySerialize(String type){
-//        List<String> typeList = new ArrayList<>();
-//        String[] s = type.split(",");
-//        for (String value : s) {
-//            if(!value.isEmpty()){
-//                typeList.add(value);
-//            }
-//        }
-//        return typeList;
-//    }
-
 }

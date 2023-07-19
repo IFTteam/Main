@@ -22,13 +22,4 @@ public class FrontendAudienceController {
     public List<Audience> getAudienceAndTagByUser(@PathVariable("id") Long userId) throws UserNotFoundException {
         return frontendAudienceService.getAudienceAndTagByUser(userId);
     }
-
-
-//    // Task 6, input is audience_id, tag_id, no output
-//    @PostMapping("/audiences/{audience}/{tag}")
-//    public Audience createRelationBetweenAudienceAndTag(@PathVariable("audience") Long audienceId, @PathVariable("tag") Long tagId) throws AudienceNotFoundException, TagNotFoundException {
-//        return audienceService.createRelationBetweenAudienceAndTag(audienceId, tagId);
-//    }
-
-
 }

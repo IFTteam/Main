@@ -6,9 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import springredis.demo.entity.Transmission;
-import springredis.demo.entity.User;
-import springredis.demo.entity.WorldCity;
-
 import java.util.List;
 
 @Repository

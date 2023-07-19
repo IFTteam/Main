@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.entity.CoreModuleTask;
 import springredis.demo.entity.Node;
@@ -12,9 +11,7 @@ import springredis.demo.entity.TimeTask;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
 
-import java.nio.file.OpenOption;
 import java.sql.SQLException;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -67,20 +64,6 @@ public class TimeEventController {
 
         return timeDelayRepository.save(timeTask);
     }
-
-//    public static void main(String[] args) {
-//        TimeTask timeTask = new TimeTask();
-//        parseFStringDelay("SpecificTime 2023-10-10 10:12:12 1 1", timeTask);
-//        System.out.println(timeTask.getTriggerTime() +"    "+ timeTask.getRepeatTimes()+"    "+ timeTask.getRepeatInterval());
-//
-//        parseFStringDelay("DelayTimeInSecond 20 1 1", timeTask);
-//        System.out.println(timeTask.getTriggerTime() +"    "+ timeTask.getRepeatTimes()+"    "+ timeTask.getRepeatInterval());
-//
-//        parseFStringDelay("TimeUnit 1 DAYS 1 1", timeTask);
-//        System.out.println(timeTask.getTriggerTime() +"    "+ timeTask.getRepeatTimes()+"    "+ timeTask.getRepeatInterval());
-//
-//
-//    }
 
     public static void parseFStringDelay(String fstring, TimeTask timeTask) {
 //        SpecificTime 2023-10-10 10:12:12 1
@@ -261,7 +244,6 @@ public class TimeEventController {
                 //auditing support
                 timeTask.setCreatedAt(LocalDateTime.now());
                 timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
-                //timeTask.setCreatedBy(String.valueOf(coreModuleTask.getAudienceId()));
                 timeDelayRepository.save(timeTask);
             } catch (ParseException e) {
                 e.printStackTrace();
@@ -296,52 +278,6 @@ public class TimeEventController {
             e.printStackTrace();
         }
     }
-
-//    private void parseFStringWithFrequency(String frequency, TimeTask timeTask) {
-//        Calendar now = Calendar.getInstance();
-//        int weekday = now.get(Calendar.DAY_OF_WEEK);
-//        int tar_date = Calendar.MONDAY;
-//        switch (frequency) {
-//            case "Monday":
-//                tar_date = Calendar.MONDAY;
-//                break;
-//            case "Tuesday":
-//                tar_date = Calendar.TUESDAY;
-//                break;
-//            case "Wednesday":
-//                tar_date = Calendar.WEDNESDAY;
-//                break;
-//            case "Thursday":
-//                tar_date = Calendar.THURSDAY;
-//                break;
-//            case "Friday":
-//                tar_date = Calendar.FRIDAY;
-//                break;
-//            case "Saturday":
-//                tar_date = Calendar.SATURDAY;
-//                break;
-//            case "Sunday":
-//                tar_date = Calendar.SUNDAY;
-//                break;
-//        }
-//        if (weekday != tar_date) {
-//            // calculate how much to add
-//            // the 2 is the difference between Saturday and Monday
-//            int days = (Calendar.SATURDAY - weekday + 2) % 7;
-//            now.add(Calendar.DAY_OF_YEAR, days);
-//            now.set(Calendar.HOUR_OF_DAY, 0);
-//            now.set(Calendar.MINUTE, 0);
-//
-//        }
-//        Date date = now.getTime();
-//        //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-//        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
-//        System.out.println("The recurring monday is:" + format);
-//
-//    }
-//
-//    private void parseFStringWithWaitTime(String waitTime, TimeTask timeTask) {
-//    }
 
     private void time_parser_once(String time, TimeTask timeTask) {
         String[] list = time.split("T");
@@ -469,15 +405,4 @@ public class TimeEventController {
 
         return timeDelayRepository.findTasksBeforeTime(triggerTime);
     }
-
-   /* @GetMapping("/TimeDelay")
-    public List<TimeTask> TimeDelay(CoreModuleTask coreModuleTask){
-        System.out.println();
-        Long id = coreModuleTask.getId();
-        Long nodeid = coreModuleTask.getNodeId();
-        return null;
-    }
-    */
-
-
 }

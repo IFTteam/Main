@@ -1,21 +1,16 @@
 package springredis.demo.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.netty.util.internal.StringUtil;
 import lombok.Data;
-import org.apache.tomcat.util.buf.StringUtils;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.yaml.snakeyaml.util.ArrayUtils;
-import springredis.demo.entity.activeEntity.ActiveNode;
+
 import springredis.demo.entity.base.BaseEntity;
-import springredis.demo.entity.triggerType_node_relation;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.hibernate.annotations.CascadeType;
 

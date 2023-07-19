@@ -1,6 +1,5 @@
 package springredis.demo.Service;
 
-import org.springframework.stereotype.Service;
 import springredis.demo.entity.Journey;
 import springredis.demo.entity.JourneyJsonModel;
 import springredis.demo.error.JourneyNotFoundException;

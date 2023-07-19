@@ -5,10 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import springredis.demo.Service.FrontendAudienceService;
 import springredis.demo.entity.Audience;
-import springredis.demo.entity.Tag;
 import springredis.demo.entity.User;
-import springredis.demo.error.AudienceNotFoundException;
-import springredis.demo.error.TagNotFoundException;
 import springredis.demo.error.UserNotFoundException;
 import springredis.demo.repository.AudienceRepository;
 import springredis.demo.repository.TagRepository;
@@ -39,29 +36,6 @@ public class FrontendAudienceServiceImpl implements FrontendAudienceService {
         List<Audience> audienceList = audienceRepository.getAudienceByUser(real_user);
         return audienceList;
     }
-    //   @Override
-//    public Audience createRelationBetweenAudienceAndTag(Long audienceId, Long tagId) throws AudienceNotFoundException, TagNotFoundException {
-//        Optional<Audience> audience = audienceRepository.findById(audienceId);
-//
-//        if (!audience.isPresent()) {
-//            throw new AudienceNotFoundException("Audience Not Available");
-//        }
-//
-//        Audience real_audience = audience.get();
-//
-//        Optional<Tag> tag = tagRepository.findById(tagId);
-//
-//        if (!tag.isPresent()) {
-//            throw new TagNotFoundException("Tag Not Available");
-//        }
-//
-//        Tag real_tag = tag.get();
-//
-//        // Audience audience = audienceRepository.findById(audienceId).get();
-//        // Tag tag = tagRepository.findById(tagId).get();
-//        real_audience.addTags();
-//        return audienceRepository.save(real_audience);
-//    }
 
 
 }

@@ -5,7 +5,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import springredis.demo.Service.JourneyService;
@@ -25,8 +24,6 @@ import springredis.demo.serializer.SeDeFunction;
 import springredis.demo.structures.OutAPICaller;
 import springredis.demo.tasks.CMTExecutor;
 import springredis.demo.utils.OptionalUtils;
-
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -281,8 +278,6 @@ public class JourneyServiceImpl implements JourneyService {
         Long nodeId = newNode.getId();
         nodeIdList.add(nodeId);
         System.out.println("The node List in [" + idx + "] is " + nodeIdList);
-        //newNode = nodeRepository.searchNodeByid(nodeId);
-
         List<Long> nexts = new ArrayList<>();
         // If it is an if/else node. It'll have two next nodes.
         if (newNode.getType().equals("switch")) {
@@ -331,7 +326,6 @@ public class JourneyServiceImpl implements JourneyService {
         }
         newNode.setEndNodesCount(endNodesCount);
         nodeRepository.save(newNode);
-        //newNode = nodeRepository.searchNodeByid(nodeId);
         System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:" + journeyFrontEndId);
         return nodeId;
     }
@@ -360,9 +354,7 @@ public class JourneyServiceImpl implements JourneyService {
         String updatedBy = nodeJsonModel.getUpdatedBy();
         String frontEndId = nodeJsonModel.getId();
         NodeJsonModel.Property properties = nodeJsonModel.getProperties();
-//        System.out.println("PPPPPPPPPPPPPP" + properties);
         String propertiesString = new SeDeFunction().serializeNodeProperty(properties);
-//        System.out.println("BBBBBBBBBBBBBB" + propertiesString);
         Node newNode = new Node(name, type, status, createdAt, createdBy, updatedAt, updatedBy, journeyFrontEndId, propertiesString);
         newNode.setHeadOrTail(0);
         newNode.setFrontEndId(frontEndId);
@@ -468,7 +460,6 @@ public class JourneyServiceImpl implements JourneyService {
             //Dummy Task
             coreModuleTask.setTargetNodeId(activeNodeRepository.findByDBNodeId(heads.get(i).getId()).getId());//Target node ->source
             cmtExecutor.execute(coreModuleTask);
-//            taskExecutor.callModule(heads.get(i));
         }
         return journey;
     }
@@ -478,7 +469,6 @@ public class JourneyServiceImpl implements JourneyService {
     public Boolean deleteActiveAudience(List<Long> activeNodeIdList) {
         try {
             activeAudienceRepository.deleteWhenEndNode(activeNodeIdList);
-//            activeAudienceRepository.deleteWhenEndNode(activeAudienceNodeId);
             System.out.println("删除 DeleteActiveAudience  成功");
             return true;
         } catch (Exception e) {
@@ -496,7 +486,6 @@ public class JourneyServiceImpl implements JourneyService {
             Long nodeJourneyId = ActiveJourney.getId();
             activeNodeRepository.deleteByNodeJourneyId(nodeJourneyId);
             System.out.println("删除 DeleteActiveNode nodeJourneyId:" + nodeJourneyId + " 成功");
-            //System.out.println("删除 DeleteActiveJourney  成功");
             activeJourneyRepository.deleteByActiveJourneyId(JourneyId);
             System.out.println("删除 DeleteActiveJourney Id:" + JourneyId + " 成功");
             return true;

@@ -37,7 +37,6 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         Node currentNode = nodeRepository.findById(coreModuleTask.getNodeId()).get();
         String properties = currentNode.getProperties();
         JSONObject jsonObject = new JSONObject(properties);
-//        System.out.println(jsonObject);
         String name = jsonObject.getString("newTag");
         if (name == null || name.isEmpty()){
             name = jsonObject.getString("tag");
@@ -80,9 +79,6 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
         List<Long> audienceIds = coreModuleTask.getAudienceId1();
 
-//        System.out.println("im here");
-//        System.out.println(audienceIds);
-
         List<Long> newlist = new ArrayList<>();
         for (Long audienceId : audienceIds) {
             Long l = audienceId;
@@ -91,33 +87,16 @@ public class BackendTaskServiceImpl implements BackendTaskService {
 
             Audience real_audience = audience.get();
 
-
-//            System.out.println(real_audience.getId());
-
-            // Audience audience = audienceRepository.findById(audienceId).get();
-            // Tag tag = tagRepository.findById(tagId).get();
             real_tag.getAudiences().add(real_audience);
             real_audience.getTagDetails().add(real_tag);
 
-//            System.out.println(real_tag.getAudiences());
-
             tagDetailRepository.save(real_tag);
             audienceRepository.save(real_audience);
-
-
-//            real_audience.getTags().add(real_tag);
             Long id = audienceRepository.save(real_audience).getId();
 
             newlist.add(id);
 
-//            Audience curaud = audienceRepository.findById(id).get();
-//            System.out.println(id);
-//            System.out.println(curaud.getTags().get(0).getTag_name());
-
         }
-
-//        System.out.println(newlist);
-
         //newly saved real audience might have change in id
         CoreModuleTask newTask = coreModuleTask;
         newTask.setAudienceId1(newlist);
@@ -146,9 +125,6 @@ public class BackendTaskServiceImpl implements BackendTaskService {
         //Find the journey and user
         Journey journey=journeyRepository.searchJourneyById(coreModuleTask.getJourneyId());
         User user=userRepository.findById(userIdLong).get();
-//        Tag tag = tagRepository.findByUserIdName(name,user).get();
-//        Tag tag = tagRepository.findByUserIdName(name).get(0);
-
         //Find the tag by user and name
         Optional<Tag> tagOp = tagRepository.findByUserIdName(name, user);
         if (!tagOp.isPresent()) {

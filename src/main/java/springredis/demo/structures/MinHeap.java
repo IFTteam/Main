@@ -1,6 +1,5 @@
 package springredis.demo.structures;
 
-import org.springframework.stereotype.Component;
 import springredis.demo.entity.Event;
 
 import java.util.Date;

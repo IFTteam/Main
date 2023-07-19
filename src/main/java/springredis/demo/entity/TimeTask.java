@@ -1,16 +1,10 @@
 package springredis.demo.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.relational.core.sql.In;
 import springredis.demo.entity.base.BaseTaskEntity;
-
 import javax.persistence.*;
-import javax.transaction.Transactional;
-
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 
@@ -48,9 +42,6 @@ public class TimeTask extends BaseTaskEntity {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "core_module_task", referencedColumnName = "id")
     private CoreModuleTask coreModuleTask;
-
-
-//	public CoreModuleTask getCoreModuleTask;
 
     public TimeTask(BaseTaskEntity baseTaskEntity){
         super(baseTaskEntity);

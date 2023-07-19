@@ -1,8 +1,6 @@
 package springredis.demo.Service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import net.bytebuddy.dynamic.TypeResolutionStrategy;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +12,11 @@ import springredis.demo.controller.EventWebhookController;
 import springredis.demo.controller.TimeEventController;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
-import springredis.demo.entity.base.BaseTaskEntity;
 import springredis.demo.repository.*;
 import springredis.demo.repository.WorldCityRepository;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
 import springredis.demo.tasks.CMTExecutor;
 
-import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -108,14 +104,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
         String[] parsedTriggerTime = value.split(" ");
         String unit = parsedTriggerTime[1];
-
-        //Long userId = coreModuleTask.getUserId();
-        //Long nodeId = coreModuleTask.getNodeId();
-        //Long targetNodeId = coreModuleTask.getTargetNodeId();
         Long journeyId = coreModuleTask.getJourneyId();
-
-        //Optional<Journey> journey = journeyRepository.findById(journeyId);
-        //Optional<Transmission> transmission = transmissionRepository.findById(transmissionId);
 
         /*
         // todo: time task 备份
@@ -136,25 +125,11 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         task.setTriggerTime(triggerTime);
         */
 
-//        EventType{
-//        delivery,
-//                click,
-//                open,
-//                list_unsubscribe,
-//                link_unsubscribe,
-//                bounce
-//        }
-
-        //Set<Audience> allAudience = new HashSet<>();
-        //Set<Audience> haveBehavior =new HashSet<>();
-        //Set<Audience> restAudience = new HashSet<>(listOfAudiences);
-
         List<Long> haveBehavior = new ArrayList<>();
 
         for (Audience audience: listOfAudiences) {
             // Firstly, check every audience, and get the audienceActivity List for this specific audience
 
-            //List <AudienceActivity> audienceActivityList = audienceActivityRepository.getAudienceActivityByAudience(audience);
             List <AudienceActivity> audienceActivityList = audienceActivityRepository.findAllAudienceActivityByAudienceId(audience.getId());
 
             System.out.println("audience activity list size: "+audienceActivityList.size());
@@ -203,16 +178,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                             {
                                 haveBehavior.add(audience.getId());
                             }
-
-                            //CoreModuleTask newTask = coreModuleTask;
-                            //newTask.setAudienceId1(audienceList1);
-                            //newTask.setAudienceId2(new ArrayList<>());
-                            //newTask.setCallapi(0);                      //jiaqi: important, because when calling the CMTexecutor again with this task, we don't want it to call back to our if/else controller again since this trigger has already hit
-                            //newTask.setMakenext(1);
-                            //newTask.setTaskType(0);                     //the audience must already be in our main DB, so we move a user (audience), not create one
-                            //cmtExecutor.execute(newTask);
-
-                            //restAudience.remove(audience);
 
                             audienceActivityRepository.delete(audienceActivity);
                         }
@@ -297,7 +262,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
     }
 
     @Override
-    // public String ifElseProperty(List<Audience> listOfAudiences, String property, String condition, String value) {
     public CoreModuleTask ifElseProperty(CoreModuleTask coreModuleTask) {
 
         List<Audience> haveProperty = new ArrayList<>();
@@ -308,11 +272,7 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
         List<Audience> listOfAudiences = new ArrayList<>();
         List<ActiveAudience> listOfActiveAudiences = new ArrayList<>();
         for (Long id : listOfActiveAudienceId) {
-            //Audience audience = audienceRepository.findById(id).get();
-
-            // active_audience := id
             ActiveAudience activeAudience = activeAudienceRepository.findById(id).get();
-            // active_audience := audience_id
             Audience audience = audienceRepository.findById(activeAudience.getAudienceId()).get();
 
             listOfAudiences.add(audience);
@@ -351,18 +311,9 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
 
                     String miles = value.substring(0, value.indexOf(","));
                     String units = "imperial";
-                    //String destination = value.substring(value.indexOf(",")+2,value.length());
-
                     //parse the destination
                     String[] destination = value.split("\\s*,\\s*");
                     String[] audienceAddress = audience.getAddress().split("\\s*,\\s*");
-
-                    //String audienceAddress = audience.getAddress();
-                    //String googleDistance = getDistanceGoogle(audienceAddress,destination,units);
-
-                    //System.out.println("google distance: "+googleDistance);
-                    //System.out.println(destination);
-
                     WorldCity dest_city = worldCityRepository.findCity(destination[1], destination[2], destination[3]);
                     WorldCity audience_city = worldCityRepository.findCity(audienceAddress[0], audienceAddress[1], audienceAddress[2]);
 
@@ -372,18 +323,6 @@ public class IfElseTaskServiceImpl implements IfElseTaskService {
                     {
                         haveProperty.add(audience);
                     }
-
-                    /*if(googleDistance != null) {
-                        if(googleDistance.contains(",")){
-                            googleDistance = googleDistance.replace(",","");
-                        }
-                        if(googleDistance.contains(".")){
-                            googleDistance = googleDistance.substring(0,googleDistance.indexOf("."));
-                        }
-                        if (Integer.valueOf(googleDistance) <= Integer.valueOf(miles)){
-                            haveProperty.add(audience);
-                        }
-                    }*/
                 }
             }
 

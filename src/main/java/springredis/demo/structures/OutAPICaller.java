@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,9 +41,6 @@ public class OutAPICaller {
      * auto-wired taskScheduler to do scheduling task
      */
     private final TaskScheduler taskScheduler;
-
-    @Autowired
-    private RestTemplate restTemplate = new RestTemplate();
 
     private final CMTExecutor cmtExecutor;
 

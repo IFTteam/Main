@@ -12,24 +12,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
-import org.springframework.web.util.UriBuilderFactory;
-import org.springframework.web.util.UriComponentsBuilder;
 import springredis.demo.Service.DAO;
 import springredis.demo.entity.*;
 import springredis.demo.entity.activeEntity.ActiveAudience;
 import springredis.demo.repository.*;
 import springredis.demo.repository.activeRepository.ActiveAudienceRepository;
-
-
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.util.*;
-
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Slf4j
@@ -169,7 +161,6 @@ public class EventWebhookController {
 
 
     private final String targetUrl = "https://15ba-104-244-243-145.ngrok-free.app/analytics/webhook/eventWebhook"; // set your target URL here
-    // https://9cdf-104-244-243-145.ngrok-free.app/analytics/webhook/sparkpost_create_webhook <- this is the url for POST request: create a webhook
 
     private JSONObject generateWebhookPayload() { // name, target URL, and event type are required for creating a webhook
         JSONObject payload = new JSONObject();
@@ -288,52 +279,4 @@ public class EventWebhookController {
             e.printStackTrace();
         }
     }
-
-//    @RequestMapping(value = "/sparkpost_get_webhookID", method = GET)
-//    public ResponseEntity<Response> getSparkpostWebhookID() {
-//        try {
-//            WebClient client = WebClient.create("https://api.sparkpost.com/api/v1/webhooks");
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-//            headers.setBearerAuth("358294aeb167a63aa0ade3a287ef013559e3d964");
-//
-//            ResponseEntity<String> responseEntity = client.get()
-//                    .headers(httpHeaders -> httpHeaders.addAll(headers))
-//                    .retrieve()
-//                    .toEntity(String.class)
-//                    .block();
-//
-//            assert responseEntity != null;
-//            HttpStatus statusCode = responseEntity.getStatusCode();
-//            String responseBody = responseEntity.getBody();
-//
-//            if (statusCode == HttpStatus.OK) {
-//                // Process the response body to extract webhook IDs
-//                JSONObject json = new JSONObject(responseBody);
-//                JSONArray results = json.getJSONArray("results");
-//
-//                List<String> webhookIds = new ArrayList<>();
-//                for (int i = 0; i < results.length(); i++) {
-//                    JSONObject webhook = results.getJSONObject(i);
-//                    String webhookId = webhook.getString("id");
-//                    webhookIds.add(webhookId);
-//                }
-//
-//                // Return the webhook IDs in the response
-//                Response successResponse = new Response("Webhook IDs: " + webhookIds.toString(), "200");
-//                return ResponseEntity.status(HttpStatus.OK).body(successResponse);
-//            }
-//            else {
-//                Response errorResponse = new Response("Failed to retrieve webhook: " + responseBody, statusCode.toString());
-//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//            }
-//        } catch (Exception e) {
-//            Response errorResponse = new Response("Failed to retrieve webhook: " + e.getMessage(), "500");
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-//        }
-//    }
-
-
 }

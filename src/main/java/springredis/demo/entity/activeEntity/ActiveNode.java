@@ -2,8 +2,6 @@ package springredis.demo.entity.activeEntity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import springredis.demo.entity.Journey;
-
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;

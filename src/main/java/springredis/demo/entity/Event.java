@@ -4,12 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-
 import javax.persistence.Embeddable;
 import java.io.Serializable;
-import java.util.Comparator;
 import java.util.Date;
 
 //public class Event implements Serializable{
@@ -56,10 +52,4 @@ public class Event implements Serializable {
     @JsonProperty("msys")
     private Msys msys;
 
-
-
-//    @Override
-//    public int compareTo(Event o) {
-//        return triggerTime-o.getTriggerTime();
-//    }
 }
