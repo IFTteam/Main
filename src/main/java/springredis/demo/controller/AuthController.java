@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import springredis.demo.entity.User;
 import springredis.demo.repository.UserRepository;
 
 @RestController
@@ -24,6 +25,11 @@ public class AuthController {
             return "Username already exists"; // Return an appropriate response indicating the error
         }
         // Check if the provided username already exists in the database by using the UserRepository method findByUsername. If a user with the same username exists, it returns an appropriate response indicating the error.
+
+        if (userRepository.findByEmail(user.getEmail()) != null) {
+            return "Email already exists";
+        }
+
 
         // After validating the username, this code block hashes the password using the PasswordEncoder. The hashed password is then set on the User object.
         // Hash the password before saving it

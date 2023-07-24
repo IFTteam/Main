@@ -13,6 +13,7 @@ public class User extends BaseEntity {
     @GeneratedValue    private Long id;
     private String username;
     private String password_hash;
+    private String email; // add the email field
     private String avatarUrl;
     private String domain;
     private Long companyId;
