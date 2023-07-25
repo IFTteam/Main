@@ -14,7 +14,7 @@ public class WorldCityController {
     public WorldCityController(WorldCityService worldCityService) {
         this.worldCityService = worldCityService;
     }
-
+    @CrossOrigin(origins = "*", maxAge = 3600)
     @GetMapping(value = "/worldcity/{name}/{accuracyRate}")
     public List<String> getWorldCity(@PathVariable String name, @PathVariable String accuracyRate) {
         // accuracy Rate指的是匹配精度，越高，则对相似的标准越严格
