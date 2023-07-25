@@ -17,7 +17,7 @@ spring:
       wrap-root-value: false # env variables
   
   main:
-    lazy-initialization: true
+    allow-circular-references: true
 
 SPARKPOST_API_KEY: 358294aeb167a63aa0ade3a287ef013559e3d964
 SP_BASE_URI: https://api.sparkpost.com
