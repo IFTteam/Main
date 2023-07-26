@@ -10,12 +10,15 @@ import springredis.demo.entity.Node;
 import springredis.demo.entity.TimeTask;
 import springredis.demo.repository.NodeRepository;
 import springredis.demo.repository.TimeDelayRepository;
+import springredis.demo.utils.OptionalUtils;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -110,58 +113,26 @@ public class TimeEventController {
      */
     @PostMapping("/Time_Trigger")
     public CoreModuleTask saveTimeTaskByTimeTrigger(@RequestBody CoreModuleTask coreModuleTask) {
-        log.info("begin to save a new time task from Time_Trigger path...");
-        Long node_id = coreModuleTask.getNodeId();
-        System.out.println("(TimeEventController) CMT passed into Time_Trigger: " + coreModuleTask);
-        System.out.println("node id: " + node_id);
-        Node node = nodeRepository.findById(node_id).get();
+        Long nodeId = coreModuleTask.getNodeId();
+        log.info("begin to save new time task(s) from Time_Trigger path with node id: {}...", nodeId);
 
-        /*
-         *   Initialize the new time task
-         */
-        TimeTask timeTask = new TimeTask(coreModuleTask);
+        Optional<Node> optionalNode = nodeRepository.findById(nodeId);
+        Node node = OptionalUtils.getObjectOrThrow(optionalNode, "Not found node by given node id");
 
-        // set make next
-        timeTask.setMakenext(coreModuleTask.getMakenext());
+//        TimeTask timeTask = new TimeTask(coreModuleTask);
 
-        /*
-         *   Set the dummy coreModuleTask
-         */
+        //Set the dummy coreModuleTask
         coreModuleTask.setMakenext(0);
-
-        timeTask.setTaskStatus(0);
 
         //parsing the time information
         JSONObject jsonObject = new JSONObject(node.getProperties());
         String time = jsonObject.getString("send");
         String frequency = jsonObject.getString("frequency");
-        if (Objects.equals(frequency, "Once")) {
-            time_parser_once(time, timeTask);
-        } else if (Objects.equals(frequency, "Recurring")) {
-            time_parser_recurring(time, timeTask);
+        if ("Once".equals(frequency)) {
+            timeParserOnce(time, coreModuleTask);
+        } else if ("Recurring".equals(frequency)) {
+            timeParserRecurring(time, coreModuleTask);
         }
-
-        //auditing support
-        timeTask.setNodeId(node_id);
-        timeTask.setJourneyId(coreModuleTask.getJourneyId());
-        timeTask.setCreatedAt(LocalDateTime.now());
-        timeTask.setUserId(coreModuleTask.getUserId());
-        timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
-        timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
-        timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
-        timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
-        timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
-        timeTask.setTaskStatus(0);
-        timeTask.setCoreModuleTask(coreModuleTask);
-        timeTask.setJourneyId(coreModuleTask.getJourneyId());
-        timeTask.setCreatedBy("Time trigger");
-
-        System.out.println("journey id before time" + timeTask.getCoreModuleTask().getJourneyId());
-        System.out.println("The ActiveAudienceId1 is" + coreModuleTask.getActiveAudienceId1());
-        timeDelayRepository.save(timeTask);
-
-        System.out.println("dummy task returned");
-        System.out.println(coreModuleTask);
         return coreModuleTask;
     }
 
@@ -182,7 +153,7 @@ public class TimeEventController {
 
 
         // Initialize the new time task
-        TimeTask timeTask = createTimeTask(coreModuleTask, nodeId);
+        TimeTask timeTask = createTimeTask(coreModuleTask);
         timeTask.setCreatedBy("Time delay");
         timeTask.setMakenext(coreModuleTask.getMakenext());
 
@@ -206,19 +177,18 @@ public class TimeEventController {
         return coreModuleTask;
     }
 
-    private TimeTask createTimeTask(@RequestBody CoreModuleTask coreModuleTask, Long node_id) {
+    private TimeTask createTimeTask(CoreModuleTask coreModuleTask) {
         TimeTask timeTask = new TimeTask(coreModuleTask);
-        timeTask.setNodeId(node_id);
         timeTask.setCreatedAt(LocalDateTime.now());
-        timeTask.setUserId(coreModuleTask.getUserId());
-        timeTask.setCreatedBy(String.valueOf(coreModuleTask.getUserId()));
+        timeTask.setCreatedBy("Time trigger");
         timeTask.activeAudienceId1SDeserialize(coreModuleTask.getActiveAudienceId1());
         timeTask.activeAudienceId2SDeserialize(coreModuleTask.getActiveAudienceId2());
         timeTask.audienceId1SDeserialize(coreModuleTask.getAudienceId1());
         timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
         timeTask.setCoreModuleTask(coreModuleTask);
-        timeTask.setJourneyId(coreModuleTask.getJourneyId());
         timeTask.setTaskStatus(0);
+        // set make next to 1
+        timeTask.setMakenext(1);
         return timeTask;
     }
 
@@ -279,7 +249,8 @@ public class TimeEventController {
         }
     }
 
-    private void time_parser_once(String time, TimeTask timeTask) {
+    private void timeParserOnce(String time, CoreModuleTask coreModuleTask) {
+        TimeTask timeTask = createTimeTask(coreModuleTask);
         String[] list = time.split("T");
         String clock = list[1];
         int hour = Integer.parseInt(clock.substring(0, 2));
@@ -296,52 +267,45 @@ public class TimeEventController {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+
+        timeDelayRepository.save(timeTask);
     }
 
-    private void time_parser_recurring(String frequency, TimeTask timeTask) {
+    private void timeParserRecurring(String frequency, CoreModuleTask coreModuleTask) {
         String[] list = frequency.split(",");
-        System.out.println(list.length);
-        String d = list[0];
-        String week = d.substring(0, d.length() - 4);
-        String time = d.substring(d.length() - 4);
-        String end_date = list[1].split(":")[0];
-        Calendar now = Calendar.getInstance();
-        int weekday = now.get(Calendar.DAY_OF_WEEK);
-        int tar_date = Calendar.MONDAY;
-        switch (week) {
-            case "Monday":
-                tar_date = Calendar.MONDAY;
-                break;
-            case "Tuesday":
-                tar_date = Calendar.TUESDAY;
-                break;
-            case "Wednesday":
-                tar_date = Calendar.WEDNESDAY;
-                break;
-            case "Thursday":
-                tar_date = Calendar.THURSDAY;
-                break;
-            case "Friday":
-                tar_date = Calendar.FRIDAY;
-                break;
-            case "Saturday":
-                tar_date = Calendar.SATURDAY;
-                break;
-            case "Sunday":
-                tar_date = Calendar.SUNDAY;
-                break;
+        LocalDateTime now = LocalDateTime.now();
+        for (String dateAndRepeatStr : list) {
+            Long triggerTime = getTriggerTime(dateAndRepeatStr, now);
+            Integer repeatTimes = getRepeatTimes(dateAndRepeatStr);
+            TimeTask timeTask = createTimeTask(coreModuleTask);
+            timeTask.setTriggerTime(triggerTime);
+            timeTask.setRepeatTimes(repeatTimes);
+            timeDelayRepository.save(timeTask);
         }
-        if (weekday != tar_date) {
-            int days = (Calendar.SATURDAY - weekday + 2) % 7;
-            now.add(Calendar.DAY_OF_YEAR, days);
-            now.set(Calendar.HOUR_OF_DAY, 0);
-            now.set(Calendar.MINUTE, 0);
-        }
-        Date date = now.getTime();
-        //SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(date);
-        System.out.println("The recurring monday is:" + format);
+    }
 
+
+    private Long getTriggerTime(String input, LocalDateTime now) {
+//        String weekDayString = input.substring(0, input.indexOf(" ") - 4);
+        String weekDayString = input.substring(0, input.indexOf(' ')).split("\\d", 2)[0];
+        DayOfWeek weekDay = DayOfWeek.valueOf(weekDayString.toUpperCase(Locale.ROOT));
+
+        String timeString = input.substring(weekDayString.length(), input.lastIndexOf(' '));
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("ha");
+        LocalTime time = LocalTime.parse(timeString, timeFormatter);
+
+        LocalDateTime triggerTime = now.with(TemporalAdjusters.nextOrSame(weekDay)).with(time);
+
+        if (triggerTime.isBefore(now)) {
+            triggerTime = triggerTime.with(TemporalAdjusters.next(weekDay));
+        }
+
+        return triggerTime.atZone(ZoneId.systemDefault()).toEpochSecond();
+    }
+
+    private Integer getRepeatTimes(String input) {
+        String repeatTimesString = input.substring(input.lastIndexOf(' ') + 1);
+        return Integer.parseInt(repeatTimesString);
     }
 
     private void time_parser_wait_date(String time, TimeTask timeTask) {
