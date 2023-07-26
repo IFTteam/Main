@@ -1,10 +1,11 @@
 package springredis.demo.controller;
+import springredis.demo.entity.User;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import springredis.demo.entity.User;
 import springredis.demo.repository.UserRepository;
 
 @RestController
@@ -16,32 +17,25 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // This method handles the sign-up functionality when a POST request is made to the /signup endpoint.
-    // RequestBody:  binds the request body to the User object passed as a parameter.
+
     @PostMapping("/signup")
     public String signUp(@RequestBody User user) {
-        // Check if the username is already taken
+
         if (userRepository.findByUsername(user.getUsername()) != null) {
             return "Username already exists"; // Return an appropriate response indicating the error
         }
-        // Check if the provided username already exists in the database by using the UserRepository method findByUsername. If a user with the same username exists, it returns an appropriate response indicating the error.
 
         if (userRepository.findByEmail(user.getEmail()) != null) {
             return "Email already exists";
         }
 
-
-        // After validating the username, this code block hashes the password using the PasswordEncoder. The hashed password is then set on the User object.
-        // Hash the password before saving it
         String hashedPassword = passwordEncoder.encode(user.getPassword_hash());
         user.setPassword_hash(hashedPassword);
 
-        // Save the user to the database
         userRepository.save(user);
 
         return "Signup successful"; // Return a success response
     }
-
 
     // This method handles the login functionality when a POST request is made to the /login endpoint.
     // RequestBody: binds the request body to the User object passed as a parameter.
@@ -61,4 +55,46 @@ public class AuthController {
     }
 
 
+
+    @PutMapping("/update/{userId}")
+    public String updateUser(@PathVariable Long userId, @RequestBody User updatedUser) {
+        // Find the user by userId
+        User existingUser = userRepository.findById(userId).orElse(null);
+
+        // Check if the user exists
+        if (existingUser == null) {
+            return "User not found"; // Return an appropriate response indicating the error
+        }
+
+        // Update the fields of the existingUser with the fields from updatedUser
+        // You can choose which fields are updatable based on your application's requirements.
+        existingUser.setUsername(updatedUser.getUsername());
+        existingUser.setEmail(updatedUser.getEmail());
+        existingUser.setAvatarUrl(updatedUser.getAvatarUrl());
+        // Update other fields as needed...
+
+        // Save the updated user
+        userRepository.save(existingUser);
+
+        return "User updated successfully"; // Return a success response
+    }
+
+    @DeleteMapping("/delete/{userId}")
+    public String deleteUser(@PathVariable Long userId) {
+        // Find the user by userId
+        User existingUser = userRepository.findById(userId).orElse(null);
+
+        // Check if the user exists
+        if (existingUser == null) {
+            return "User not found"; // Return an appropriate response indicating the error
+        }
+
+        // Delete the user from the database
+        userRepository.delete(existingUser);
+
+        return "User deleted successfully"; // Return a success response
+    }
+
+
 }
+

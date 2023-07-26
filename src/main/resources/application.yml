@@ -11,6 +11,10 @@ spring:
   main:
     allow-circular-references: true
 
+  main:
+    allow-circular-references: true
+
+
   jpa:
     show-sql: true
     hibernate:
