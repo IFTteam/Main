@@ -56,5 +56,45 @@ public class AuthController {
 
 
 
+    @PutMapping("/update/{userId}")
+    public String updateUser(@PathVariable Long userId, @RequestBody User updatedUser) {
+        // Find the user by userId
+        User existingUser = userRepository.findById(userId).orElse(null);
+
+        // Check if the user exists
+        if (existingUser == null) {
+            return "User not found"; // Return an appropriate response indicating the error
+        }
+
+        // Update the fields of the existingUser with the fields from updatedUser
+        // You can choose which fields are updatable based on your application's requirements.
+        existingUser.setUsername(updatedUser.getUsername());
+        existingUser.setEmail(updatedUser.getEmail());
+        existingUser.setAvatarUrl(updatedUser.getAvatarUrl());
+        // Update other fields as needed...
+
+        // Save the updated user
+        userRepository.save(existingUser);
+
+        return "User updated successfully"; // Return a success response
+    }
+
+    @DeleteMapping("/delete/{userId}")
+    public String deleteUser(@PathVariable Long userId) {
+        // Find the user by userId
+        User existingUser = userRepository.findById(userId).orElse(null);
+
+        // Check if the user exists
+        if (existingUser == null) {
+            return "User not found"; // Return an appropriate response indicating the error
+        }
+
+        // Delete the user from the database
+        userRepository.delete(existingUser);
+
+        return "User deleted successfully"; // Return a success response
+    }
+
+
 }
 
