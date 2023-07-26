@@ -187,6 +187,8 @@ public class TimeEventController {
         timeTask.audienceId2SDeserialize(coreModuleTask.getAudienceId2());
         timeTask.setCoreModuleTask(coreModuleTask);
         timeTask.setTaskStatus(0);
+        timeTask.setNodeId(coreModuleTask.getNodeId());
+        timeTask.setJourneyId(coreModuleTask.getJourneyId());
         // set make next to 1
         timeTask.setMakenext(1);
         return timeTask;
