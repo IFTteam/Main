@@ -7,6 +7,11 @@ spring:
     url: jdbc:mysql://localhost:3306/customer_journey?sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION'&jdbcCompliantTruncation=false
     username: lishuangyang
     password: password
+<<<<<<< Updated upstream
+=======
+  main:
+    allow-circular-references: true
+>>>>>>> Stashed changes
 
   jpa:
     show-sql: true
