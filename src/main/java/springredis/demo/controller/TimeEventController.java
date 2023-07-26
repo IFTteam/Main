@@ -252,25 +252,34 @@ public class TimeEventController {
     }
 
     private void timeParserOnce(String time, CoreModuleTask coreModuleTask) {
-        TimeTask timeTask = createTimeTask(coreModuleTask);
-        String[] list = time.split("T");
-        String clock = list[1];
-        int hour = Integer.parseInt(clock.substring(0, 2));
-        String minute = clock.substring(2, 5);
-        String AMPM = clock.substring(clock.length() - 2);
 
-        if (AMPM.equals("PM") && hour != 12) hour += 12;
-
-        try {
-            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            Date parse = format.parse(list[0] + " " + hour + minute);
-            System.out.println("parsed time: " + parse);
-            timeTask.setTriggerTime(parse.getTime());
-        } catch (ParseException e) {
-            e.printStackTrace();
+        String[] Time_list = time.split(",");
+        for(int i=0; i<Time_list.length; i++ ){
+            TimeTask timeTask = createTimeTask(coreModuleTask);
+            String[] list = Time_list[i].split("T");
+            String clock = list[1];
+            int hour = Integer.parseInt(clock.substring(0, 2));
+            String minute = clock.substring(2, 5);
+            String AMPM = clock.substring(clock.length() - 2);
+            if (AMPM.equals("PM") && hour != 12) hour += 12;
+            try {
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                Date parse = format.parse(list[0] + " " + hour + minute);
+                System.out.println("parsed time: " + parse);
+                timeTask.setTriggerTime(parse.getTime());
+                Long nodeid = timeTask.getNodeId();
+                //nodeRepository.
+                if(i>0){
+                    Node nodelist = nodeRepository.searchNodeByid(nodeid);
+                    Node dummyHeadNode = nodeRepository.searchByJourneyFrontEndIdAndName(nodelist.getJourneyFrontEndId(), "dummyHead");
+                    dummyHeadNode.setEndNodesCount(dummyHeadNode.getEndNodesCount()+1);
+                    nodeRepository.save(dummyHeadNode);
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            timeDelayRepository.save(timeTask);
         }
-
-        timeDelayRepository.save(timeTask);
     }
 
     private void timeParserRecurring(String frequency, CoreModuleTask coreModuleTask) {
