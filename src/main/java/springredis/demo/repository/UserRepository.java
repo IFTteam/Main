@@ -15,8 +15,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User findById(long l);
 
     User findByEmail(String email);
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 }
