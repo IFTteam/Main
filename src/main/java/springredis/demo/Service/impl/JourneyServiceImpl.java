@@ -318,15 +318,11 @@ public class JourneyServiceImpl implements JourneyService {
         Integer endNodesCount = 0;
         for (Long next : nexts) {
             Optional<Node> optionalNode = nodeRepository.findById(next);
-            if (optionalNode.isEmpty()) {
-                throw new DataBaseObjectNotFoundException("not found");
-            }
-            Node node = optionalNode.get();
+            Node node = OptionalUtils.getObjectOrThrow(optionalNode, "not found the node by given node id!");
             endNodesCount += node.getEndNodesCount();
         }
         newNode.setEndNodesCount(endNodesCount);
         nodeRepository.save(newNode);
-        System.out.println("Name: " + newNode.getName() + "\nID: " + newNode.getId() + " \nChild:" + newNode.getNexts() + " \nJourneyFrontEndId:" + journeyFrontEndId);
         return nodeId;
     }
 

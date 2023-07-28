@@ -1,8 +1,13 @@
 package springredis.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,6 +75,8 @@ public class NodeJsonModel {
         String type;
         String date;
         String newTag;
+        @SerializedName("end date")
+        String endDate;
     }
     @Data
     public class Branch {

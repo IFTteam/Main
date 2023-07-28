@@ -18,6 +18,7 @@ import javax.annotation.PreDestroy;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -89,11 +90,25 @@ public class SimulateNewEvent {
             log.info("caught a triggered time task...");
             time.setTime(timeTask.getTriggerTime());
             Event event = new Event(time, timeTask.getId());
-            timeTask.setTaskStatus(1);
+            // repeatTimes - 1
+            timeTask.setRepeatTimes(timeTask.getRepeatTimes() - 1);
+            // if repeatTimes still > 0, then set new trigger time -> current trigger time +
+            // one week.
+            // if repeatTimes <= 0, then just set task status to 1
+            if (timeTask.getRepeatTimes() > 0) {
+                timeTask.setTriggerTime(timeTask.getTriggerTime() + getOneWeekInMilliseconds());
+            }
+            else {
+                timeTask.setTaskStatus(1);
+            }
             timeDelayRepository.save(timeTask);
 
             redisTemplate.opsForList().leftPush(inQueueKey, event);
             System.out.println("Insert New Event at" + time);
         }
+    }
+
+    private static Long getOneWeekInMilliseconds() {
+        return TimeUnit.MILLISECONDS.convert(7, TimeUnit.DAYS);
     }
 }

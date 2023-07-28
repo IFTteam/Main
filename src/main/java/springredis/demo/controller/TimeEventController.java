@@ -128,10 +128,11 @@ public class TimeEventController {
         JSONObject jsonObject = new JSONObject(node.getProperties());
         String time = jsonObject.getString("send");
         String frequency = jsonObject.getString("frequency");
+        String endDate = jsonObject.getString("end date");
         if ("Once".equals(frequency)) {
             timeParserOnce(time, coreModuleTask);
         } else if ("Recurring".equals(frequency)) {
-            timeParserRecurring(time, coreModuleTask);
+            timeParserRecurring(time, coreModuleTask, endDate);
         }
         return coreModuleTask;
     }
@@ -282,16 +283,25 @@ public class TimeEventController {
         }
     }
 
-    private void timeParserRecurring(String frequency, CoreModuleTask coreModuleTask) {
+    private void timeParserRecurring(String frequency, CoreModuleTask coreModuleTask, String endDateStr) {
         String[] list = frequency.split(",");
         LocalDateTime now = LocalDateTime.now();
+        Long endDate = parseDateStr(endDateStr);
         for (String dateAndRepeatStr : list) {
-            Long triggerTime = getTriggerTime(dateAndRepeatStr, now);
             Integer repeatTimes = getRepeatTimes(dateAndRepeatStr);
-            TimeTask timeTask = createTimeTask(coreModuleTask);
-            timeTask.setTriggerTime(triggerTime);
-            timeTask.setRepeatTimes(repeatTimes);
-            timeDelayRepository.save(timeTask);
+            // if repeat times <= 0, no need to save new time task
+            if (repeatTimes > 0) {
+                Long triggerTime = getTriggerTime(dateAndRepeatStr, now);
+                // if front end indicates repeatTimes > 0, but after parsing, trigger time > endDate, then no
+                // need to save new time tasks, in case: front-end create time trigger recurring at MM/1st, but
+                // after 10 days activated, and the end date is MM/2nd, then already passed the endDate.
+                if (triggerTime <= endDate) {
+                    TimeTask timeTask = createTimeTask(coreModuleTask);
+                    timeTask.setTriggerTime(triggerTime);
+                    timeTask.setRepeatTimes(repeatTimes);
+                    timeDelayRepository.save(timeTask);
+                }
+            }
         }
     }
 
@@ -302,7 +312,7 @@ public class TimeEventController {
         DayOfWeek weekDay = DayOfWeek.valueOf(weekDayString.toUpperCase(Locale.ROOT));
 
         String timeString = input.substring(weekDayString.length(), input.lastIndexOf(' '));
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("ha");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("ha", Locale.US);
         LocalTime time = LocalTime.parse(timeString, timeFormatter);
 
         LocalDateTime triggerTime = now.with(TemporalAdjusters.nextOrSame(weekDay)).with(time);
@@ -311,7 +321,14 @@ public class TimeEventController {
             triggerTime = triggerTime.with(TemporalAdjusters.next(weekDay));
         }
 
-        return triggerTime.atZone(ZoneId.systemDefault()).toEpochSecond();
+
+        return triggerTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    private Long parseDateStr(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy", Locale.US);
+        LocalDate date = LocalDate.parse(dateStr, formatter);
+        return date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     private Integer getRepeatTimes(String input) {

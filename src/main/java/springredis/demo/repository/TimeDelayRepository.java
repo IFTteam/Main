@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface TimeDelayRepository extends JpaRepository<TimeTask, Long> {
-    @Query(value = "select * from time_task t where t.trigger_time < :trigger_time and t.task_status = 0",nativeQuery = true)
+    @Query(value = "select * from time_task t where t.trigger_time < :trigger_time and t.repeat_times > 0 and t.task_status = 0",nativeQuery = true)
     List<TimeTask> findTasksBeforeTime(@Param("trigger_time") Long triggerTime);
 
 }
