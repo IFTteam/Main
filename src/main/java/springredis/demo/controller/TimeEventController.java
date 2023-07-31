@@ -268,12 +268,13 @@ public class TimeEventController {
                 Date parse = format.parse(list[0] + " " + hour + minute);
                 System.out.println("parsed time: " + parse);
                 timeTask.setTriggerTime(parse.getTime());
+                timeTask.setRepeatTimes(1);
                 Long nodeid = timeTask.getNodeId();
                 //nodeRepository.
                 if(i>0){
                     Node nodelist = nodeRepository.searchNodeByid(nodeid);
                     Node dummyHeadNode = nodeRepository.searchByJourneyFrontEndIdAndName(nodelist.getJourneyFrontEndId(), "dummyHead");
-                    dummyHeadNode.setEndNodesCount(dummyHeadNode.getEndNodesCount()+1);
+                    dummyHeadNode.setEndNodesCount(dummyHeadNode.getEndNodesCount()+nodelist.getEndNodesCount());
                     nodeRepository.save(dummyHeadNode);
                 }
             } catch (ParseException e) {
