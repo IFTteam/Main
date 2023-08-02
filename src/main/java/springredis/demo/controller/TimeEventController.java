@@ -304,6 +304,23 @@ public class TimeEventController {
                 }
             }
         }
+
+        // get time trigger node
+        Optional<Node> optionalNode = nodeRepository.findById(coreModuleTask.getNodeId());
+        Node node = OptionalUtils.getObjectOrThrow(optionalNode, "Not found the node by given node Id");
+        // get dummy head node
+        Node dummyHeadNode = nodeRepository.searchByJourneyFrontEndIdAndName(node.getJourneyFrontEndId(), "dummyHead");
+        // set dummyHeadNode ends nodes count
+        Integer summedRepeatTimes = timeDelayRepository.sumRepeatTimesByJourneyId(coreModuleTask.getJourneyId());
+        try {
+            int result = Math.multiplyExact(node.getEndNodesCount(), summedRepeatTimes);
+            dummyHeadNode.setEndNodesCount(result);
+        } catch (ArithmeticException e) {
+            // handle overflow
+            e.printStackTrace();
+            dummyHeadNode.setEndNodesCount(Integer.MAX_VALUE);
+        }
+        nodeRepository.save(dummyHeadNode);
     }
 
 
