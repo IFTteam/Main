@@ -170,7 +170,7 @@ public class TimeEventController {
         } else {
             time_parser_wait_duration(parsed, timeTask);
         }
-
+        timeTask.setRepeatTimes(1);
         timeDelayRepository.save(timeTask);
         System.out.println("Saved Time Delay as TimeTask into timeDelayRepo");
 
