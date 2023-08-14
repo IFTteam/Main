@@ -17,4 +17,6 @@ public interface TransmissionRepository extends JpaRepository<Transmission, Long
     Transmission getTransmissionById(long id);
     @Query(value="SELECT * from transmission where user_id = ?1", nativeQuery = true )
     List<Transmission> getTransmissionByUserId(long userid);
+
+    List<Transmission> findByJourneyId(Long journey);
 }

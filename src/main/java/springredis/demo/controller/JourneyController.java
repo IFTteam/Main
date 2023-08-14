@@ -7,9 +7,11 @@ import springredis.demo.Service.JourneyService;
 import springredis.demo.entity.*;
 import springredis.demo.error.JourneyNotFoundException;
 
+import java.util.List;
+
 @RestController
 @CrossOrigin(origins = "*", maxAge = 3600)
-@RequestMapping("journey")
+@RequestMapping("/journey")
 @Slf4j
 public class JourneyController {
     private final JourneyService journeyService;
@@ -56,5 +58,10 @@ public class JourneyController {
         log.info("begin to activate the journey...");
         log.info(journeyJson);
         return journeyService.activate(journeyJson);
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Journey> getJourneysByUserId(@PathVariable String userId) {
+        return journeyService.getByUserId(userId);
     }
 }

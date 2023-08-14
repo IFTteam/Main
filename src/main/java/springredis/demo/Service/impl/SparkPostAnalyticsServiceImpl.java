@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -11,9 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import springredis.demo.Service.SparkPostAnalyticsService;
-import springredis.demo.entity.response.AnalyticsReport;
+import springredis.demo.entity.Transmission;
 import springredis.demo.entity.response.AnalyticsResponse;
 import springredis.demo.entity.response.IndividualAnalyticsReport;
+import springredis.demo.repository.JourneyRepository;
+import springredis.demo.repository.TransmissionRepository;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -30,7 +33,17 @@ public class SparkPostAnalyticsServiceImpl implements SparkPostAnalyticsService 
     @Value("${SP_BASE_URI}")
     private String sparkPostBaseUrl;
 
+    private final JourneyRepository journeyRepository;
+
+    private final TransmissionRepository transmissionRepository;
+
     private final String earliestStartTime = "2019-01-01T00:00";
+
+    @Autowired
+    public SparkPostAnalyticsServiceImpl(JourneyRepository journeyRepository, TransmissionRepository transmissionRepository) {
+        this.journeyRepository = journeyRepository;
+        this.transmissionRepository = transmissionRepository;
+    }
 
     public List<AnalyticsResponse> getAnalytics(String url)
     {
@@ -90,60 +103,33 @@ public class SparkPostAnalyticsServiceImpl implements SparkPostAnalyticsService 
     @Override
     public IndividualAnalyticsReport generateIndividualAnalyticsReportFromRecipientEmail(String recipientEmail) {
         List<AnalyticsResponse> analytics = getIndividualAnalyticsFromRecipientEmail(recipientEmail);
-        return getIndividualAnalyticsReport(analytics, recipientEmail);
+        return getIndividualAnalyticsReport(analytics);
     }
 
     @Override
-    public AnalyticsReport generateAnalyticsReport() {
-        List<AnalyticsResponse> analytics = getAllAnalytics();
-        return getAnalyticsReport(analytics);
+    public IndividualAnalyticsReport generateIndividualAnalyticsReportByJourneyId(Long journeyId) {
+        List<Transmission> transmissionList = transmissionRepository.findByJourneyId(journeyId);
+        StringBuilder sb = new StringBuilder();
+        for (Transmission transmission : transmissionList) {
+            sb.append(transmission.getId())
+                    .append(",");
+        }
+        List<AnalyticsResponse> responses = getIndividualAnalyticsFromTransmissionID(sb.toString());
+        return getIndividualAnalyticsReport(responses);
     }
 
-
-    private AnalyticsReport getAnalyticsReport(List<AnalyticsResponse> analytics) {
-        AnalyticsReport analyticsReport = new AnalyticsReport();
-        int totalInjection = 0;
-        int totalDelivery = 0;
-        int totalOpen = 0;
-        int totalClick = 0;
-        int totalBounce = 0;
-        Set<String> emailSet = new HashSet<>();
-        Set<String> transmissionsSet = new HashSet<>();
-        for (AnalyticsResponse analytic : analytics) {
-            emailSet.add(analytic.getRaw_rcpt_to());
-            transmissionsSet.add(analytic.getTransmission_id());
-        }
-
-        for (String email : emailSet) {
-            IndividualAnalyticsReport individualAnalyticsReport = generateIndividualAnalyticsReportFromRecipientEmail(email);
-            totalBounce += individualAnalyticsReport.getTotalBounce();
-            totalClick += individualAnalyticsReport.getTotalClick();
-            totalDelivery += individualAnalyticsReport.getTotalDelivery();
-            totalOpen += individualAnalyticsReport.getTotalOpen();
-            totalInjection += individualAnalyticsReport.getTotalInjection();
-        }
-
-        analyticsReport.setTotalEmails(emailSet.size());
-        analyticsReport.setTotalTransmissionIds(transmissionsSet.size());
-        analyticsReport.setTotalInjection(totalInjection);
-        analyticsReport.setTotalDelivery(totalDelivery);
-        analyticsReport.setTotalClick(totalClick);
-        analyticsReport.setTotalOpen(totalOpen);
-        analyticsReport.setTotalBounce(totalBounce);
-        return analyticsReport;
-    }
-
-    private IndividualAnalyticsReport getIndividualAnalyticsReport(List<AnalyticsResponse> analytics, String recipientEmail) {
+    private IndividualAnalyticsReport getIndividualAnalyticsReport(List<AnalyticsResponse> analytics) {
         IndividualAnalyticsReport report = new IndividualAnalyticsReport();
-        report.setEmail(recipientEmail);
-        List<String> transmissionIds = new ArrayList<>();
+        Set<String> emailSet = new HashSet<>();
+        Set<String> transmissionsIdSet = new HashSet<>();
         int totalInjection = 0;
         int totalDelivery = 0;
         int totalOpen = 0;
         int totalClick = 0;
         int totalBounce = 0;
         for (AnalyticsResponse analytic : analytics) {
-            transmissionIds.add(analytic.getRaw_rcpt_to());
+            transmissionsIdSet.add(analytic.getTransmission_id());
+            emailSet.add(analytic.getRaw_rcpt_to());
             if ("injection".equals(analytic.getType())) {
                 totalInjection++;
             }
@@ -160,8 +146,8 @@ public class SparkPostAnalyticsServiceImpl implements SparkPostAnalyticsService 
                 totalClick++;
             }
         }
-
-        report.setTransmissionIds(transmissionIds);
+        report.setTransmissionIds(new ArrayList<>(transmissionsIdSet));
+        report.setEmails(new ArrayList<>(emailSet));
         report.setTotalBounce(totalBounce);
         report.setTotalDelivery(totalDelivery);
         report.setTotalClick(totalClick);

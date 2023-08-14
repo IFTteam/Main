@@ -50,4 +50,6 @@ public interface JourneyService {
     Boolean deleteActiveNodeAndJourney(Long JourneyId);
 
     Boolean endJourney(Long journeyId);
+
+    List<Journey> getByUserId(String userId);
 }

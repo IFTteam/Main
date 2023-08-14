@@ -266,7 +266,7 @@ public class JourneyServiceImpl implements JourneyService {
     }
 
     @Transactional
-    private Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
+    public Long dfs(NodeJsonModel[] nodeJsonModelList, int idx, String journeyFrontEndId) {
         Node newNode = createNodeFromNodeJsonModel(nodeJsonModelList[idx], journeyFrontEndId);
         System.out.println(nodeJsonModelList[idx].toString());
         // We need to store the node in DB first
@@ -529,4 +529,11 @@ public class JourneyServiceImpl implements JourneyService {
             return false;
         }
     }
+
+    @Override
+    public List<Journey> getByUserId(String userId) {
+        return journeyRepository.findByCreatedBy(userId);
+    }
+
+
 }

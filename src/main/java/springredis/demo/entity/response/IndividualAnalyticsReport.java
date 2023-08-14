@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 public class IndividualAnalyticsReport {
-    private String email;
+    private List<String> emails;
     private List<String> transmissionIds;
     private Integer totalInjection;
     private Integer totalDelivery;

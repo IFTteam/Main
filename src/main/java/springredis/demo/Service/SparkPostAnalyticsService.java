@@ -1,6 +1,5 @@
 package springredis.demo.Service;
 
-import springredis.demo.entity.response.AnalyticsReport;
 import springredis.demo.entity.response.AnalyticsResponse;
 import springredis.demo.entity.response.IndividualAnalyticsReport;
 
@@ -18,5 +17,5 @@ public interface SparkPostAnalyticsService {
 
     IndividualAnalyticsReport generateIndividualAnalyticsReportFromRecipientEmail(String recipientEmail);
 
-    AnalyticsReport generateAnalyticsReport();
+    IndividualAnalyticsReport generateIndividualAnalyticsReportByJourneyId(Long journeyId);
 }
