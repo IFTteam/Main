@@ -13,8 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import springredis.demo.Service.SparkPostAnalyticsService;
 import springredis.demo.entity.Transmission;
+import springredis.demo.entity.analyticsReport.TransmissionInfo;
 import springredis.demo.entity.response.AnalyticsResponse;
-import springredis.demo.entity.response.IndividualAnalyticsReport;
+import springredis.demo.entity.analyticsReport.IndividualAnalyticsReport;
 import springredis.demo.repository.JourneyRepository;
 import springredis.demo.repository.TransmissionRepository;
 
@@ -121,38 +122,53 @@ public class SparkPostAnalyticsServiceImpl implements SparkPostAnalyticsService 
     private IndividualAnalyticsReport getIndividualAnalyticsReport(List<AnalyticsResponse> analytics) {
         IndividualAnalyticsReport report = new IndividualAnalyticsReport();
         Set<String> emailSet = new HashSet<>();
-        Set<String> transmissionsIdSet = new HashSet<>();
-        int totalInjection = 0;
-        int totalDelivery = 0;
-        int totalOpen = 0;
-        int totalClick = 0;
-        int totalBounce = 0;
+        int totalJourneyInjection = 0;
+        int totalJourneyDelivery = 0;
+        int totalJourneyOpen = 0;
+        int totalJourneyClick = 0;
+        int totalJourneyBounce = 0;
         for (AnalyticsResponse analytic : analytics) {
-            transmissionsIdSet.add(analytic.getTransmission_id());
-            emailSet.add(analytic.getRaw_rcpt_to());
+            String transmissionId = analytic.getTransmission_id();
+            String email = analytic.getRaw_rcpt_to();
+            if (!report.getTransmissionInfoMap().containsKey(transmissionId)) {
+                TransmissionInfo transmissionInfo = new TransmissionInfo();
+                transmissionInfo.setTransmissionId(transmissionId);
+                report.getTransmissionInfoMap().put(transmissionId, transmissionInfo);
+            }
+
+            emailSet.add(email);
+            TransmissionInfo transmissionInfo = report.getTransmissionInfoMap().get(transmissionId);
             if ("injection".equals(analytic.getType())) {
-                totalInjection++;
+                transmissionInfo.setTotalInjection(transmissionInfo.getTotalInjection() + 1);
+                totalJourneyInjection++;
             }
             else if ("delivery".equals(analytic.getType())) {
-                totalDelivery++;
+                transmissionInfo.setTotalDelivery(transmissionInfo.getTotalDelivery() + 1);
+                totalJourneyDelivery++;
             }
             else if ("bounce".equals(analytic.getType())) {
-                totalBounce++;
+                transmissionInfo.setTotalBounce(transmissionInfo.getTotalBounce() + 1);
+                totalJourneyBounce++;
             }
             else if ("open".equals(analytic.getType())) {
-                totalOpen++;
+                transmissionInfo.setTotalOpen(transmissionInfo.getTotalOpen() + 1);
+                totalJourneyOpen++;
             }
             else if ("click".equals(analytic.getType())) {
-                totalClick++;
+                transmissionInfo.setTotalClick(transmissionInfo.getTotalClick() + 1);
+                totalJourneyClick++;
             }
+            if (!transmissionInfo.getEmails().contains(email)) {
+                transmissionInfo.getEmails().add(email);
+            }
+            report.getTransmissionInfoMap().put(transmissionId, transmissionInfo);
         }
-        report.setTransmissionIds(new ArrayList<>(transmissionsIdSet));
         report.setEmails(new ArrayList<>(emailSet));
-        report.setTotalBounce(totalBounce);
-        report.setTotalDelivery(totalDelivery);
-        report.setTotalClick(totalClick);
-        report.setTotalInjection(totalInjection);
-        report.setTotalOpen(totalOpen);
+        report.setTotalBounce(totalJourneyBounce);
+        report.setTotalDelivery(totalJourneyDelivery);
+        report.setTotalClick(totalJourneyClick);
+        report.setTotalInjection(totalJourneyInjection);
+        report.setTotalOpen(totalJourneyOpen);
         return report;
     }
 

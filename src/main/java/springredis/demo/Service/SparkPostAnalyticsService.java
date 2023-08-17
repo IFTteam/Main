@@ -1,7 +1,7 @@
 package springredis.demo.Service;
 
 import springredis.demo.entity.response.AnalyticsResponse;
-import springredis.demo.entity.response.IndividualAnalyticsReport;
+import springredis.demo.entity.analyticsReport.IndividualAnalyticsReport;
 
 import java.util.List;
 

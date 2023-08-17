@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import springredis.demo.Service.SparkPostAnalyticsService;
 import springredis.demo.entity.response.AnalyticsResponse;
 import lombok.extern.slf4j.Slf4j;
-import springredis.demo.entity.response.IndividualAnalyticsReport;
+import springredis.demo.entity.analyticsReport.IndividualAnalyticsReport;
 
 import java.util.List;
 
