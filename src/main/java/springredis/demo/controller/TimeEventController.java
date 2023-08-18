@@ -21,7 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
+import java.text.DateFormat;
+import java.util.Calendar;
 @RestController
 @Slf4j
 public class TimeEventController {
@@ -287,9 +288,10 @@ public class TimeEventController {
     private void timeParserRecurring(String frequency, CoreModuleTask coreModuleTask, String endDateStr) {
         String[] list = frequency.split(",");
         LocalDateTime now = LocalDateTime.now();
+        String formatEndDate = parseEndDateStr(endDateStr);
         Long endDate = parseDateStr(endDateStr);
         for (String dateAndRepeatStr : list) {
-            Integer repeatTimes = getRepeatTimes(dateAndRepeatStr);
+            Integer repeatTimes = weekend(now.toLocalDate().toString(),formatEndDate,dateAndRepeatStr,now.getHour());
             // if repeat times <= 0, no need to save new time task
             if (repeatTimes > 0) {
                 Long triggerTime = getTriggerTime(dateAndRepeatStr, now);
@@ -348,10 +350,85 @@ public class TimeEventController {
         LocalDate date = LocalDate.parse(dateStr, formatter);
         return date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
+    private String parseEndDateStr(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy", Locale.US);
+        LocalDate date = LocalDate.parse(dateStr, formatter);
+        return date.toString();
+    }
 
     private Integer getRepeatTimes(String input) {
         String repeatTimesString = input.substring(input.lastIndexOf(' ') + 1);
         return Integer.parseInt(repeatTimesString);
+    }
+/**
+ * Given a time period and a day of the week, calculate how many of the given day of the week there are in the time period
+ * @param start start time ,format yyyy-MM-dd
+ * @param end end time，format yyyy-MM-dd
+ * @param a  Monday to Sunday, Use 1-7
+ * @return count
+ */
+    private Integer weekend(String start,String end,String dateAndRepeatStr,int StartHour){
+        String[] dateList = dateAndRepeatStr.split("day");
+        String Hour = dateList[1].substring(0,4);
+        int ExeHour  = 0;
+        if(Hour.contains("AM")){
+            String[] ExeHourList = Hour.split("AM");
+            int exehour = Integer.parseInt(ExeHourList[0]);
+            if(exehour!=12){
+                ExeHour = exehour;
+            }
+        }else{
+            String[] ExeHourList = Hour.split("PM");
+            int exehour = Integer.parseInt(ExeHourList[0]);
+            if(exehour!=12){
+                ExeHour = exehour+12;
+            }else{
+                ExeHour = exehour;
+            }
+        }
+        int a = 0;
+        switch (dateList[0]){
+            case "Mon": a =1;
+                 break;
+            case "Tues": a =2;
+                 break;
+            case "Wednes": a =3;
+                 break;
+            case "Thurs": a =4;
+                 break;
+            case "Fri": a =5;
+                 break;
+            case "Satur": a =6;
+                 break;
+            case "Sun": a =7;
+                 break;
+        }
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        long sunDay = 0;//计数
+        try{
+            Calendar startDate = Calendar.getInstance(); //start time
+            startDate.setTime(format.parse(start));
+            Calendar endDate = Calendar.getInstance();//end time
+            endDate.setTime(format.parse(end));
+            int SW = startDate.get(Calendar.DAY_OF_WEEK)-1;
+            int EW = endDate.get(Calendar.DAY_OF_WEEK)-1;
+
+            long diff = endDate.getTimeInMillis()-startDate.getTimeInMillis();
+            long days = diff / (1000 * 60 * 60 * 24);//total days
+            long w = Math.round(Math.ceil(((days+SW+(7-EW))/7.0)));//total weeks
+            sunDay = w;
+            if(a<SW)
+                sunDay--;
+            if(a>EW)
+                sunDay--;
+            if(a == SW)
+                if(ExeHour <= StartHour)
+                    sunDay--;
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return (int)sunDay;
     }
 
     private void time_parser_wait_date(String time, TimeTask timeTask) {
