@@ -250,6 +250,7 @@ public class JourneyServiceImpl implements JourneyService {
 
         //get audience list from properties
         long userId = Long.parseLong(oneJourney.getCreatedBy());
+        cmt.setUserId(userId);
         System.out.println("UserId is " + userId);
         List<Long> audienceList = AudienceFromAudienceList(headNode.getId(), userId);
         cmt.setAudienceId1(audienceList);
