@@ -36,9 +36,10 @@ public class CMTExecutor {
     private final HashMap<String, String> urlDict = new HashMap<>() {
         {
             put("Time Delay", "http://localhost:8080/Time_Delay");
+            put("API Trigger", "http://localhost:8080/API_trigger");
+            put("Time Trigger", "http://localhost:8080/Time_Trigger");
             put("Place a Purchase", "http://localhost:8080/API_trigger");
             put("Abandon Checkout", "http://localhost:8080/API_trigger");
-            put("Time Trigger", "http://localhost:8080/add");
             put("Send Email", "http://localhost:8080/actionSend/createCMTTransmission");
             put("If/Else", "http://localhost:8080/IfElse");
             put("Add Tag", "http://localhost:8080/AddTag");

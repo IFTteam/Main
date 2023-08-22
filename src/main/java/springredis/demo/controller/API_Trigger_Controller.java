@@ -1,5 +1,6 @@
 package springredis.demo.controller;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -106,7 +107,7 @@ public class API_Trigger_Controller {
             String token = user.getShopifyApiAccessToken();
             String url = "https://" + devstore + ".myshopify.com/admin/api/2023-04/webhooks.json";
             //String url = "http://localhost:8080/show"; //for testing
-            String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://5112-131-179-156-9.ngrok-free.app/shopify_purchase_update/" + user.getId() + "\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
+            String data = "{\"webhook\":{\"topic\":\"orders/create\",\"address\":\"https://a01d-69-119-17-18.ngrok-free.app/shopify_purchase_update/" + user.getId() + "\",\"format\":\"json\",\"fields\":[\"id\", \"email\", \"created_at\", \"updated_at\", \"total_price\", \"customer\", \"line_items\"]}}";
             HttpHeaders header = new HttpHeaders();
             header.set("X-Shopify-Access-Token", token);
             header.setContentType(MediaType.APPLICATION_JSON);
@@ -165,7 +166,7 @@ public class API_Trigger_Controller {
             String token = user.getShopifyApiAccessToken();
             String url = "https://"+devstore+".myshopify.com/admin/api/2023-04/webhooks.json";
             System.out.println(url);
-            String data = "{\"webhook\":{\"topic\":\"checkouts/create\",\"address\":\"https://5112-131-179-156-9.ngrok-free.app/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"abandoned_checkout_url\"]}}";
+            String data = "{\"webhook\":{\"topic\":\"checkouts/create\",\"address\":\"https://a01d-69-119-17-18.ngrok-free.app/shopify_abandon_checkout_update/"+Long.toString(user.getId())+"\",\"format\":\"json\",\"fields\":[\"id\",\"abandoned_checkout_url\"]}}";
             HttpHeaders header = new HttpHeaders();
             header.set("X-Shopify-Access-Token",token);
             header.setContentType(MediaType.APPLICATION_JSON);

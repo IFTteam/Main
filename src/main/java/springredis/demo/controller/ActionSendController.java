@@ -114,12 +114,6 @@ public class ActionSendController {
             put("education_level", "college");
         }});
 
-        System.out.println("====================================================Request Campaign ID: " + transmissionRequest.getCampaignId());
-        System.out.println("====================================================Request Audience ID: " + transmissionRequest.getAudienceId());
-        System.out.println("====================================================Request Journey ID: " + transmissionRequest.getJourneyId());
-        System.out.println("====================================================Request User ID: " + transmissionRequest.getUserId());
-        System.out.println("====================================================Request Address: " + transmissionRequest.getAddressList().size());
-        System.out.println("====================================================Request Content: " + transmissionRequest.getContent());
         Optional<SparkPostResponse> sparkPostResponse = webClient.post()
                 .uri("/api/v1/transmissions?num_rcpt_errors=3")
                 .header("Content-Type", "application/json")
