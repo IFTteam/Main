@@ -55,6 +55,9 @@ public class DAO {
     public Audience searchAudienceByEmail(String email) {
         return audienceRepository.searchAudienceByEmail(email);
     }
+    public Audience searchAudienceByPhone(String phone) {
+        return audienceRepository.searchAudienceByPhone(phone);
+    }
 
     public ActiveNode searchActiveNodeById(Long id){return activeNodeRepository.findByActiveNodeId(id);}
 
@@ -74,8 +77,15 @@ public class DAO {
 
     public ActiveAudience addNewActiveAudience(ActiveAudience aud){return activeAudienceRepository.save(aud);}
 
+
+
+    public Journey addNewJourney(Journey journey){
+        return journeyRepository.save(journey);
+    }
+
     public triggerType_node_relation addNewTNR(triggerType_node_relation tnr){
         return tnr_repository.save(tnr);
     }
 
+    public void updateAudience(Audience audience) { audienceRepository.save(audience); }
 }

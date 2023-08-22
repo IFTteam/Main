@@ -19,6 +19,8 @@ public interface AudienceRepository extends JpaRepository<Audience, Long> {
 
     @Query(value = "SELECT a from Audience a WHERE a.email=:Email")
     Audience searchAudienceByEmail(String Email);
+    @Query(value = "SELECT a from Audience a WHERE a.phone=:Phone")
+    Audience searchAudienceByPhone(String Phone);
 
     @Query("select s.id from Audience s where s.user = ?1")
     long getAudienceIdByUser(User user);

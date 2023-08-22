@@ -199,7 +199,7 @@ public class ActionSendController {
     @ResponseBody
     public CoreModuleTask createCMTTransmission(@RequestBody CoreModuleTask coreModuleTask) {
     	List<ActiveAudience> activeAudienceList = new ArrayList<ActiveAudience>();  //obtain active audience list from CMT
-    	for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++) 
+    	for(int i = 0; i < coreModuleTask.getActiveAudienceId1().size(); i++)
     	{
     		Optional<ActiveAudience> activeAudience = activeAudienceRepository.findById(coreModuleTask.getActiveAudienceId1().get(i));
     		if(activeAudience.isPresent())
@@ -207,12 +207,12 @@ public class ActionSendController {
     			activeAudienceList.add(activeAudience.get());
     		}
     	}
-    	
+
     	List<Audience> audienceList = new ArrayList<Audience>();  //obtain audience list from the CMT
-    	for(int i = 0; i < activeAudienceList.size(); i++) 
+    	for(int i = 0; i < activeAudienceList.size(); i++)
     	{
     		Optional<Audience> audience = audienceRepository.findById(activeAudienceList.get(i).getAudienceId());
-    		if(audience.isPresent() == true) 
+    		if(audience.isPresent() == true)
     		{
     			audienceList.add(audience.get());
     		}
@@ -221,7 +221,7 @@ public class ActionSendController {
     	TransmissionRequest request = new TransmissionRequest();
     	
     	request.setCampaignId("1");  //Not entirely sure how to obtain campaign ID yet
-    	
+
     	List<Address> addressList = new ArrayList<Address>();  //set address list for the request
     	for(int i = 0; i < audienceList.size(); i++) 
     	{
@@ -299,7 +299,6 @@ public class ActionSendController {
         ResponseEntity<Response> response = createTransmission(request);
         System.out.println(response);
     	return coreModuleTask;
-    	
     }
     
     //Testing

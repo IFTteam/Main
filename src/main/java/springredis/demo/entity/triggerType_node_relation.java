@@ -27,4 +27,9 @@ public class triggerType_node_relation {
         userId = uid;
     }
 
+    public void setNode(Node node){
+        nodes = new ArrayList<>();
+        nodes.add(node);
+    }
+
 }

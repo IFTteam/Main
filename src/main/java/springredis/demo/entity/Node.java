@@ -100,4 +100,20 @@ public class Node extends BaseEntity {
         this.journeyFrontEndId = journeyFrontEndId;
         this.properties = properties;
     }
+
+    @Override
+    public String toString() {
+        return "Node{" +
+                "id=" + id +
+                ", frontEndId='" + frontEndId + '\'' +
+                ", name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", headOrTail=" + headOrTail +
+                ", status='" + status + '\'' +
+                ", properties='" + properties + '\'' +
+                ", journeyFrontEndId='" + journeyFrontEndId + '\'' +
+                ", sNexts='" + sNexts + '\'' +
+                ", sLasts='" + sLasts + '\'' +
+                '}';
+    }
 }
