@@ -95,9 +95,8 @@ public class CMTExecutor {
             if (isTimeTrigger) {
                 dummyHeadNode.setEndNodesCount(dummyHeadNode.getEndNodesCount() - curEndNodesCount);
                 nodeRepository.save(dummyHeadNode);
+                return;
             }
-
-            return;
         }
 
         CoreModuleTask restask = null;

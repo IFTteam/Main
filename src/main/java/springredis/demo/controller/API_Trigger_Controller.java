@@ -118,7 +118,7 @@ public class API_Trigger_Controller {
             System.out.println("Response: " + response.getBody());
         }
         // don't let the next node get executed
-        task.setMakenext(0);
+        task.setMakenext(1);
         return task;
     }
 
@@ -176,7 +176,7 @@ public class API_Trigger_Controller {
             System.out.println("Response: " + response.getBody());
         }
         // don't let the next node get executed yet
-        task.setMakenext(0);
+        task.setMakenext(1);
         return task;
     }
 
@@ -241,6 +241,8 @@ public class API_Trigger_Controller {
 
         triggerType_node_relation tnr = productService.searchTNR(user.getId(),"purchase").get();
         List<Node> nodes = tnr.getNodes();
+        String JourneyFrontEndId = nodes.get(0).getJourneyFrontEndId();
+        Journey Journey = journeyRepository.searchJourneyByFrontEndId(JourneyFrontEndId);
         List<CoreModuleTask> tasks = new ArrayList<>();                 //returns all new tasks pushed onto the task queue
         //push a bunch of API_trigger-typed CMT onto task queue with name being "finished": this type of task is redirected to a "finished" controller, which only modifies the task's taskType to 1 so task executor will create (not make) audience in next node's buffer
         for(Node n:nodes){
@@ -249,6 +251,7 @@ public class API_Trigger_Controller {
             List<Long> newlist = new ArrayList<>();
             newlist.add(audienceId);
             task.setAudienceId1(newlist);
+            task.setJourneyId(Journey.getId());
             task.setNodeId(n.getId());                   //we set nodeid as next node's id, since task executor should execute the next node's task, not this node
             task.setUserId(user.getId());
             task.setTaskType(1);                        //a task that is creating a new audience
@@ -340,7 +343,8 @@ public class API_Trigger_Controller {
         triggerType_node_relation tnr = productService.searchTNR(user.getId(), "abandon_cart").get();
         List<Node> nodes = tnr.getNodes();
         List<CoreModuleTask> tasks = new ArrayList<>();
-
+        String JourneyFrontEndId = nodes.get(0).getJourneyFrontEndId();
+        Journey Journey = journeyRepository.searchJourneyByFrontEndId(JourneyFrontEndId);
         for (Node node : nodes) {
             System.out.println("++++++++ Node id in tnr: " + node.getId() + " +++++++++");
             for (Long nextId : node.getNexts()) {
@@ -360,6 +364,7 @@ public class API_Trigger_Controller {
                 task.setAudienceId1(audienceIds);
 
                 task.setNodeId(nextId);
+                task.setJourneyId(journey.getId());
                 task.setUserId(user.getId());
                 task.setTaskType(1);
                 task.setName(nextNode.getName());
