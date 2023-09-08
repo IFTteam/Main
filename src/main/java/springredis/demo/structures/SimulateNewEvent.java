@@ -145,14 +145,14 @@ public class SimulateNewEvent {
         List<User> userLists = userRepository.findAll();
         for (User userList : userLists) {
             log.info("abandon checkout");
-            String shopifyApiKey = userList.getShopifyApiKey();
+            //String shopifyApiKey = userList.getShopifyApiKey();
             String shopifydevstore = userList.getShopifydevstore();
-            String shopifyApiAccessToken = userList.getShopifyApiAccessToken();
+            //String shopifyApiAccessToken = userList.getShopifyApiAccessToken();
             Long userid = userList.getId();
             String url = "https://"+shopifydevstore+".myshopify.com/admin/api/2023-04/checkouts.json?created_at_min="+sd;
             System.out.println(url);
             HttpHeaders header = new HttpHeaders();
-            header.set("X-Shopify-Access-Token", shopifyApiAccessToken);
+            //header.set("X-Shopify-Access-Token", shopifyApiAccessToken);
             header.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> request = new HttpEntity("{}", header);
             ResponseEntity<String > response = restTemplate.exchange(url, HttpMethod.GET,request, String.class);
